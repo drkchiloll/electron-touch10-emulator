@@ -1,14 +1,14 @@
 {
-  "name": "electron-react-ts-starter",
-  "version": "0.0.1",
-  "description": "A Starter Project for Electron/React/Typescript 2.x",
+  "name": "cisco-touch10-emulator",
+  "version": "1.0.0",
+  "description": "An Emulator for the Cisco Touch 10 Interface",
   "main": "./dist/main.bundle.js",
   "scripts": {
     "build:dev": "node_modules/.bin/webpack --watch --progress --profile",
     "build:dist": "NODE_ENV=production node_modules/.bin/webpack --progress --colors",
     "build:win:dist": "webpack -p --progress --colors",
     "start": "electron .",
-    "package": "node_modules/.bin/electron-packager ./ AppName --platform=darwin --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=0.0.1 --icon ./resources/iconForApp.icns",
+    "package": "node_modules/.bin/electron-packager ./ Cisco Touch10 Emulator --platform=darwin --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.0 --icon ./resources/video-icon.icns",
     "clean": "cd dist && rm app.bundle.js app.bundle.js.map main.bundle.js main.bundle.js.map && cd .."
   },
   "dependencies": {},

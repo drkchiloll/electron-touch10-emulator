@@ -1,14 +1,27 @@
 import * as React from 'react'
+// Import Components
 import { Main } from './components';
 
-// Import Components
-
 export class App extends React.Component<any, any> {
-	state = {}
+  state = {
+    mainView: true,
+    meetingsView: false,
+    callView: false
+  }
 
-	render() {
-		return <div>
-			<Main />
-		</div>
-	}
+  updateView = (args: any) => {
+    // Main -> Meetings List
+    // Meeting -> Call
+  }
+
+  render() {
+    const { mainView, meetingsView, callView } = this.state;
+    return <div>
+      {
+        mainView ?
+          <Main switch={this.updateView} /> :
+          null
+      }
+    </div>
+  }
 }

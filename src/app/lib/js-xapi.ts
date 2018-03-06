@@ -9,7 +9,7 @@ export interface Booking {
   DialInfo: { Calls: { Call: [{ Number, CallType }] } }
 }
 
-export abstract class Api {
+export abstract class JsXAPI {
   public static xapi: any;
 
   static connect() {

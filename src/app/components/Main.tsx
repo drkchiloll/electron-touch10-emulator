@@ -16,7 +16,7 @@ import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
 
-import { Api, Time } from '../lib';
+import { JsXAPI, Time } from '../lib';
 
 export class Main extends React.Component<any,any> {
   state = {
@@ -36,13 +36,13 @@ export class Main extends React.Component<any,any> {
       this.setState({ left, top });
     });
 
-    Api.getMeetings().then((meetings) => {
+    JsXAPI.getMeetings().then((meetings) => {
       if(meetings.length !== 0) {
         this.meetingHander(meetings[0]);
       }
       return;
     }).then(() => {
-      return Api.getAudio();
+      return JsXAPI.getAudio();
     }).then((result) => {
       console.log(result);
       this.setState({ volume: result });
@@ -149,7 +149,7 @@ export class Main extends React.Component<any,any> {
               primary={true}
               badgeStyle={this.styles.badge2}>
               <IconButton onClick={() =>
-                Api.setAudio('Decrease').then(() =>
+                JsXAPI.setAudio('Decrease').then(() =>
                   this.setState({ volume: --volume }))
               }> <VolumeDown /> </IconButton>
             </Badge>
@@ -158,7 +158,7 @@ export class Main extends React.Component<any,any> {
               primary={true}
               badgeStyle={this.styles.badge2}>
               <IconButton onClick={() =>
-                Api.setAudio('Increase').then(() =>
+                JsXAPI.setAudio('Increase').then(() =>
                   this.setState({ volume: ++volume }))
               } > <VolumeUp /> </IconButton>
             </Badge>

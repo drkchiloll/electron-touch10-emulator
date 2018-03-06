@@ -1,4 +1,4 @@
-import { Api } from './api';
+import { JsXAPI } from './js-xapi';
 import { Time } from './time';
 
-export { Api, Time };
+export { JsXAPI, Time };

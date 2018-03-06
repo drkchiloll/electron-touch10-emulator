@@ -10,11 +10,13 @@ import AddIcon from 'material-ui/svg-icons/content/add';
 import VolumeUp from 'material-ui/svg-icons/av/volume-up';
 import VolumeDown from 'material-ui/svg-icons/av/volume-down';
 import DecreaseIcon from 'material-ui/svg-icons/content/remove'
+import AwakeIcon from 'material-ui/svg-icons/action/visibility';
+import StandbyIcon from 'material-ui/svg-icons/action/visibility-off';
 import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
 
-import { Api } from '../lib/api';
+import { Api, Time } from '../lib';
 
 export class Main extends React.Component<any,any> {
   state = {
@@ -22,16 +24,43 @@ export class Main extends React.Component<any,any> {
     top: window.innerHeight / 3,
     meetInTen: false,
     nextMeeting: null,
-    volume: 0
+    volume: 0,
+    status: 'Standby'
   }
 
-  componentDidMount() {
+  componentWillMount() {
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
       left = window.innerWidth / 3.5;
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
+
+    Api.getMeetings().then((meetings) => {
+      if(meetings.length !== 0) {
+        this.meetingHander(meetings[0]);
+      }
+      return;
+    }).then(() => {
+      return Api.getAudio();
+    }).then((result) => {
+      console.log(result);
+      this.setState({ volume: result });
+    });
+  }
+
+  meetingHander = (nextMeeting) => {
+    const { startTime, endTime } = nextMeeting;
+    const meetInTen = Time.meetInTen(startTime, endTime);
+    this.setState({ meetInTen, nextMeeting });
+    if(!meetInTen) {
+      const x = Time.timesubtract(startTime).format();
+      const durationInMs = Time.durationUntilMeeting(x);
+      // console.log(durationInMs);
+      setTimeout(() => {
+        this.redirect();
+      }, durationInMs);
+    }
   }
 
   _closeConnection = () => {
@@ -115,7 +144,7 @@ export class Main extends React.Component<any,any> {
         <div style={this.styles.div2}>
           <Paper style={this.styles.paper} rounded={false} >
             <h5 style={this.styles.heading}> Controls </h5>
-            <Divider />
+            <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
             <Badge badgeContent={<DecreaseIcon color='white' style={this.styles.plusminusIcon} />}
               primary={true}
               badgeStyle={this.styles.badge2}>
@@ -133,7 +162,7 @@ export class Main extends React.Component<any,any> {
                   this.setState({ volume: ++volume }))
               } > <VolumeUp /> </IconButton>
             </Badge>
-            <Divider />
+            <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
             <div style={this.styles.divider}></div>
           </Paper>
         </div>
@@ -147,7 +176,7 @@ export class Main extends React.Component<any,any> {
     btnIcon: { height: 85, width: 85 },
     meetingIcon: {
       width: 55,
-      height: 45,
+      height: 55,
       color: '#CFD8DC',
       marginTop: '20px'
     },
@@ -157,7 +186,7 @@ export class Main extends React.Component<any,any> {
       position: 'absolute',
       bottom: 20
     },
-    paper: { borderRadius: '10%' },
+    paper: { borderRadius: '10%', border: '1px solid black' },
     heading: { textAlign: 'center', padding: 0, margin: 0 },
     plusminusIcon: { width: 10, height: 10 },
     badge2: { top: 30, right: 28, width: 15, height: 15 },

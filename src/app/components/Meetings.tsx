@@ -46,7 +46,8 @@ export class Meetings extends React.Component<any, any> {
     header3: {
       position: 'absolute',
       top: 250,
-      left: 300
+      left: 300,
+      borderLeft: '5px solid black'
     }
   }
 

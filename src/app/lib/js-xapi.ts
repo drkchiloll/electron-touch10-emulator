@@ -35,7 +35,7 @@ export abstract class JsXAPI {
           this.xapi.close();
           this.xapi = null;
         }
-      }, 15000);
+      }, 150000);
     });
   };
 
@@ -110,6 +110,7 @@ export abstract class JsXAPI {
       this.xapi.close();
       this.xapi = null;
     }
+    return Promise.resolve();
   };
 
   static dial(number) {

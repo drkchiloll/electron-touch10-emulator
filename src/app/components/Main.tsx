@@ -63,12 +63,10 @@ export class Main extends React.Component<any,any> {
     }
   }
 
-  _closeConnection = () => {
-    return Promise.resolve();
-  }
+  _closeConnection = () => JsXAPI.closeConnection();
 
   _floatAction = () =>
-    <FloatingActionButton onClick={this._closeConnection} backgroundColor={deepOrange400} style={{ marginLeft: 45 }}
+    <FloatingActionButton onClick={this.redirect} backgroundColor={deepOrange400} style={{ marginLeft: 45 }}
       iconStyle={{ height: 85, width: 85 }} >
       <FontIcon>
         <Meeting style={{
@@ -91,7 +89,7 @@ export class Main extends React.Component<any,any> {
   }
 
   redirect = () => this._closeConnection()
-    .then(() => this.props.history.push('/meetings'));
+    .then(() => this.props.switch({ meetingsView: true }));
 
   render() {
     let MeetBadge: any;

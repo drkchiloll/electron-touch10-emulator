@@ -22,17 +22,11 @@ export class Meetings extends React.Component<any, any> {
     });
   }
 
-  timeMath = date => {
-    momenttz.utc(new Date(date))
-      .tz(momenttz.tz.guess())
-      .subtract(10, 'minutes')
-      .format('h:mm a')
-  }
-
   styles: any = {
     closeIcon: { float: 'right' },
     header1: { marginLeft: 10 },
     paper: {
+      borderRadius: '7px',
       marginLeft: '25px',
       width: 600,
       marginBottom: '10px',
@@ -73,6 +67,21 @@ export class Meetings extends React.Component<any, any> {
     })
   }
 
+  _renderCardHeader = meeting => {
+    const { title, startTime } = meeting;
+    const subtitle = `You can join this meeting from ` +
+      `${Time.timesubtract(startTime).format('h:mm a')}`;
+    const Title = () =>
+      <strong style={this.styles.meetingTitle}>
+        {title}
+      </strong>
+    return (
+      <CardHeader subtitle={subtitle}
+        title={<Title/>}
+        style={this.styles.card} />
+    );
+  }
+
   render() {
     const { meetings }: any = this.state;
     return (
@@ -101,15 +110,7 @@ export class Meetings extends React.Component<any, any> {
                         }} /> :
                       null }
                     { index === 0 ?
-                      <CardHeader
-                        subtitle={`You can join this meeting from `+ 
-                          `${this.timeMath(meeting.startTime)}`}
-                        title={
-                          <strong style={this.styles.meetingTitle}>
-                            {meeting.title}
-                          </strong>
-                        }
-                        style={this.styles.card} /> :
+                     this._renderCardHeader(meeting) :
                      <CardHeader title={meeting.title} />}
                     <CardText>
                       {this.getTime(meeting.startTime) + ' - ' +

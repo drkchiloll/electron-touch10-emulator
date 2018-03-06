@@ -184,7 +184,7 @@ export class Main extends React.Component<any,any> {
       position: 'absolute',
       bottom: 20
     },
-    paper: { borderRadius: '10%', border: '1px solid black' },
+    paper: { borderRadius: '7px', border: '1px solid black' },
     heading: { textAlign: 'center', padding: 0, margin: 0 },
     plusminusIcon: { width: 10, height: 10 },
     badge2: { top: 30, right: 28, width: 15, height: 15 },

@@ -53,7 +53,7 @@ export class Main extends React.Component<any,any> {
     const { startTime, endTime } = nextMeeting;
     const meetInTen = Time.meetInTen(startTime, endTime);
     this.setState({ meetInTen, nextMeeting });
-    if(!meetInTen) {
+    if(!meetInTen && !Time.meetingEnded(endTime)) {
       const x = Time.timesubtract(startTime).format();
       const durationInMs = Time.durationUntilMeeting(x);
       // console.log(durationInMs);

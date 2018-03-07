@@ -18,6 +18,12 @@ export abstract class Time {
         false : true
   }
 
+  static meetingEnded(endTime) {
+    return momenttz.utc().tz(this.timezone).isAfter(
+      momenttz.utc(new Date(endTime)).tz(this.timezone)
+    )
+  }
+
   static durationUntilMeeting(date) {
     const now = moment(),
       later = moment(new Date(date));

@@ -124,4 +124,15 @@ export abstract class JsXAPI {
         this.dial(number));
     }
   };
+
+  static hangUp(CallId) {
+    if(this.xapi) {
+      return this.commander({
+        string: 'Call Disconnect',
+        param: { CallId }
+      });
+    } else {
+      return this.connect().then(() => this.hangUp(CallId));
+    }
+  }
 }

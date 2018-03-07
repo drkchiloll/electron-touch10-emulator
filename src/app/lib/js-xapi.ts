@@ -92,7 +92,7 @@ export abstract class JsXAPI {
     } else {
       return this.connect().then(() => this.getState());
     }
-  }
+  };
 
   static setAudio(action) {
     if(this.xapi) {
@@ -134,5 +134,5 @@ export abstract class JsXAPI {
     } else {
       return this.connect().then(() => this.hangUp(CallId));
     }
-  }
+  };
 }

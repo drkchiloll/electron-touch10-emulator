@@ -17,6 +17,14 @@ export class Meetings extends React.Component<any, any> {
   }
 
   componentWillMount() {
+    this.getMeetings();
+  }
+
+  componentWillReceiveProps(newProps) {
+    this.getMeetings();
+  }
+
+  getMeetings() {
     JsXAPI.getMeetings().then(meetings => {
       this.setState({ meetings })
     });
@@ -58,11 +66,10 @@ export class Meetings extends React.Component<any, any> {
     const { meetings }: any = this.state;
     JsXAPI.dial(number).then(result => {
       if(result && result.status === 'OK') {
-        this.props.updateView({
+        this.props.switch({
           callView: true,
           callId: result.CallId,
-          conferenceId: result.ConferenceId,
-          bookingId: meetings[0].id
+          meeeting: meetings[0]
         });
       }
     })

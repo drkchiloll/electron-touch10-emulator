@@ -8,7 +8,7 @@
     "build:dist": "NODE_ENV=production node_modules/.bin/webpack --progress --colors",
     "build:win:dist": "webpack -p --progress --colors",
     "start": "electron .",
-    "package": "node_modules/.bin/electron-packager ./ Cisco Touch10 Emulator --platform=darwin --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.0 --icon ./resources/video-icon.icns",
+    "package": "node_modules/.bin/electron-packager ./ Touch10_Emulator --platform=darwin --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.0 --icon ./resources/touch10_panel.icns",
     "clean": "cd dist && rm app.bundle.js app.bundle.js.map main.bundle.js main.bundle.js.map && cd .."
   },
   "dependencies": {},

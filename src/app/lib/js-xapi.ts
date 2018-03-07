@@ -1,6 +1,7 @@
 import axios from 'axios';
 import * as Promise from 'bluebird';
 import * as jsxapi from 'jsxapi';
+import { EventEmitter } from 'events';
 
 export interface Booking {
   Id: string;
@@ -9,8 +10,9 @@ export interface Booking {
   DialInfo: { Calls: { Call: [{ Number, CallType }] } }
 }
 
-export abstract class JsXAPI {
+export abstract class JsXAPI extends EventEmitter {
   public static xapi: any;
+  public static event = new EventEmitter();
 
   static connect() {
     return new Promise((resolve, reject) => {
@@ -35,7 +37,7 @@ export abstract class JsXAPI {
           this.xapi.close();
           this.xapi = null;
         }
-      }, 150000);
+      }, 15000);
     });
   };
 
@@ -135,4 +137,29 @@ export abstract class JsXAPI {
       return this.connect().then(() => this.hangUp(CallId));
     }
   };
+
+  static wakeStatus() {
+    if(this.xapi) {
+      return this.xapi.status
+        .get('Standby State');
+    } else {
+      return this.connect().then(() => this.wakeStatus());
+    }
+  }
+
+  static updateWakeStatus(status: string) {
+    // Acceptable status':
+    // Activate: (sets the display to Standby)
+    // Deactivate: (turns the display on)
+    // Halfwake: (Shows message on display to "Touch to Wake")
+    // ResetTimer
+    if(this.xapi) {
+      return this.commander({
+        string: `Standby ${status}`,
+        param: {}
+      });
+    } else {
+      return this.connect().then(() => this.updateWakeStatus(status));
+    }
+  }
 }

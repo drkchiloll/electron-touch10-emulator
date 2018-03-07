@@ -42,10 +42,16 @@ export class Main extends React.Component<any,any> {
       }
       return;
     }).then(() => {
-      return JsXAPI.getAudio();
-    }).then((result) => {
-      console.log(result);
-      this.setState({ volume: result });
+      return Promise.all([
+        JsXAPI.getAudio(),
+        JsXAPI.wakeStatus()
+      ]);
+    }).then((results) => {
+      console.log(results);
+      this.setState({
+        volume: results[0],
+        status: results[1] === 'Off' ? 'Awake': 'Standby'
+      });
     });
   }
 
@@ -93,7 +99,7 @@ export class Main extends React.Component<any,any> {
 
   render() {
     let MeetBadge: any;
-    let { meetInTen, volume } = this.state;
+    let { meetInTen, volume, status } = this.state;
     if(meetInTen) {
       MeetBadge =
         <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
@@ -125,6 +131,24 @@ export class Main extends React.Component<any,any> {
             </FontIcon>
           </FloatingActionButton>
           {MeetBadge}
+          <FloatingActionButton style={{marginLeft: '45px'}} backgroundColor={'grey'} iconStyle={{ height: 85, width: 85 }}
+            onClick={() => {
+              let action: string;
+              if(status === 'Standby') {
+                action = 'Deactivate';
+              } else {
+                action = 'Activate';
+              }
+              JsXAPI.updateWakeStatus(action).then((resp) => {
+                this.setState({ status: status === 'Standby' ? 'Awake': 'Standby' });
+              })
+            }}>
+            <FontIcon>
+              { status === 'Standby' ?
+                <StandbyIcon style={this.styles.wakeIcons} /> :
+                <AwakeIcon style={this.styles.wakeIcons} />}
+            </FontIcon>
+          </FloatingActionButton>
         </div>
         <div style={{
           left: this.state.left,
@@ -137,6 +161,7 @@ export class Main extends React.Component<any,any> {
             <span style={{
               marginLeft: meetInTen ? 95 : 80
             }}> Meetings </span>
+            <span style={{marginLeft: meetInTen ? 92 : 70}}> {status} </span>
           </div>
         </div>
         <div style={this.styles.div2}>
@@ -179,7 +204,7 @@ export class Main extends React.Component<any,any> {
       marginTop: '20px'
     },
     div1: { marginLeft: 30 },
-    span1: { marginLeft: 90 },
+    span1: { marginLeft: 95 },
     div2: {
       position: 'absolute',
       bottom: 20
@@ -188,6 +213,12 @@ export class Main extends React.Component<any,any> {
     heading: { textAlign: 'center', padding: 0, margin: 0 },
     plusminusIcon: { width: 10, height: 10 },
     badge2: { top: 30, right: 28, width: 15, height: 15 },
-    divider: { height: 10 }
+    divider: { height: 10 },
+    wakeIcons: {
+      width: 40,
+      height: 50,
+      marginTop: '15px',
+      color: 'black'
+    }
   }
 }

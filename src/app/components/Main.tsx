@@ -33,6 +33,7 @@ export class Main extends React.Component<any,any> {
 
   componentDidMount() {
     JsXAPI.event.on('updates', updates => {
+      console.log(updates);
       // updates[0] = meetings
       // updates[1] = Audio Levels
       // updates[2] = Standby Mode
@@ -45,20 +46,23 @@ export class Main extends React.Component<any,any> {
   }
 
   componentWillUnmount() {
-    console.log('Main Unmounting');
-    clearInterval(JsXAPI.poller)
-    JsXAPI.poller = null;
+    JsXAPI.event.removeAllListeners();
   }
 
   componentWillMount() {
+    setTimeout(() => {
+      if(JsXAPI.event.eventNames().length === 0) {
+        console.log('setup events');
+        JsXAPI.init();
+      }
+    }, 5000);
+
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
       left = window.innerWidth / 3.5;
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
-
-    JsXAPI.init();
 
     JsXAPI.getMeetings().then((meetings) => {
       if(meetings.length !== 0) {
@@ -71,7 +75,7 @@ export class Main extends React.Component<any,any> {
         JsXAPI.wakeStatus()
       ]);
     }).then((results) => {
-      console.log(results);
+      // console.log(results);
       this.setState({
         volume: results[0],
         status: results[1] === 'Off' ? 'Awake': 'Standby'

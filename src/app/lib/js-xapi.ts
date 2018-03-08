@@ -10,9 +10,36 @@ export interface Booking {
   DialInfo: { Calls: { Call: [{ Number, CallType }] } }
 }
 
-export abstract class JsXAPI extends EventEmitter {
+export class JsXAPI extends EventEmitter {
   public static xapi: any;
   public static event = new EventEmitter();
+  public static poller: any;
+
+  static init() {
+    this.connect().then(() => {
+      this.event.on('connection-closing', () => {
+        if(this.poller) {
+          this.event.removeAllListeners();
+          this.event = null;
+          this.event = new EventEmitter();
+          clearInterval(this.poller);
+          if(!this.xapi) {
+            return this.init();
+          }
+        }
+      });
+
+      this.poller = setInterval(() => {
+        Promise.all([
+          this.getMeetings(),
+          this.getAudio(),
+          this.getState()
+        ]).then((results) => {
+          this.event.emit('updates', results);
+        })
+      }, 15000);
+    });
+  }
 
   static connect() {
     return new Promise((resolve, reject) => {
@@ -36,8 +63,9 @@ export abstract class JsXAPI extends EventEmitter {
         if(this.xapi) {
           this.xapi.close();
           this.xapi = null;
+          this.event.emit('connection-closing');
         }
-      }, 15000);
+      }, 150000);
     });
   };
 

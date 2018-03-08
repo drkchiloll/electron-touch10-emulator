@@ -19,13 +19,35 @@ import {
 import { JsXAPI, Time } from '../lib';
 
 export class Main extends React.Component<any,any> {
-  state = {
-    left: window.innerWidth / 3.5,
-    top: window.innerHeight / 3,
-    meetInTen: false,
-    nextMeeting: null,
-    volume: 0,
-    status: 'Standby'
+  constructor(props) {
+    super(props);
+    this.state = {
+      left: window.innerWidth / 3.5,
+      top: window.innerHeight / 3,
+      meetInTen: false,
+      nextMeeting: null,
+      volume: 0,
+      status: 'Standby'
+    };
+  }
+
+  componentDidMount() {
+    JsXAPI.event.on('updates', updates => {
+      // updates[0] = meetings
+      // updates[1] = Audio Levels
+      // updates[2] = Standby Mode
+      this.setState({
+        meetings: updates[0],
+        volume: updates[1],
+        status: updates[2] === 'Off' ? 'Awake' : 'Standby'
+      });
+    });
+  }
+
+  componentWillUnmount() {
+    console.log('Main Unmounting');
+    clearInterval(JsXAPI.poller)
+    JsXAPI.poller = null;
   }
 
   componentWillMount() {
@@ -35,6 +57,8 @@ export class Main extends React.Component<any,any> {
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
+
+    JsXAPI.init();
 
     JsXAPI.getMeetings().then((meetings) => {
       if(meetings.length !== 0) {

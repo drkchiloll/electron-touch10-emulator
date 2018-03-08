@@ -2,6 +2,8 @@ import * as React from 'react'
 // Import Components
 import { Main, Meetings, Call } from './components';
 
+import { JsXAPI } from './lib';
+
 export class App extends React.Component<any, any> {
   state = {
     mainView: true,
@@ -9,6 +11,10 @@ export class App extends React.Component<any, any> {
     callView: false,
     meeting: null,
     callId: null
+  }
+
+  componentWillMount() {
+    JsXAPI.init();
   }
 
   updateView = (args: any) => {

@@ -27,35 +27,22 @@ export class Main extends React.Component<any,any> {
       meetInTen: false,
       nextMeeting: null,
       volume: 0,
-      status: 'Standby'
+      status: 'Standby',
+      xapi: null
     };
   }
 
-  componentDidMount() {
-    JsXAPI.event.on('updates', updates => {
-      console.log(updates);
-      // updates[0] = meetings
-      // updates[1] = Audio Levels
-      // updates[2] = Standby Mode
-      this.setState({
-        meetings: updates[0],
-        volume: updates[1],
-        status: updates[2] === 'Off' ? 'Awake' : 'Standby'
-      });
-    });
-  }
-
+  componentDidMount() { JsXAPI.event.on('updates', this.eventHandler) }
   componentWillUnmount() {
     JsXAPI.event.removeAllListeners();
+    clearInterval(JsXAPI.eventInterval);
   }
 
   componentWillMount() {
-    setTimeout(() => {
-      if(JsXAPI.event.eventNames().length === 0) {
-        console.log('setup events');
-        JsXAPI.init();
-      }
-    }, 5000);
+    if(JsXAPI.event.eventNames().length === 0) {
+      JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
+      JsXAPI.event.addListener('update', this.eventHandler);
+    }
 
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
@@ -80,6 +67,14 @@ export class Main extends React.Component<any,any> {
         volume: results[0],
         status: results[1] === 'Off' ? 'Awake': 'Standby'
       });
+    });
+  }
+
+  eventHandler = (updates) => {
+    this.setState({
+      meetings: updates[0],
+      volume: updates[1],
+      status: updates[2] === 'Off' ? 'Awake' : 'Standby'
     });
   }
 

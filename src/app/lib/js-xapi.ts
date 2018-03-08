@@ -10,36 +10,27 @@ export interface Booking {
   DialInfo: { Calls: { Call: [{ Number, CallType }] } }
 }
 
-export class JsXAPI extends EventEmitter {
+export class JsXAPI {
   public static xapi: any;
   public static event = new EventEmitter();
   public static poller: any;
+  public static eventInterval: any;
 
   static init() {
     this.connect().then(() => {
-      this.event.on('connection-closing', () => {
-        if(this.poller) {
-          this.event.removeAllListeners();
-          this.event = null;
-          this.event = new EventEmitter();
-          clearInterval(this.poller);
-          if(!this.xapi) {
-            return this.init();
-          }
-        }
-      });
+      // this.event.on('connection-closing', () => {
+      //   if(!this.xapi) return this.connect();
+      // });
+      this.poller = () => Promise.all([
+        this.getMeetings(),
+        this.getAudio(),
+        this.getState()
+      ]).then(results => this.event.emit('updates', results));
 
-      this.poller = setInterval(() => {
-        Promise.all([
-          this.getMeetings(),
-          this.getAudio(),
-          this.getState()
-        ]).then((results) => {
-          this.event.emit('updates', results);
-        })
-      }, 15000);
+      this.eventInterval = setInterval(this.poller, 5000);
     });
-  }
+  };
+
 
   static connect() {
     return new Promise((resolve, reject) => {
@@ -63,9 +54,8 @@ export class JsXAPI extends EventEmitter {
         if(this.xapi) {
           this.xapi.close();
           this.xapi = null;
-          this.event.emit('connection-closing');
         }
-      }, 150000);
+      }, 600000);
     });
   };
 
@@ -82,7 +72,7 @@ export class JsXAPI extends EventEmitter {
         string: 'Bookings List',
         param: {}
       }).then((bookings:any) => {
-        console.log(bookings);
+        // console.log(bookings);
         const { status, ResultInfo: { TotalRows } } = bookings;
         if(bookings && (parseInt(TotalRows, 10) >= 1)) {
           return Promise.map(bookings.Booking, (meeting: Booking) => {

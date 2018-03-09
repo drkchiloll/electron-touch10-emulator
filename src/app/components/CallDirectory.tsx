@@ -36,6 +36,22 @@ export class CallDirectory extends React.Component<any,any> {
     }, 1550);
   }
 
+  makeCall = () => {
+    const { search } = this.state;
+    JsXAPI.dial(search).then(result => {
+      if(result && result.status === 'OK') {
+        this.props.close();
+        this.props.switch({
+          callView: true,
+          meetingsView: false,
+          mainView: false,
+          callId: result.CallId,
+          caller: search
+        });
+      }
+    });
+  }
+
   render() {
     let { tabIdx, tabValue, search, users } = this.state;
     return (
@@ -44,11 +60,11 @@ export class CallDirectory extends React.Component<any,any> {
         onRequestClose={() => {
           this.props.close();
         }} >
-        <div style={{position: 'relative', width: 230}}>
+        <div style={{position: 'relative', width: 350}}>
           <TextField autoFocus
-            style={{ width: 225, position: 'relative' }}
+            style={{ width: 300, position: 'relative' }}
             id='search-field'
-            hintText='Search Directory'
+            hintText='Search Directory or Enter URI/Number'
             value={search}
             onChange={(e, search) => {
               this.setState({ search });
@@ -56,22 +72,8 @@ export class CallDirectory extends React.Component<any,any> {
             }}/>
             {
               users && users.length === 0 ?
-                <IconButton style={{ position: 'absolute', right: 0, top: 2 }}
-                  onClick={() => {
-                    const { search } = this.state;
-                    JsXAPI.dial(search).then(result => {
-                      if(result && result.status === 'OK') {
-                        this.props.close();
-                        this.props.switch({
-                          callView: true,
-                          meetingsView: false,
-                          mainView: false,
-                          callId: result.CallId,
-                          caller: search
-                        });
-                      }
-                    });
-                  }} >
+                <IconButton style={{ position: 'absolute', right: 20, top: 2 }}
+                  onClick={this.makeCall} >
                   <CallIcon />
                 </IconButton> :
                 null
@@ -99,7 +101,7 @@ export class CallDirectory extends React.Component<any,any> {
                               <ListItem key={`${u.id}_${index}`}
                                 primaryText={contact.number}
                                 style={{ position: 'relative' }}>
-                                <IconButton onClick={()=>{}}
+                                <IconButton onClick={this.makeCall}
                                   style={{
                                     position: 'absolute', top: 0, right: 10
                                   }}>

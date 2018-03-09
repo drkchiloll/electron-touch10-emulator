@@ -5,10 +5,12 @@
   "main": "./dist/main.bundle.js",
   "scripts": {
     "build:dev": "node_modules/.bin/webpack --watch --progress --profile",
+    "build:dev:win": "SET \"NODE_ENV=development\" && webpack --watch --progress --profile",
     "build:dist": "NODE_ENV=production node_modules/.bin/webpack --progress --colors",
-    "build:win:dist": "webpack -p --progress --colors",
+    "build:win:dist": "SET \"NODE_ENV=production\" && webpack --define process.env.NODE_ENV=\"production\" --progress --colors",
     "start": "electron .",
-    "package": "node_modules/.bin/electron-packager ./ Touch10_Emulator --platform=darwin --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.0 --icon ./resources/touch10_panel.icns",
+    "package:macos": "node_modules/.bin/electron-packager ./ Touch10_Emulator --platform=darwin --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.0 --icon ./resources/touch10_panel.icns",
+    "package:win64": "node_modules/.bin/electron-packager ./ Touch10_Emulator --platform=win32 --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.0 --icon ./resources/touch10_panel.ico",
     "clean": "cd dist && rm app.bundle.js app.bundle.js.map main.bundle.js main.bundle.js.map && cd .."
   },
   "dependencies": {},

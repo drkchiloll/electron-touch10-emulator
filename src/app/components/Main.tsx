@@ -16,6 +16,8 @@ import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
 
+import { CallDirectory } from './index';
+
 import { JsXAPI, Time } from '../lib';
 
 export class Main extends React.Component<any,any> {
@@ -28,7 +30,7 @@ export class Main extends React.Component<any,any> {
       nextMeeting: null,
       volume: 0,
       status: 'Standby',
-      xapi: null
+      directoryDialog: false
     };
   }
 
@@ -120,9 +122,12 @@ export class Main extends React.Component<any,any> {
   redirect = () => this._closeConnection()
     .then(() => this.props.switch({ meetingsView: true }));
 
+  callRedirect = (update) => this._closeConnection().then(() =>
+    this.props.switch(update))
+
   render() {
     let MeetBadge: any;
-    let { meetInTen, volume, status } = this.state;
+    let { meetInTen, volume, status, directoryDialog } = this.state;
     if(meetInTen) {
       MeetBadge =
         <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
@@ -138,9 +143,15 @@ export class Main extends React.Component<any,any> {
     }
     return (
       <div>
+        {
+          directoryDialog ?
+          <CallDirectory close={() => this.setState({directoryDialog: false })}
+            switch={this.callRedirect} /> :
+          null
+        }
         <div style={{ left: this.state.left, top: this.state.top, position: 'absolute' }}>
           <FloatingActionButton backgroundColor={green500} iconStyle={{ height: 85, width: 85 }}
-            onClick={() => { }} >
+            onClick={() => this.setState({ directoryDialog: true })} >
             <FontIcon>
               <VideoCall style={{ height: 60, width: 60, marginTop: '10px', color: '#CFD8DC' }} />
             </FontIcon>

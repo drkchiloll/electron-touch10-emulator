@@ -133,15 +133,15 @@ export class JsXAPI {
     return Promise.resolve();
   };
 
-  static dial(number) {
+  static dial(Number) {
     if(this.xapi) {
       return this.commander({
         string: 'Dial',
-        param: { Number: number }
+        param: { Number }
       });
     } else {
       return this.connect().then(() =>
-        this.dial(number));
+        this.dial(Number));
     }
   };
 
@@ -163,7 +163,7 @@ export class JsXAPI {
     } else {
       return this.connect().then(() => this.wakeStatus());
     }
-  }
+  };
 
   static updateWakeStatus(status: string) {
     // Acceptable status':
@@ -178,6 +178,92 @@ export class JsXAPI {
       });
     } else {
       return this.connect().then(() => this.updateWakeStatus(status));
+    }
+  };
+
+  static getDirectory({query = ''}) {
+    if(this.xapi) {
+      return this.commander({
+        string: 'Phonebook Search',
+        param: {
+          PhonebookId: 'default',
+          PhonebookType: 'Corporate',
+          SearchString: query,
+          Limit: 65534
+        }
+      }).then(({ Contact }) => {
+        if(!Contact) {
+          return [];
+        } else {
+          return Promise.reduce(Contact, (a, u: any) => {
+            if(u.Name === 'user') return a;
+            let user: any = {
+              id: u.id,
+              name: u.Name
+            };
+            if(u.ContactMethod && u.ContactMethod.length > 0) {
+              return Promise.map(u.ContactMethod, ({ Number }) => {
+                return { number: Number };
+              }).then(contacts => {
+                user['contacts'] = contacts;
+                a.push(user);
+                return a;
+              });
+            } else {
+              return a;
+            }
+          }, []);
+        }
+      });
+    }
+  };
+
+  static getCallHistory({ query = '' }) {
+    if(this.xapi) {
+      return this.commander({
+        string: 'CallHistory Get',
+        param: {
+          Filter: 'All',
+          Limit: 65534,
+          DetailLevel: 'Full',
+          SearchString: query
+        }
+      }).then(({ Entry }) => {
+        return Promise.map(Entry, (history: any) => {
+          return {
+            number: history.CallbackNumber,
+            startTime: history.StartTime,
+            duration: parseInt(history.Duration, 10) / 60,
+            roomCount: history.RoomAnalytics.PeopleCount,
+            callQuality: {
+              audio: {
+                incoming: {
+                  maxJitter: history.Audio.Incoming.MaxJitter,
+                  packetLoss: history.Audio.Incoming.PacketLoss,
+                  packetLossPercent: history.Audio.Incoming.PacketLossPercentage
+                },
+                outgoing: {
+                  maxJitter: history.Audio.Outgoing.MaxJitter,
+                  packetLoss: history.Audio.Outgoing.PacketLoss,
+                  packetLossPercent: history.Audio.Outgoing.PacketLossPercentage
+                }
+              },
+              video: {
+                incoming: {
+                  maxJitter: history.Video.Incoming.MaxJitter,
+                  packetLoss: history.Video.Incoming.PacketLoss,
+                  packetLossPercent: history.Video.Incoming.PacketLossPercentage
+                },
+                outgoing: {
+                  maxJitter: history.Video.Outgoing.MaxJitter,
+                  packetLoss: history.Video.Outgoing.PacketLoss,
+                  packetLossPercent: history.Video.Outgoing.PacketLossPercentage
+                }
+              }
+            }
+          };
+        });
+      });
     }
   }
 }

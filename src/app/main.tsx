@@ -18,10 +18,15 @@ const muiTheme = getMuiTheme({
     calendarTextColor: indigo200
   },
   textField: {
-    floatingLabelColor: indigo200,
-    focusColor: indigo200,
-    hintColor: indigo200,
-    textColor: indigo200
+    floatingLabelColor: indigo500,
+    focusColor: indigo500,
+    hintColor: indigo500,
+    textColor: indigo500
+  },
+  tabs: {
+    selectedTextColor: indigo500,
+    textColor: indigo500,
+    backgroundColor: '#d7dddd',
   },
   fontFamily: `'Times New Roman'`
 });

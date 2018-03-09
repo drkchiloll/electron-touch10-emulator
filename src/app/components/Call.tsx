@@ -49,14 +49,15 @@ export class Call extends React.Component<any, any> {
     this.state = {
       callId: null,
       meeting: null,
-      volume: 0
+      volume: 0,
+      caller: null
     };
   }
 
   componentWillMount() {
-    const { callId, meeting } = this.props;
+    const { callId, meeting, caller } = this.props;
     JsXAPI.getAudio().then((volume) => {
-      this.setState({ callId, meeting, volume });
+      this.setState({ callId, meeting, volume, caller });
     });
   }
 
@@ -71,9 +72,9 @@ export class Call extends React.Component<any, any> {
   }
 
   render() {
-    let { meeting, volume } = this.state;
+    let { meeting, volume, caller } = this.state;
     // console.log(meeting);
-    let temp: any, avatar: string, title: string;
+    let temp: any, avatar: any, title: string;
     if(meeting) {
       temp = meeting.Booking.Title.split(' ');
       if(temp.length === 2) {
@@ -83,6 +84,8 @@ export class Call extends React.Component<any, any> {
         avatar = temp[0].substring(0, 2).toUpperCase();
       }
       title = meeting.Booking.Title;
+    } else {
+      avatar = <div style={{fontSize: '30%'}}>{ caller }</div>;
     }
     return (
       <div>

@@ -10,7 +10,8 @@ export class App extends React.Component<any, any> {
     meetingsView: false,
     callView: false,
     meeting: null,
-    callId: null
+    callId: null,
+    caller: null
   }
 
   componentWillMount() {
@@ -20,6 +21,7 @@ export class App extends React.Component<any, any> {
   updateView = (args: any) => {
     // Main -> Meetings List
     // Meeting -> Call
+    console.log(args);
     const {
       mainView, meetingsView, callView
     } = args;
@@ -36,13 +38,15 @@ export class App extends React.Component<any, any> {
         callView: false
       });
     } else if(callView) {
-      this.setState({
+      let update: any = {
         callView,
-        meetingView: false,
+        mainView: false,
         meetingsView: false,
-        callId: args.callId,
-        meeting: args.meeting
-      });
+        callId: args.callId
+      };
+      if(args.meeting) update['meeting'] = args.meeting;
+      if(args.caller) update['caller'] = args.caller;
+      this.setState(update);
     }
   }
 

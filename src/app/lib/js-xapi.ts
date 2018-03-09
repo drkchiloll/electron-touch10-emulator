@@ -17,7 +17,7 @@ export class JsXAPI {
   public static eventInterval: any;
 
   static init() {
-    this.connect().then(() => {
+    return this.connect().then(() => {
       // this.event.on('connection-closing', () => {
       //   if(!this.xapi) return this.connect();
       // });
@@ -28,6 +28,7 @@ export class JsXAPI {
       ]).then(results => this.event.emit('updates', results));
 
       this.eventInterval = setInterval(this.poller, 5000);
+      return;
     });
   };
 

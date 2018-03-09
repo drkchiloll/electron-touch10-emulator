@@ -15,7 +15,13 @@ export class App extends React.Component<any, any> {
   }
 
   componentWillMount() {
-    JsXAPI.init();
+    this.getConnected();
+  }
+
+  getConnected = () => {
+    JsXAPI.init().catch(e => {
+      setTimeout(this.getConnected, 10000);
+    });
   }
 
   updateView = (args: any) => {

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Promise from 'bluebird';
 import {
   FloatingActionButton, Badge, FontIcon,
   Subheader, IconButton, Paper, Divider

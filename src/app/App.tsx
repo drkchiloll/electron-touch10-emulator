@@ -41,7 +41,7 @@ export class App extends React.Component<any, any> {
   updateView = (args: any) => {
     // Main -> Meetings List
     // Meeting -> Call
-    console.log(args);
+    // console.log(args);
     const {
       mainView, meetingsView, callView
     } = args;

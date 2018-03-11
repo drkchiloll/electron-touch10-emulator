@@ -58,6 +58,12 @@ export class Call extends React.Component<any, any> {
     const { callId, meeting, caller } = this.props;
     JsXAPI.getAudio().then((volume) => {
       this.setState({ callId, meeting, volume, caller });
+      return;
+    }).then(() => {
+      JsXAPI.callEvents();
+    });
+    JsXAPI.event.on('call-disconnect', () => {
+      this.props.switch({ mainView: true });
     });
   }
 

@@ -54,13 +54,18 @@ export class Call extends React.Component<any, any> {
     };
   }
 
+  componentWillUnmount() {
+    JsXAPI.event.removeAllListeners('call-disconnect');
+    JsXAPI.event.removeAllListeners('call');
+  }
+
   componentWillMount() {
     const { callId, meeting, caller } = this.props;
     JsXAPI.getAudio().then((volume) => {
       this.setState({ callId, meeting, volume, caller });
       return;
     }).then(() => {
-      JsXAPI.callEvents();
+      JsXAPI.callEvents('disconnects');
     });
     JsXAPI.event.on('call-disconnect', () => {
       this.props.switch({ mainView: true });

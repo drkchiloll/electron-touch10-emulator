@@ -19,8 +19,19 @@ export class App extends React.Component<any, any> {
   getConnected = () => {
     JsXAPI.init()
       .then(() => {
-        JsXAPI.callEvents('call');
-        return;
+        return JsXAPI.xapi.status
+          .get('Call')
+          .then(res => {
+            if(res && res.length === 1) {
+              this.updateView({
+                mainView: false,
+                meetingsView: false,
+                callView: true,
+                caller: res[0].DisplayName
+              });
+              return;
+            }
+          }).then(() => JsXAPI.callEvents('call'))
       })
       .catch(e => {
         setTimeout(this.getConnected, 10000);

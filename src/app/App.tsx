@@ -14,14 +14,17 @@ export class App extends React.Component<any, any> {
     caller: null
   }
 
-  componentWillMount() {
-    this.getConnected();
-  }
+  componentWillMount() { this.getConnected() }
 
   getConnected = () => {
-    JsXAPI.init().catch(e => {
-      setTimeout(this.getConnected, 10000);
-    });
+    JsXAPI.init()
+      .then(() => {
+        JsXAPI.callEvents('call');
+        return;
+      })
+      .catch(e => {
+        setTimeout(this.getConnected, 10000);
+      });
   }
 
   updateView = (args: any) => {

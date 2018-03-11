@@ -69,7 +69,7 @@ export class Meetings extends React.Component<any, any> {
         this.props.switch({
           callView: true,
           callId: result.CallId,
-          meeeting: meetings[0]
+          meeting: meetings[0]
         });
       }
     })

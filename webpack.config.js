@@ -24,7 +24,7 @@ let dev = {
 		path: path.join(__dirname, 'dist'),
 		filename: '[name].bundle.js'
 	},
-	target: 'electron',
+	target: 'electron-main',
 	node: {
 		__dirname: false,
 		console: true,

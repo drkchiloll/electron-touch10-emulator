@@ -35,16 +35,26 @@ export class Main extends React.Component<any,any> {
     };
   }
 
-  componentDidMount() { JsXAPI.event.on('updates', this.eventHandler) }
+  componentDidMount() {
+    JsXAPI.event.on('updates', this.eventHandler);
+    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
+    JsXAPI.event.on('call', this.callHandler);
+    console.log(JsXAPI.event.eventNames());
+  }
+
   componentWillUnmount() {
-    JsXAPI.event.removeAllListeners('update');
+    JsXAPI.event.removeAllListeners('updates');
+    JsXAPI.event.removeAllListeners('call');
     clearInterval(JsXAPI.eventInterval);
   }
 
   componentWillMount() {
-    if(JsXAPI.event.eventNames().length === 0) {
+    if(!JsXAPI.event.eventNames().indexOf('updates')) {
       JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
       JsXAPI.event.addListener('update', this.eventHandler);
+    }
+    if(!JsXAPI.event.eventNames().indexOf('call')) {
+      JsXAPI.event.addListener('call', this.callHandler);
     }
 
     window.addEventListener('resize', () => {
@@ -79,6 +89,19 @@ export class Main extends React.Component<any,any> {
       volume: updates[1],
       status: updates[2] === 'Off' ? 'Awake' : 'Standby'
     });
+  }
+
+  callHandler = ({id}) => {
+    JsXAPI.xapi.status
+      .get(`Call ${id} DisplayName`)
+      .then(caller => {
+        this.props.switch({
+          callView: true,
+          mainView: false,
+          meetingsView: false,
+          caller
+        });
+      });
   }
 
   meetingHander = (nextMeeting) => {

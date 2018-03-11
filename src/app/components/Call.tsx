@@ -104,9 +104,9 @@ export class Call extends React.Component<any, any> {
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
           <div style={styles.div2}>
-            <Paper style={styles.paper} rounded={false} >
-              <h5 style={styles.heading}> Controls </h5>
-              <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
+            {/* <Paper style={styles.paper} rounded={false} > */}
+              {/* <h5 style={styles.heading}> Controls </h5> */}
+              {/* <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} /> */}
               <Badge badgeContent={<DecreaseIcon color='white' style={styles.plusminusIcon} />}
                 primary={true}
                 badgeStyle={styles.badge2}>
@@ -124,9 +124,9 @@ export class Call extends React.Component<any, any> {
                     this.setState({ volume: ++volume }))
                 } > <VolumeUp /> </IconButton>
               </Badge>
-              <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
-              <div style={styles.divider}></div>
-            </Paper>
+              {/* <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} /> */}
+              {/* <div style={styles.divider}></div> */}
+            {/* </Paper> */}
           </div>
         </Paper>
         <div style={{ marginTop: '35px' }}>

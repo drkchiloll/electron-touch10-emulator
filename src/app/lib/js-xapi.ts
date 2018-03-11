@@ -68,7 +68,7 @@ export class JsXAPI {
   };
 
   static getMeetings() {
-    console.log('getting meetings');
+    // console.log('getting meetings');
     if(this.xapi) {
       return this.commander({
         string: 'Bookings List',
@@ -99,7 +99,7 @@ export class JsXAPI {
   };
 
   static getAudio() {
-    console.log('retrieve audio volume');
+    // console.log('retrieve audio volume');
     if(this.xapi) {
       return this.xapi.status.get('Audio Volume');
     } else {
@@ -189,7 +189,7 @@ export class JsXAPI {
         switch(type) {
           case 'disconnects':
             if(data.id && data.ghost === 'True') {
-              this.event.emit('call-disconnect');
+              this.event.emit('call-disconnect', data.id);
             }
             break;
           case 'call':

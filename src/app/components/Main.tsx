@@ -35,6 +35,8 @@ export class Main extends React.Component<any,any> {
     };
   }
 
+  timeout: any;
+
   componentDidMount() {
     JsXAPI.event.on('updates', this.eventHandler);
     JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
@@ -42,6 +44,7 @@ export class Main extends React.Component<any,any> {
   }
 
   componentWillUnmount() {
+    clearTimeout(this.timeout);
     JsXAPI.event.removeAllListeners('updates');
     JsXAPI.event.removeAllListeners('call');
     clearInterval(JsXAPI.eventInterval);
@@ -114,7 +117,7 @@ export class Main extends React.Component<any,any> {
       const x = Time.timesubtract(startTime).format();
       const durationInMs = Time.durationUntilMeeting(x);
       // console.log(durationInMs);
-      setTimeout(() => {
+      this.timeout = setTimeout(() => {
         this.redirect();
       }, durationInMs);
     }
@@ -136,7 +139,7 @@ export class Main extends React.Component<any,any> {
     </FloatingActionButton>
 
   redirectTimer = () => {
-    setTimeout(() => {
+    this.timeout = setTimeout(() => {
       let redirectCounter = sessionStorage.getItem('redirectCounter');
       if(!redirectCounter) {
         sessionStorage.setItem('redirectCounter', '1');

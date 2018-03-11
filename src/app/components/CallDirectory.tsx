@@ -56,6 +56,10 @@ export class CallDirectory extends React.Component<any,any> {
     let { tabIdx, tabValue, search, users } = this.state;
     return (
       <Dialog open={true}
+        contentStyle={{
+          minHeight: '80vh',
+          maxHeight: '80vh',
+        }}
         autoScrollBodyContent={true}
         onRequestClose={() => {
           this.props.close();

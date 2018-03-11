@@ -4,7 +4,7 @@
   "description": "An Emulator for the Cisco Touch 10 Interface",
   "main": "./dist/main.bundle.js",
   "scripts": {
-    "build:dev": "node_modules/.bin/webpack --watch --progress --profile",
+    "build:dev": "node_modules/.bin/webpack --watch",
     "build:dev:win": "SET \"NODE_ENV=development\" && webpack --watch --progress --profile",
     "build:dist": "NODE_ENV=production node_modules/.bin/webpack --progress --colors",
     "build:win:dist": "SET \"NODE_ENV=production\" && webpack --define process.env.NODE_ENV=\"production\" --progress --colors",

@@ -37,7 +37,7 @@ export class Main extends React.Component<any,any> {
 
   componentDidMount() { JsXAPI.event.on('updates', this.eventHandler) }
   componentWillUnmount() {
-    JsXAPI.event.removeAllListeners();
+    JsXAPI.event.removeAllListeners('update');
     clearInterval(JsXAPI.eventInterval);
   }
 

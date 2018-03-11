@@ -39,7 +39,6 @@ export class Main extends React.Component<any,any> {
     JsXAPI.event.on('updates', this.eventHandler);
     JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
     JsXAPI.event.on('call', this.callHandler);
-    console.log(JsXAPI.event.eventNames());
   }
 
   componentWillUnmount() {

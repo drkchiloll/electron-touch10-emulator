@@ -84,6 +84,9 @@ export class Main extends React.Component<any,any> {
   }
 
   eventHandler = (updates) => {
+    if(updates[0].length > 0) {
+      this.meetingHander(updates[0][0]);
+    }
     this.setState({
       meetings: updates[0],
       volume: updates[1],
@@ -121,7 +124,10 @@ export class Main extends React.Component<any,any> {
   _closeConnection = () => JsXAPI.closeConnection();
 
   _floatAction = () =>
-    <FloatingActionButton onClick={this.redirect} backgroundColor={deepOrange400} style={{ marginLeft: 45 }}
+    <FloatingActionButton
+      onClick={this.redirect}
+      backgroundColor={deepOrange400}
+      style={{ marginLeft: 45 }}
       iconStyle={{ height: 85, width: 85 }} >
       <FontIcon>
         <Meeting style={{

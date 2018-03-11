@@ -59,7 +59,7 @@ export class Call extends React.Component<any, any> {
     JsXAPI.event.removeAllListeners('call');
   }
 
-  componentWillMount() {
+  componentDidMount() {
     const { callId, meeting, caller } = this.props;
     JsXAPI.getAudio().then((volume) => {
       this.setState({ callId, meeting, volume, caller });
@@ -67,8 +67,10 @@ export class Call extends React.Component<any, any> {
     }).then(() => {
       JsXAPI.callEvents('disconnects');
     });
-    JsXAPI.event.on('call-disconnect', () => {
-      this.props.switch({ mainView: true });
+    JsXAPI.event.on('call-disconnect', (id) => {
+      if(callId === id) {
+        this.props.switch({ mainView: true });
+      }
     });
   }
 
@@ -84,19 +86,13 @@ export class Call extends React.Component<any, any> {
 
   render() {
     let { meeting, volume, caller } = this.state;
-    // console.log(meeting);
-    let temp: any, avatar: any, title: string;
+    let avatar: any, title: string;
     if(meeting) {
-      temp = meeting.Booking.Title.split(' ');
-      if(temp.length === 2) {
-        avatar = temp[0].substring(0, 1).toUpperCase() +
-          temp[1].substring(0, 1).toUpperCase();
-      } else {
-        avatar = temp[0].substring(0, 2).toUpperCase();
-      }
-      title = meeting.Booking.Title;
+      let temp = meeting.endpoint.number;
+      temp = temp.replace(/@.*/, '');
+      avatar = <div style={{ fontSize: '40%' }}>{ temp }</div>;
     } else {
-      avatar = <div style={{fontSize: '30%'}}>{ caller }</div>;
+      avatar = <div style={{ fontSize: '40%' }}>{ caller }</div>;
     }
     return (
       <div>

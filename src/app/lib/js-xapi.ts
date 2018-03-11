@@ -25,7 +25,9 @@ export class JsXAPI {
         this.getMeetings(),
         this.getAudio(),
         this.getState()
-      ]).then(results => this.event.emit('updates', results));
+      ]).then(results => {
+        this.event.emit('updates', results);
+      });
 
       this.eventInterval = setInterval(this.poller, 5000);
       return;
@@ -181,16 +183,27 @@ export class JsXAPI {
     }
   };
 
-  static callEvents() {
+  static callEvents(type) {
     if(this.xapi) {
       this.xapi.feedback.on('/Status/Call', (data: any) => {
-        if(data && data.id && data.ghost === 'True') {
-          this.event.emit('call-disconnect');
+        switch(type) {
+          case 'disconnects':
+            if(data.id && data.ghost === 'True') {
+              this.event.emit('call-disconnect');
+            }
+            break;
+          case 'call':
+            if(data.id && data.AnswerState === 'Answered') {
+              this.event.emit('call', data);
+              this.event.removeAllListeners('call');
+            }
+            break;
+          default:
+            break;
         }
-        console.log(data);
       });
     } else {
-      return this.connect().then(() => this.callEvents());
+      return this.connect().then(() => this.callEvents(type));
     }
   };
 

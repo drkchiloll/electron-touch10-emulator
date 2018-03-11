@@ -32,7 +32,6 @@ export class JsXAPI {
     });
   };
 
-
   static connect() {
     return new Promise((resolve, reject) => {
       this.xapi = jsxapi.connect('ssh://10.253.3.160', {
@@ -182,6 +181,19 @@ export class JsXAPI {
     }
   };
 
+  static callEvents() {
+    if(this.xapi) {
+      this.xapi.feedback.on('/Status/Call', (data: any) => {
+        if(data && data.id && data.ghost === 'True') {
+          this.event.emit('call-disconnect');
+        }
+        console.log(data);
+      });
+    } else {
+      return this.connect().then(() => this.callEvents());
+    }
+  };
+
   static getDirectory({query = ''}) {
     if(this.xapi) {
       return this.commander({
@@ -266,5 +278,5 @@ export class JsXAPI {
         });
       });
     }
-  }
+  };
 }

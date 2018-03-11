@@ -27,7 +27,8 @@ export class App extends React.Component<any, any> {
                 mainView: false,
                 meetingsView: false,
                 callView: true,
-                caller: res[0].DisplayName
+                caller: res[0].DisplayName,
+                callId: res[0].id
               });
               return;
             }

@@ -41,7 +41,7 @@ export class Main extends React.Component<any,any> {
 
   componentDidMount() {
     JsXAPI.event.addListener('updates', this.eventHandler);
-    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
+    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 2500);
   }
 
   componentWillUnmount() {
@@ -56,10 +56,6 @@ export class Main extends React.Component<any,any> {
       JsXAPI.event.addListener('update', this.eventHandler);
     }
 
-    setTimeout(() => {
-      this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
-    }, 1000);
-
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
       left = window.innerWidth / 3.5;
@@ -71,6 +67,7 @@ export class Main extends React.Component<any,any> {
       if(meetings.length !== 0) {
         this.meetingHander(meetings[0]);
       }
+      this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
       return;
     }).then(() => {
       return Promise.all([

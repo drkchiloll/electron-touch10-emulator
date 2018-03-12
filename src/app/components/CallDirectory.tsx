@@ -1,10 +1,14 @@
 import * as React from 'react';
 import { JsXAPI } from '../lib';
-import { Dialog, TextField, List, ListItem, IconButton, Tab, Tabs, SvgIcon } from 'material-ui';
+import {
+  Dialog, TextField, List,
+  ListItem, IconButton, Tab,
+  Tabs, SvgIcon, CircularProgress
+} from 'material-ui';
 import CorpDirecotryIcon from 'material-ui/svg-icons/communication/contact-phone';
 import CallHistoryIcon from 'material-ui/svg-icons/action/history';
 import CallIcon from 'material-ui/svg-icons/communication/call';
-import { indigo500 } from 'material-ui/styles/colors'
+import { indigo500, indigo200 } from 'material-ui/styles/colors'
 
 export class CallDirectory extends React.Component<any,any> {
   searchTimeout: any;
@@ -13,7 +17,8 @@ export class CallDirectory extends React.Component<any,any> {
     tabIdx: 1,
     tabValue: 'Corporate', // Recent
     search: '',
-    users: null
+    users: null,
+    showProgress: false
   }
 
   componentDidMount() {
@@ -38,19 +43,23 @@ export class CallDirectory extends React.Component<any,any> {
 
   makeCall = () => {
     const { search } = this.state;
-    JsXAPI.dial(search).then(result => {
-      if(result && result.status === 'OK') {
-        this.props.close();
-        this.props.switch({
-          callView: true,
-          meetingsView: false,
-          mainView: false,
-          callId: result.CallId,
-          caller: search
-        });
-      }
-    });
+    JsXAPI.dial(search).then(() => this.setState({showProgress: true}));
   }
+
+  styles = (): any => ({
+    call: {
+      position: 'absolute',
+      right: 85,
+      top: 2,
+      display: this.state.showProgress ? 'none': 'inline'
+    },
+    progress: {
+      position: 'absolute',
+      right: 100,
+      top: 15,
+      display: this.state.showProgress ? 'inline' : 'none'
+    }
+  })
 
   render() {
     let { tabIdx, tabValue, search, users } = this.state;
@@ -66,7 +75,7 @@ export class CallDirectory extends React.Component<any,any> {
         }} >
         <div style={{position: 'relative', width: 350}}>
           <TextField autoFocus
-            style={{ width: 300, position: 'relative' }}
+            style={{ width: 254, position: 'relative' }}
             id='search-field'
             hintText='Search Directory or Enter URI/Number'
             value={search}
@@ -76,10 +85,17 @@ export class CallDirectory extends React.Component<any,any> {
             }}/>
             {
               users && users.length === 0 ?
-                <IconButton style={{ position: 'absolute', right: 20, top: 2 }}
-                  onClick={this.makeCall} >
-                  <CallIcon />
-                </IconButton> :
+                <div>
+                  <IconButton style={this.styles().call}
+                    tooltip='Make Call'
+                    tooltipPosition='top-center'
+                    onClick={this.makeCall} >
+                    <CallIcon />
+                  </IconButton>
+                  <CircularProgress size={20}
+                    color={indigo200}
+                    style={this.styles().progress} />
+                </div>:
                 null
             }
         </div>

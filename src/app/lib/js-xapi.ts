@@ -21,7 +21,8 @@ export class JsXAPI {
       this.poller = () => Promise.all([
         this.getMeetings(),
         this.getAudio(),
-        this.getState()
+        this.getState(),
+        this.getMicStatus()
       ]).then(results => {
         this.event.emit('updates', results);
       });
@@ -104,6 +105,15 @@ export class JsXAPI {
     }
   };
 
+  static getMicStatus() {
+    if(this.xapi) {
+      // Returns On/Off
+      return this.xapi.status.get('Audio Microphones Mute');
+    } else {
+      return this.connect().then(() => this.getMicStatus());
+    }
+  }
+
   static getState() {
     // Standby, EnteringStandby, Halfwake, Off(not in standby)
     if(this.xapi) {
@@ -123,6 +133,18 @@ export class JsXAPI {
       return this.connect().then(() => this.setAudio(action));
     }
   };
+
+  // action: String; Mute | Unmute
+  static setMic(action) {
+    if(this.xapi) {
+      return this.commander({
+        string: `Audio Microphones ${action}`,
+        param: {}
+      });
+    } else {
+      return this.connect().then(() => this.setMic(action));
+    }
+  }
 
   static closeConnection() {
     if(this.xapi) {

@@ -52,7 +52,7 @@ export class Main extends React.Component<any,any> {
 
   componentWillMount() {
     if(JsXAPI.event.eventNames().length === 0) {
-      JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
+      JsXAPI.eventInterval = setInterval(JsXAPI.poller, 2500);
       JsXAPI.event.addListener('update', this.eventHandler);
     }
 

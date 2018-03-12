@@ -21,7 +21,7 @@ export class Meetings extends React.Component<any, any> {
   }
 
   componentWillMount() {
-    this.getMeetings();
+    setTimeout(() => this.getMeetings(), 200);
   }
 
   componentWillReceiveProps(newProps) {

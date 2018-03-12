@@ -30,9 +30,10 @@ export class App extends React.Component<any, any> {
                 caller: res[0].DisplayName,
                 callId: res[0].id
               });
-              return;
             }
-          }).then(() => JsXAPI.callEvents('call'))
+            // return;
+          })
+          // .then(() => JsXAPI.callEvents())
       })
       .catch(e => {
         setTimeout(this.getConnected, 10000);
@@ -63,10 +64,10 @@ export class App extends React.Component<any, any> {
         callView,
         mainView: false,
         meetingsView: false,
-        callId: args.callId
+        callId: args.callId,
+        meeting: args.meeting,
+        caller: args.caller
       };
-      if(args.meeting) update['meeting'] = args.meeting;
-      if(args.caller) update['caller'] = args.caller;
       this.setState(update);
     }
   }

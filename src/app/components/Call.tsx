@@ -46,31 +46,21 @@ const styles: any = {
 export class Call extends React.Component<any, any> {
   constructor(props) {
     super(props);
-    this.state = {
-      callId: null,
-      meeting: null,
-      volume: 0,
-      caller: null
-    };
+    this.state = { volume: 0 };
   }
 
-  componentWillUnmount() {
-    JsXAPI.event.removeAllListeners('call-disconnect');
-    JsXAPI.event.removeAllListeners('call');
-  }
+  callDisconnects: any;
 
-  componentDidMount() {
+  componentWillMount() {
     const { callId, meeting, caller } = this.props;
     JsXAPI.getAudio().then((volume) => {
-      this.setState({ callId, meeting, volume, caller });
-      return;
-    }).then(() => {
-      JsXAPI.callEvents('disconnects');
-    });
-    JsXAPI.event.on('call-disconnect', (id) => {
-      if(callId === id) {
-        this.props.switch({ mainView: true });
-      }
+      this.setState({ volume });
+      this.callDisconnects = JsXAPI.xapi.feedback.on('/Status/Call', (data: any) => {
+        if(data.id && data.ghost === 'True') {
+          this.props.switch({ mainView: true });
+          this.callDisconnects();
+        }
+      });
     });
   }
 
@@ -81,11 +71,13 @@ export class Call extends React.Component<any, any> {
       this.props.switch({
         mainView: true
       });
+      return;
     })
   }
 
   render() {
-    let { meeting, volume, caller } = this.state;
+    let { meeting, caller, callId } = this.props;
+    let { volume } = this.state;
     let avatar: any, title: string;
     if(meeting) {
       let temp = meeting.endpoint.number;
@@ -144,7 +136,7 @@ export class Call extends React.Component<any, any> {
           </FloatingActionButton>
           <FloatingActionButton style={styles.icon}
             onClick={() => {
-              this.hangup(this.state.callId);
+              this.hangup(callId);
             }}
             backgroundColor='red' >
             <CallEndIcon />

@@ -16,6 +16,11 @@ export class Meetings extends React.Component<any, any> {
     }
   }
 
+  componentWillUnmount() {
+    console.log(JsXAPI.event.eventNames());
+    sessionStorage.setItem('redirectCounter', '2')
+  }
+
   componentWillMount() {
     this.getMeetings();
   }
@@ -96,8 +101,7 @@ export class Meetings extends React.Component<any, any> {
       <div>
         <IconButton style={this.styles.closeIcon}
           onClick={() => {
-            JsXAPI.closeConnection().then(() =>
-              this.props.switch({ mainView: true }));
+            this.props.switch({ mainView: true });
           }}>
           <CloseIcon />
         </IconButton>

@@ -37,27 +37,23 @@ export class Main extends React.Component<any,any> {
 
   timeout: any;
 
-  componentDidMount() {
-    JsXAPI.event.on('updates', this.eventHandler);
-    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
-    JsXAPI.event.on('call', this.callHandler);
-  }
+  call: any;
 
   componentWillUnmount() {
     clearTimeout(this.timeout);
     JsXAPI.event.removeAllListeners('updates');
-    JsXAPI.event.removeAllListeners('call');
     clearInterval(JsXAPI.eventInterval);
   }
 
   componentWillMount() {
-    if(!JsXAPI.event.eventNames().indexOf('updates')) {
+    if(JsXAPI.event.eventNames().indexOf('updates') === -1) {
       JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
       JsXAPI.event.addListener('update', this.eventHandler);
     }
-    if(!JsXAPI.event.eventNames().indexOf('call')) {
-      JsXAPI.event.addListener('call', this.callHandler);
-    }
+
+    setTimeout(() => {
+      this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
+    }, 1000);
 
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
@@ -96,17 +92,22 @@ export class Main extends React.Component<any,any> {
     });
   }
 
-  callHandler = ({id}) => {
-    JsXAPI.xapi.status
-      .get(`Call ${id} DisplayName`)
-      .then(caller => {
-        this.props.switch({
-          callView: true,
-          mainView: false,
-          meetingsView: false,
-          caller
+  callHandler = call => {
+    console.log('call handler');
+    if(call && call.id && call.AnswerState === 'Answered') {
+      JsXAPI.xapi.status
+        .get(`Call ${call.id} DisplayName`)
+        .then(caller => {
+          this.props.switch({
+            callView: true,
+            mainView: false,
+            meetingsView: false,
+            caller,
+            callId: call.id
+          });
+          this.call();
         });
-      });
+    }
   }
 
   meetingHander = (nextMeeting) => {

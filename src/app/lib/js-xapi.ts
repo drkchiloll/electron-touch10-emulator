@@ -18,9 +18,6 @@ export class JsXAPI {
 
   static init() {
     return this.connect().then(() => {
-      // this.event.on('connection-closing', () => {
-      //   if(!this.xapi) return this.connect();
-      // });
       this.poller = () => Promise.all([
         this.getMeetings(),
         this.getAudio(),
@@ -68,7 +65,7 @@ export class JsXAPI {
   };
 
   static getMeetings() {
-    // console.log('getting meetings');
+    console.log('getting meetings');
     if(this.xapi) {
       return this.commander({
         string: 'Bookings List',
@@ -99,7 +96,7 @@ export class JsXAPI {
   };
 
   static getAudio() {
-    // console.log('retrieve audio volume');
+    console.log('retrieve audio volume');
     if(this.xapi) {
       return this.xapi.status.get('Audio Volume');
     } else {
@@ -180,30 +177,6 @@ export class JsXAPI {
       });
     } else {
       return this.connect().then(() => this.updateWakeStatus(status));
-    }
-  };
-
-  static callEvents(type) {
-    if(this.xapi) {
-      this.xapi.feedback.on('/Status/Call', (data: any) => {
-        switch(type) {
-          case 'disconnects':
-            if(data.id && data.ghost === 'True') {
-              this.event.emit('call-disconnect', data.id);
-            }
-            break;
-          case 'call':
-            if(data.id && data.AnswerState === 'Answered') {
-              this.event.emit('call', data);
-              this.event.removeAllListeners('call');
-            }
-            break;
-          default:
-            break;
-        }
-      });
-    } else {
-      return this.connect().then(() => this.callEvents(type));
     }
   };
 

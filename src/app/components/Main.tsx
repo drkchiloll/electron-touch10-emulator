@@ -96,8 +96,10 @@ export class Main extends React.Component<any,any> {
   }
 
   callHandler = call => {
-    console.log('call handler');
+    // console.log('call handler');
+    let { directoryDialog } = this.state;
     if(call && call.id && call.AnswerState === 'Answered') {
+      if(directoryDialog) this.setState({ directoryDialog: false });
       JsXAPI.xapi.status
         .get(`Call ${call.id} DisplayName`)
         .then(caller => {
@@ -179,9 +181,9 @@ export class Main extends React.Component<any,any> {
       <div>
         {
           directoryDialog ?
-          <CallDirectory close={() => this.setState({directoryDialog: false })}
-            switch={this.callRedirect} /> :
-          null
+            <CallDirectory close={() => this.setState({directoryDialog: false })}
+              switch={this.callRedirect} /> :
+            null
         }
         <div style={{ left: this.state.left, top: this.state.top, position: 'absolute' }}>
           <FloatingActionButton backgroundColor={green500} iconStyle={{ height: 85, width: 85 }}

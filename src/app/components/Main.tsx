@@ -155,11 +155,9 @@ export class Main extends React.Component<any,any> {
     }, 2000);
   }
 
-  redirect = () => this._closeConnection()
-    .then(() => this.props.switch({ meetingsView: true }));
+  redirect = () => this.props.switch({ meetingsView: true });
 
-  callRedirect = (update) => this._closeConnection().then(() =>
-    this.props.switch(update))
+  callRedirect = (update) => this.props.switch(update);
 
   render() {
     let MeetBadge: any;

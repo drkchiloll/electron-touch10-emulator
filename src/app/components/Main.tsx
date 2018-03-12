@@ -13,6 +13,8 @@ import VolumeDown from 'material-ui/svg-icons/av/volume-down';
 import DecreaseIcon from 'material-ui/svg-icons/content/remove'
 import AwakeIcon from 'material-ui/svg-icons/action/visibility';
 import StandbyIcon from 'material-ui/svg-icons/action/visibility-off';
+import MicOnIcon from 'material-ui/svg-icons/av/mic';
+import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
@@ -30,6 +32,7 @@ export class Main extends React.Component<any,any> {
       meetInTen: false,
       nextMeeting: null,
       volume: 0,
+      mic: 'Off',
       status: 'Standby',
       directoryDialog: false
     };
@@ -84,14 +87,15 @@ export class Main extends React.Component<any,any> {
   }
 
   eventHandler = (updates) => {
-    console.log(updates);
+    // console.log(updates);
     if(updates[0].length > 0) {
       this.meetingHander(updates[0][0]);
     }
     this.setState({
       meetings: updates[0],
       volume: updates[1],
-      status: updates[2] === 'Off' ? 'Awake' : 'Standby'
+      status: updates[2] === 'Off' ? 'Awake' : 'Standby',
+      mic: updates[3]
     });
   }
 
@@ -163,7 +167,7 @@ export class Main extends React.Component<any,any> {
 
   render() {
     let MeetBadge: any;
-    let { meetInTen, volume, status, directoryDialog } = this.state;
+    let { meetInTen, volume, status, directoryDialog, mic } = this.state;
     if(meetInTen) {
       MeetBadge =
         <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
@@ -241,20 +245,35 @@ export class Main extends React.Component<any,any> {
             <Badge badgeContent={<DecreaseIcon color='white' style={this.styles.plusminusIcon} />}
               primary={true}
               badgeStyle={this.styles.badge2}>
-              <IconButton onClick={() =>
+              <IconButton style={{margin:0, padding:0}} onClick={() =>
                 JsXAPI.setAudio('Decrease').then(() =>
                   this.setState({ volume: --volume }))
               }> <VolumeDown /> </IconButton>
             </Badge>
-            Volume: {volume}
+            <strong> Volume: {volume}</strong>
             <Badge badgeContent={<AddIcon color='white' style={this.styles.plusminusIcon} />}
               primary={true}
               badgeStyle={this.styles.badge2}>
-              <IconButton onClick={() =>
+              <IconButton style={{margin:0, padding:0}} onClick={() =>
                 JsXAPI.setAudio('Increase').then(() =>
                   this.setState({ volume: ++volume }))
               } > <VolumeUp /> </IconButton>
             </Badge>
+            <br/>
+            <IconButton style={{ marginLeft: 10, marginBottom: 10 }}
+              onClick={() => {
+                let action = mic === 'On' ? 'Unmute' : 'Mute';
+                JsXAPI.setMic(action).then(() => {
+                  this.setState({ mic: action === 'Mute' ? 'On' : 'Off' });
+                });
+              }} >
+              {
+                mic === 'Off' ?
+                  <MicOnIcon /> :
+                  <MicOffIcon />
+              }
+            </IconButton>
+            <strong>Microphones</strong>
             <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
             <div style={this.styles.divider}></div>
           </Paper>
@@ -281,7 +300,7 @@ export class Main extends React.Component<any,any> {
     },
     paper: { borderRadius: '7px', border: '1px solid black' },
     heading: { textAlign: 'center', padding: 0, margin: 0 },
-    plusminusIcon: { width: 10, height: 10 },
+    plusminusIcon: { width: 10, height: 10, margin: 0, padding: 0 },
     badge2: { top: 30, right: 28, width: 15, height: 15 },
     divider: { height: 10 },
     wakeIcons: {

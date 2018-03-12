@@ -12,6 +12,8 @@ import ShareIcon from 'material-ui/svg-icons/content/content-copy';
 import PauseIcon from 'material-ui/svg-icons/av/pause';
 import TransferIcon from 'material-ui/svg-icons/navigation/arrow-forward';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
+import MicOnIcon from 'material-ui/svg-icons/av/mic';
+import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import { JsXAPI, Time } from '../lib';
 
 const styles: any = {
@@ -46,7 +48,7 @@ const styles: any = {
 export class Call extends React.Component<any, any> {
   constructor(props) {
     super(props);
-    this.state = { volume: 0 };
+    this.state = { volume: 0, mic: 'Off' };
   }
 
   callDisconnects: any;
@@ -58,8 +60,10 @@ export class Call extends React.Component<any, any> {
 
   componentWillMount() {
     const { callId, meeting, caller } = this.props;
-    JsXAPI.getAudio().then((volume) => {
-      this.setState({ volume });
+    Promise.all([
+      JsXAPI.getAudio(),
+      JsXAPI.getMicStatus()
+    ]).then((results) => {
       this.callDisconnects = JsXAPI.xapi.feedback.on('/Status/Call', (data: any) => {
         if(data.id && data.ghost === 'True') {
           if(data.id === callId) {
@@ -74,8 +78,13 @@ export class Call extends React.Component<any, any> {
   }
 
   eventHandler = (updates) => {
-    let { volume } = this.state;
-    if(volume !== updates[1]) this.setState({ volume: updates[1] });
+    let { volume, mic } = this.state;
+    let update:any = {};
+    if(volume !== updates[1]) update['volume'] = updates[1];
+    if(mic !== updates[3]) update['mic'] = updates[3];
+    if(update.volume || update.mic) {
+      this.setState(update);
+    }
   }
 
   hangup = callId => {
@@ -90,7 +99,7 @@ export class Call extends React.Component<any, any> {
 
   render() {
     let { meeting, caller, callId } = this.props;
-    let { volume } = this.state;
+    let { volume, mic } = this.state;
     let avatar: any, title: string;
     if(meeting) {
       let temp = meeting.endpoint.number;
@@ -109,29 +118,37 @@ export class Call extends React.Component<any, any> {
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
           <div style={styles.div2}>
-            {/* <Paper style={styles.paper} rounded={false} > */}
-              {/* <h5 style={styles.heading}> Controls </h5> */}
-              {/* <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} /> */}
-              <Badge badgeContent={<DecreaseIcon color='white' style={styles.plusminusIcon} />}
-                primary={true}
-                badgeStyle={styles.badge2}>
-                <IconButton onClick={() =>
-                  JsXAPI.setAudio('Decrease').then(() =>
-                    this.setState({ volume: --volume }))
-                }> <VolumeDown /> </IconButton>
-              </Badge>
-              Volume: {volume}
-              <Badge badgeContent={<AddIcon color='white' style={styles.plusminusIcon} />}
-                primary={true}
-                badgeStyle={styles.badge2}>
-                <IconButton onClick={() =>
-                  JsXAPI.setAudio('Increase').then(() =>
-                    this.setState({ volume: ++volume }))
-                } > <VolumeUp /> </IconButton>
-              </Badge>
-              {/* <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} /> */}
-              {/* <div style={styles.divider}></div> */}
-            {/* </Paper> */}
+            <Badge badgeContent={<DecreaseIcon color='white' style={styles.plusminusIcon} />}
+              primary={true}
+              badgeStyle={styles.badge2}>
+              <IconButton onClick={() =>
+                JsXAPI.setAudio('Decrease').then(() =>
+                  this.setState({ volume: --volume }))
+              }> <VolumeDown /> </IconButton>
+            </Badge>
+            <strong>Volume: {volume}</strong>
+            <Badge badgeContent={<AddIcon color='white' style={styles.plusminusIcon} />}
+              primary={true}
+              badgeStyle={styles.badge2}>
+              <IconButton onClick={() =>
+                JsXAPI.setAudio('Increase').then(() =>
+                  this.setState({ volume: ++volume }))
+              } > <VolumeUp /> </IconButton>
+            </Badge>
+            <IconButton style={{ marginLeft: 10, marginBottom: 10 }}
+              onClick={() => {
+                let action = mic === 'On' ? 'Unmute' : 'Mute';
+                JsXAPI.setMic(action).then(() => {
+                  this.setState({ mic: action === 'Mute' ? 'On' : 'Off' });
+                });
+              }} >
+              {
+                mic === 'Off' ?
+                  <MicOnIcon /> :
+                  <MicOffIcon />
+              }
+            </IconButton>
+            <strong>Microphones</strong>
           </div>
         </Paper>
         <div style={{ marginTop: '35px' }}>

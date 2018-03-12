@@ -39,6 +39,11 @@ export class Main extends React.Component<any,any> {
 
   call: any;
 
+  componentDidMount() {
+    JsXAPI.event.addListener('updates', this.eventHandler);
+    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
+  }
+
   componentWillUnmount() {
     clearTimeout(this.timeout);
     JsXAPI.event.removeAllListeners('updates');
@@ -46,7 +51,7 @@ export class Main extends React.Component<any,any> {
   }
 
   componentWillMount() {
-    if(JsXAPI.event.eventNames().indexOf('updates') === -1) {
+    if(JsXAPI.event.eventNames().length === 0) {
       JsXAPI.eventInterval = setInterval(JsXAPI.poller, 5000);
       JsXAPI.event.addListener('update', this.eventHandler);
     }
@@ -82,6 +87,7 @@ export class Main extends React.Component<any,any> {
   }
 
   eventHandler = (updates) => {
+    console.log(updates);
     if(updates[0].length > 0) {
       this.meetingHander(updates[0][0]);
     }

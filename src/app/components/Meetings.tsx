@@ -17,7 +17,6 @@ export class Meetings extends React.Component<any, any> {
   }
 
   componentWillUnmount() {
-    console.log(JsXAPI.event.eventNames());
     sessionStorage.setItem('redirectCounter', '2')
   }
 
@@ -48,7 +47,11 @@ export class Meetings extends React.Component<any, any> {
     btn: {
       position: 'absolute',
       top: 40,
-      right: 35
+      right: 35,
+      width: 130,
+      height: 45,
+      borderRadius: '9px',
+      border: 'solid 2px black'
     },
     meetingTitle: { fontSize: 18 },
     card: { width: 400 },
@@ -116,7 +119,9 @@ export class Meetings extends React.Component<any, any> {
                 return (
                   <Paper key={meeting.id} style={this.styles.paper}>
                     { Time.meetInTen(meeting.startTime, meeting.endTime) ? 
-                      <RaisedButton label='Join' style={this.styles.btn}
+                      <RaisedButton label='Join' buttonStyle={this.styles.btn}
+                        backgroundColor='green'
+                        labelColor='#FFFFFF'
                         onClick={() => {
                           this.dial(meeting.endpoint.number)
                         }} /> :

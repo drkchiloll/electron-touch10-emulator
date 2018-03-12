@@ -51,17 +51,31 @@ export class Call extends React.Component<any, any> {
 
   callDisconnects: any;
 
+  componentWillUnmount() {
+    JsXAPI.event.removeAllListeners('updates');
+    clearInterval(JsXAPI.eventInterval);
+  }
+
   componentWillMount() {
     const { callId, meeting, caller } = this.props;
     JsXAPI.getAudio().then((volume) => {
       this.setState({ volume });
       this.callDisconnects = JsXAPI.xapi.feedback.on('/Status/Call', (data: any) => {
         if(data.id && data.ghost === 'True') {
-          this.props.switch({ mainView: true });
-          this.callDisconnects();
+          if(data.id === callId) {
+            this.props.switch({ mainView: true });
+            this.callDisconnects();
+          }
         }
       });
+      JsXAPI.event.addListener('updates', this.eventHandler);
+      JsXAPI.eventInterval = setInterval(JsXAPI.poller, 1000);
     });
+  }
+
+  eventHandler = (updates) => {
+    let { volume } = this.state;
+    if(volume !== updates[1]) this.setState({ volume: updates[1] });
   }
 
   hangup = callId => {
@@ -71,8 +85,7 @@ export class Call extends React.Component<any, any> {
       this.props.switch({
         mainView: true
       });
-      return;
-    })
+    });
   }
 
   render() {

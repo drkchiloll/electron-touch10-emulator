@@ -3,7 +3,8 @@ import { JsXAPI } from '../lib';
 import {
   Dialog, TextField, List,
   ListItem, IconButton, Tab,
-  Tabs, SvgIcon, CircularProgress
+  Tabs, SvgIcon, CircularProgress,
+  Snackbar
 } from 'material-ui';
 import CorpDirecotryIcon from 'material-ui/svg-icons/communication/contact-phone';
 import CallHistoryIcon from 'material-ui/svg-icons/action/history';
@@ -18,13 +19,28 @@ export class CallDirectory extends React.Component<any,any> {
     tabValue: 'Corporate', // Recent
     search: '',
     users: null,
-    showProgress: false
+    showProgress: false,
+    inError: false,
+    snack: false
   }
+
+  call: any;
 
   componentDidMount() {
     JsXAPI.getDirectory({}).then(users => {
       this.setState({ users })
     });
+  }
+
+  componentDidUpdate() {
+    let { inError } = this.state;
+    if(this.props.error && !inError) {
+      this.setState({
+        showProgress: false,
+        inError: true,
+        snack: true
+      });
+    }
   }
 
   search = () => {
@@ -62,7 +78,8 @@ export class CallDirectory extends React.Component<any,any> {
   })
 
   render() {
-    let { tabIdx, tabValue, search, users } = this.state;
+    let { tabIdx, tabValue, search, users, snack } = this.state;
+    const { error } = this.props;
     return (
       <Dialog open={true}
         contentStyle={{
@@ -73,6 +90,10 @@ export class CallDirectory extends React.Component<any,any> {
         onRequestClose={() => {
           this.props.close();
         }} >
+        <Snackbar open={snack}
+          message='Check Your Number and Call Again'
+          autoHideDuration={3500}
+          onRequestClose={() => this.setState({ snack: false })} />
         <div style={{position: 'relative', width: 350}}>
           <TextField autoFocus
             style={{ width: 254, position: 'relative' }}
@@ -90,7 +111,7 @@ export class CallDirectory extends React.Component<any,any> {
                     tooltip='Make Call'
                     tooltipPosition='top-center'
                     onClick={this.makeCall} >
-                    <CallIcon />
+                    <CallIcon color={error ? 'red' : indigo500} />
                   </IconButton>
                   <CircularProgress size={20}
                     color={indigo200}

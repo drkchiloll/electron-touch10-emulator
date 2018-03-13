@@ -34,7 +34,8 @@ export class Main extends React.Component<any,any> {
       volume: 0,
       mic: 'Off',
       status: 'Standby',
-      directoryDialog: false
+      directoryDialog: false,
+      callError: false
     };
   }
 
@@ -104,6 +105,7 @@ export class Main extends React.Component<any,any> {
 
   callHandler = call => {
     // console.log('call handler');
+    console.log(call);
     let { directoryDialog } = this.state;
     if(call && call.id && call.AnswerState === 'Answered') {
       if(directoryDialog) this.setState({ directoryDialog: false });
@@ -119,6 +121,9 @@ export class Main extends React.Component<any,any> {
           });
           this.call();
         });
+    } else if(call.id && call.ghost === 'True') {
+      console.log('error');
+      this.setState({ callError: true })
     }
   }
 
@@ -170,7 +175,7 @@ export class Main extends React.Component<any,any> {
 
   render() {
     let MeetBadge: any;
-    let { meetInTen, volume, status, directoryDialog, mic } = this.state;
+    let { meetInTen, volume, status, directoryDialog, mic, callError } = this.state;
     if(meetInTen) {
       MeetBadge =
         <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
@@ -190,7 +195,8 @@ export class Main extends React.Component<any,any> {
         {
           directoryDialog ?
             <CallDirectory close={() => this.setState({directoryDialog: false })}
-              switch={this.callRedirect} /> :
+              switch={this.callRedirect}
+              error={callError} /> :
             null
         }
         <div style={{ left: this.state.left, top: this.state.top, position: 'absolute' }}>

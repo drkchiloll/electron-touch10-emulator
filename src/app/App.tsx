@@ -1,22 +1,42 @@
 import * as React from 'react'
-// Import Components
-import { Main, Meetings, Call } from './components';
 
-import { JsXAPI } from './lib';
+import { Dialog, IconButton } from 'material-ui';
+import SettingsIcon from 'material-ui/svg-icons/action/settings';
+// Import Components
+import { Main, Meetings, Call, AccountDialog } from './components';
+
+import { JsXAPI, Accounts } from './lib';
 
 export class App extends React.Component<any, any> {
   state = {
-    mainView: true,
+    account: null,
+    mainView: false,
     meetingsView: false,
     callView: false,
     meeting: null,
     callId: null,
-    caller: null
+    caller: null,
+    acctDialog: false
   }
 
-  componentWillMount() { this.getConnected() }
+  componentWillMount() {
+    const accounts = Accounts.get();
+    let account: any;
+    if(accounts) {
+      account = accounts.find(a => a.selected);
+      if(account.name === 'New' && !account.host) {
+        this.setState({
+          acctDialog: true
+        });
+      } else {
+        this.setState({ account });
+        this.getConnected(account);
+      }
+    }
+  }
 
-  getConnected = () => {
+  getConnected = (account) => {
+    JsXAPI.account = account;
     JsXAPI.init()
       .then(() => {
         return JsXAPI.xapi.status
@@ -30,10 +50,14 @@ export class App extends React.Component<any, any> {
                 caller: res[0].DisplayName,
                 callId: res[0].id
               });
+            } else {
+              this.setState({
+                mainView: true,
+                acctDialog: false,
+                account
+              });
             }
-            // return;
           })
-          // .then(() => JsXAPI.callEvents())
       })
       .catch(e => {
         setTimeout(this.getConnected, 10000);
@@ -51,19 +75,22 @@ export class App extends React.Component<any, any> {
       this.setState({
         meetingsView,
         mainView: false,
-        callView: false
+        callView: false,
+        acctDialog: false
       });
     } else if(mainView) {
       this.setState({
         mainView,
         meetingsView: false,
-        callView: false
+        callView: false,
+        acctDialog: false
       });
     } else if(callView) {
       let update: any = {
         callView,
         mainView: false,
         meetingsView: false,
+        acctDialog: false,
         callId: args.callId,
         meeting: args.meeting,
         caller: args.caller
@@ -72,18 +99,48 @@ export class App extends React.Component<any, any> {
     }
   }
 
+  modifyAccount = () => {
+    if(JsXAPI.xapi) {
+      JsXAPI.xapi.close();
+    }
+    this.setState({
+      mainView: false,
+      meetingsView: false,
+      callView: false,
+      acctDialog: true
+    });
+  }
+
+  closeAccountManagement = () => {
+    const accounts = Accounts.get();
+    let account = accounts.find(a => a.selected);
+    this.getConnected(account);
+  }
+
   render() {
-    const { mainView, meetingsView, callView } = this.state;
+    const {
+      mainView, meetingsView,
+      callView, acctDialog, account
+    } = this.state;
     return <div>
       {
         mainView ?
-          <Main switch={this.updateView} /> :
+          <Main switch={this.updateView} account={account} /> :
         meetingsView ?
           <Meetings switch={this.updateView} /> : 
         callView ?
           <Call switch={this.updateView} { ...this.state } /> :
-          null
+        acctDialog ?
+        <AccountDialog accountName={(name) => {}}
+          close={this.closeAccountManagement} /> :
+        null
       }
+      <IconButton tooltip='Account Management'
+        tooltipPosition='top-left'
+        style={{position: 'absolute', bottom: 0, right: 10}}
+        onClick={this.modifyAccount} >
+        <SettingsIcon />
+      </IconButton>
     </div>
   }
 }

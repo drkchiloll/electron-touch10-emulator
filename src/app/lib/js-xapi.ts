@@ -15,6 +15,7 @@ export class JsXAPI {
   public static event = new EventEmitter();
   public static poller: any;
   public static eventInterval: any;
+  public static account: {host, username, password, name, selected};
 
   static init() {
     return this.connect().then(() => {
@@ -24,19 +25,17 @@ export class JsXAPI {
         this.getState(),
         this.getMicStatus()
       ]).then(results => {
-        this.event.emit('updates', results);
+        this.xapi.emit('update', results);
       });
-
-      this.eventInterval = setInterval(this.poller, 5000);
       return;
     });
   };
 
   static connect() {
     return new Promise((resolve, reject) => {
-      this.xapi = jsxapi.connect('ssh://10.253.3.160', {
-        username: 'admin',
-        password: 'WWTwwt1!'
+      this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
+        username: this.account.username,
+        password: this.account.password
       });
 
       this.xapi.on('ready', () => {
@@ -52,8 +51,9 @@ export class JsXAPI {
       setTimeout(() => {
         console.log('session timeout');
         if(this.xapi) {
+          this.xapi.emit('update', 'closing');
           this.xapi.close();
-          this.xapi = null;
+          return this.connect();
         }
       }, 600000);
     });
@@ -66,7 +66,7 @@ export class JsXAPI {
   };
 
   static getMeetings() {
-    console.log('getting meetings');
+    // console.log('getting meetings');
     if(this.xapi) {
       return this.commander({
         string: 'Bookings List',
@@ -97,7 +97,7 @@ export class JsXAPI {
   };
 
   static getAudio() {
-    console.log('retrieve audio volume');
+    // console.log('retrieve audio volume');
     if(this.xapi) {
       return this.xapi.status.get('Audio Volume');
     } else {

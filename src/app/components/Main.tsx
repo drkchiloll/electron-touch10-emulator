@@ -43,22 +43,19 @@ export class Main extends React.Component<any,any> {
   call: any;
 
   componentDidMount() {
-    JsXAPI.event.addListener('updates', this.eventHandler);
+    if(JsXAPI.xapi.eventNames().indexOf('updates') === -1) {
+      JsXAPI.xapi.on('update', this.eventHandler);
+    }
     JsXAPI.eventInterval = setInterval(JsXAPI.poller, 2500);
   }
 
   componentWillUnmount() {
     clearTimeout(this.timeout);
-    JsXAPI.event.removeAllListeners('updates');
     clearInterval(JsXAPI.eventInterval);
+    JsXAPI.xapi.removeAllListeners();
   }
 
   componentWillMount() {
-    if(JsXAPI.event.eventNames().length === 0) {
-      JsXAPI.eventInterval = setInterval(JsXAPI.poller, 2500);
-      JsXAPI.event.addListener('update', this.eventHandler);
-    }
-
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
       left = window.innerWidth / 3.5;
@@ -75,19 +72,25 @@ export class Main extends React.Component<any,any> {
     }).then(() => {
       return Promise.all([
         JsXAPI.getAudio(),
-        JsXAPI.wakeStatus()
+        JsXAPI.wakeStatus(),
+        JsXAPI.getMicStatus()
       ]);
     }).then((results) => {
-      // console.log(results);
       this.setState({
         volume: results[0],
-        status: results[1] === 'Off' ? 'Awake': 'Standby'
+        status: results[1] === 'Off' ? 'Awake': 'Standby',
+        mic: results[2]
       });
     });
   }
 
+  initEvents = () => {
+    JsXAPI.xapi.on('update', this.eventHandler);
+    this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
+  }
+
   eventHandler = (updates) => {
-    // console.log(updates);
+    if(updates === 'closing') return setTimeout(this.initEvents, 1000);
     if(updates[0].length > 0) {
       this.meetingHander(updates[0][0]);
     }
@@ -183,6 +186,7 @@ export class Main extends React.Component<any,any> {
     }
     return (
       <div>
+        <p style={{ font: '14px arial', color: 'grey'}}>{this.props.account.name}></p>
         {
           directoryDialog ?
             <CallDirectory close={() => this.setState({directoryDialog: false })}

@@ -2,7 +2,8 @@ import * as React from 'react';
 import * as Promise from 'bluebird';
 import {
   FloatingActionButton, Badge, FontIcon,
-  Subheader, IconButton, Paper, Divider
+  Subheader, IconButton, Paper, Divider,
+  Drawer
 } from 'material-ui';
 import VideoCall from 'material-ui/svg-icons/av/videocam';
 import Share from 'material-ui/svg-icons/content/content-copy'
@@ -15,6 +16,9 @@ import AwakeIcon from 'material-ui/svg-icons/action/visibility';
 import StandbyIcon from 'material-ui/svg-icons/action/visibility-off';
 import MicOnIcon from 'material-ui/svg-icons/av/mic';
 import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
+import CallIcon from 'material-ui/svg-icons/communication/call';
+import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
+import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
 import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
@@ -22,6 +26,9 @@ import {
 import { CallDirectory } from './index';
 
 import { JsXAPI, Time } from '../lib';
+
+import { remote } from 'electron';
+
 
 export class Main extends React.Component<any,any> {
   constructor(props) {
@@ -35,7 +42,8 @@ export class Main extends React.Component<any,any> {
       mic: 'Off',
       status: 'Standby',
       directoryDialog: false,
-      callError: false
+      callError: false,
+      incomingCall: {}
     };
   }
 
@@ -48,6 +56,7 @@ export class Main extends React.Component<any,any> {
       JsXAPI.xapi.on('update', this.eventHandler);
     }
     JsXAPI.eventInterval = setInterval(JsXAPI.poller, 2500);
+    this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
   }
 
   componentWillUnmount() {
@@ -68,7 +77,6 @@ export class Main extends React.Component<any,any> {
       if(meetings.length !== 0) {
         this.meetingHander(meetings[0]);
       }
-      this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
       return;
     }).then(() => {
       return Promise.all([
@@ -104,11 +112,22 @@ export class Main extends React.Component<any,any> {
   }
 
   callHandler = call => {
-    // console.log('call handler');
-    console.log(call);
+    let { incomingCall } = this.state;
+    if(call && call.id &&
+      call.Direction === 'Incoming' && call.AnswerState === 'Unanswered') {
+      const win = remote.getCurrentWindow();
+      win.focus();
+      incomingCall['id'] = call.id;
+      incomingCall['callback'] = call.CallbackNumber;
+      incomingCall['display'] = call.DisplayName;
+      incomingCall['status'] = call.Status;
+      incomingCall['disconnect'] = false;
+      this.setState({ incomingCall });
+    }
     let { directoryDialog } = this.state;
-    if(call && call.id && call.AnswerState === 'Answered') {
+    if(call && call.id && call.AnswerState === 'Answered' && !incomingCall.disconnect) {
       if(directoryDialog) this.setState({ directoryDialog: false });
+      this.call();
       JsXAPI.xapi.status
         .get(`Call ${call.id} DisplayName`)
         .then(caller => {
@@ -119,11 +138,12 @@ export class Main extends React.Component<any,any> {
             caller,
             callId: call.id
           });
-          this.call();
         });
-    } else if(call.id && call.ghost === 'True') {
+    } else if(call.id && call.ghost === 'True' && !incomingCall.id) {
       console.log('error');
       this.setState({ callError: true })
+    } else if(incomingCall.id && call.ghost) {
+      this.setState({ incomingCall: {}});
     }
   }
 
@@ -175,7 +195,9 @@ export class Main extends React.Component<any,any> {
 
   render() {
     let MeetBadge: any;
-    let { meetInTen, volume, status, directoryDialog, mic, callError } = this.state;
+    let {
+      meetInTen, volume, status, directoryDialog, mic, callError, incomingCall
+    } = this.state;
     if(meetInTen) {
       MeetBadge =
         <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
@@ -288,11 +310,76 @@ export class Main extends React.Component<any,any> {
             <div style={this.styles.divider}></div>
           </Paper>
         </div>
+        <Drawer open={incomingCall.hasOwnProperty('id')}
+          openSecondary={true}
+          containerStyle={{
+            position: 'absolute', height: 115, top: 10,
+            border: '1px solid red',
+            borderRadius: '8px'
+          }}
+          width={525}>
+          <h4 style={{width: 300, marginLeft: '15px' }} > Incoming Call from {incomingCall.display} </h4>
+          <p style={this.styles.para}>
+            <span>Callback Number</span><br />
+            <span>{incomingCall.callback}</span>
+          </p>
+          <IconButton onClick={this.dndCall}
+            style={this.styles.callIcon3}>
+            <DnDIcon />
+          </IconButton>
+          <IconButton onClick={this.rejectCall}
+            style={this.styles.callIcon2} > <CallEndIcon color='red' /> </IconButton>
+          <IconButton onClick={this.acceptCall}
+            style={this.styles.callIcon1}> <CallIcon color='green' /> </IconButton>
+        </Drawer>
       </div>
     );
   }
 
+  dndCall = () => {
+    const { incomingCall: { id }} = this.state;
+    JsXAPI.xapi.command('Call Ignore', { CallId: id });
+  }
+
+  acceptCall = () => {
+    const { incomingCall: { id } } = this.state;
+    JsXAPI.xapi.command('Call Accept', { CallId: id });
+  };
+
+  rejectCall = (e) => {
+    let { incomingCall } = this.state;
+    incomingCall['disconnect'] = true;
+    this.setState({ incomingCall });
+    JsXAPI.xapi.command('Call Reject', { CallId: incomingCall.id }).then(console.log);
+    // If a Device Does Not have a Forward Busy Set Then the Incoming Call will Ring and Ring
+    // JsXAPI.xapi.command('Call Accept', { CallId: incomingCall.id }).then(() => {
+    //   setTimeout(() => {
+    //     JsXAPI.xapi.command('Call Reject', { CallId: incomingCall.id })
+    //   }, 100);
+    // })
+  }
+
   styles: any = {
+    callIcon1: {
+      position: 'absolute',
+      right: 25,
+      top: 55
+    },
+    callIcon2: {
+      position: 'absolute',
+      right: 65,
+      top: 55
+    },
+    callIcon3: {
+      position: 'absolute',
+      right: 105,
+      top: 55
+    },
+    para: {
+      lineHeight: 1.1,
+      marginLeft: '15px',
+      marginBottom: '15px',
+    },
     badge1: { top: 22, right: 23 },
     actionBtn: { marginLeft: 45 },
     btnIcon: { height: 85, width: 85 },

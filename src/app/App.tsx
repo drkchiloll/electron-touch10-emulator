@@ -2,9 +2,10 @@ import * as React from 'react'
 
 import { Dialog, IconButton } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
+import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
+
 // Import Components
 import { Main, Meetings, Call, AccountDialog } from './components';
-
 import { JsXAPI, Accounts } from './lib';
 
 export class App extends React.Component<any, any> {
@@ -16,7 +17,8 @@ export class App extends React.Component<any, any> {
     meeting: null,
     callId: null,
     caller: null,
-    acctDialog: false
+    acctDialog: false,
+    connected: true
   }
 
   componentWillMount() {
@@ -39,6 +41,10 @@ export class App extends React.Component<any, any> {
     JsXAPI.account = account;
     JsXAPI.init()
       .then(() => {
+        JsXAPI.xapi.addListener('disconnect-error', () => {
+          this.setState({ connected: false });
+          this.getConnected(account);
+        });
         return JsXAPI.xapi.status
           .get('Call')
           .then(res => {
@@ -54,13 +60,16 @@ export class App extends React.Component<any, any> {
               this.setState({
                 mainView: true,
                 acctDialog: false,
-                account
+                account,
+                connected: true
               });
             }
           })
       })
       .catch(e => {
-        setTimeout(this.getConnected, 10000);
+        console.log(e);
+        this.setState({ connected: false });
+        setTimeout(this.getConnected(account), 5000);
       });
   }
 
@@ -119,10 +128,14 @@ export class App extends React.Component<any, any> {
 
   render() {
     const {
-      mainView, meetingsView,
+      mainView, meetingsView, connected,
       callView, acctDialog, account
     } = this.state;
     return <div>
+      <p style={{ font: '14px arial', color: 'grey', width: 200 }}>{account.name}>
+        <IsConnectedIcon style={{ position: 'absolute', top: 10 }}
+          color={connected ? 'green' : 'red'} />
+      </p>
       {
         mainView ?
           <Main switch={this.updateView} account={account} /> :

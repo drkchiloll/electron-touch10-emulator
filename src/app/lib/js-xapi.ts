@@ -35,7 +35,8 @@ export class JsXAPI {
     return new Promise((resolve, reject) => {
       this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
         username: this.account.username,
-        password: this.account.password
+        password: this.account.password,
+        readyTimeout: 2500
       });
 
       this.xapi.on('ready', () => {
@@ -44,7 +45,7 @@ export class JsXAPI {
       });
 
       this.xapi.on('error', (err) => {
-        console.log(err);
+        this.xapi.emit('disconnect-error');
         return reject(err);
       });
 

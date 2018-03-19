@@ -1,10 +1,5 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
-import {
-  FloatingActionButton, Badge, FontIcon,
-  Subheader, IconButton, Paper, Divider,
-  Drawer
-} from 'material-ui';
 import VideoCall from 'material-ui/svg-icons/av/videocam';
 import Share from 'material-ui/svg-icons/content/content-copy'
 import Meeting from 'material-ui/svg-icons/action/event';
@@ -19,14 +14,18 @@ import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
+import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
+import {
+  FloatingActionButton, Badge, FontIcon,
+  Subheader, IconButton, Paper, Divider,
+  Drawer
+} from 'material-ui';
 import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
 
 import { CallDirectory } from './index';
-
 import { JsXAPI, Time } from '../lib';
-
 import { remote } from 'electron';
 
 
@@ -43,27 +42,12 @@ export class Main extends React.Component<any,any> {
       status: 'Standby',
       directoryDialog: false,
       callError: false,
-      incomingCall: {}
+      incomingCall: {},
+      meetings: null
     };
   }
 
   timeout: any;
-
-  call: any;
-
-  componentDidMount() {
-    if(JsXAPI.xapi.eventNames().indexOf('updates') === -1) {
-      JsXAPI.xapi.on('update', this.eventHandler);
-    }
-    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 2500);
-    this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
-  }
-
-  componentWillUnmount() {
-    clearTimeout(this.timeout);
-    clearInterval(JsXAPI.eventInterval);
-    JsXAPI.xapi.removeAllListeners();
-  }
 
   componentWillMount() {
     window.addEventListener('resize', () => {
@@ -72,79 +56,6 @@ export class Main extends React.Component<any,any> {
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
-
-    JsXAPI.getMeetings().then((meetings) => {
-      if(meetings.length !== 0) {
-        this.meetingHander(meetings[0]);
-      }
-      return;
-    }).then(() => {
-      return Promise.all([
-        JsXAPI.getAudio(),
-        JsXAPI.wakeStatus(),
-        JsXAPI.getMicStatus()
-      ]);
-    }).then((results) => {
-      this.setState({
-        volume: results[0],
-        status: results[1] === 'Off' ? 'Awake': 'Standby',
-        mic: results[2]
-      });
-    });
-  }
-
-  initEvents = () => {
-    JsXAPI.xapi.on('update', this.eventHandler);
-    this.call = JsXAPI.xapi.feedback.on('/Status/Call', this.callHandler);
-  }
-
-  eventHandler = (updates) => {
-    if(updates === 'closing') return setTimeout(this.initEvents, 1000);
-    if(updates[0].length > 0) {
-      this.meetingHander(updates[0][0]);
-    }
-    this.setState({
-      meetings: updates[0],
-      volume: updates[1],
-      status: updates[2] === 'Off' ? 'Awake' : 'Standby',
-      mic: updates[3]
-    });
-  }
-
-  callHandler = call => {
-    let { incomingCall } = this.state;
-    if(call && call.id &&
-      call.Direction === 'Incoming' && call.AnswerState === 'Unanswered') {
-      const win = remote.getCurrentWindow();
-      win.focus();
-      incomingCall['id'] = call.id;
-      incomingCall['callback'] = call.CallbackNumber;
-      incomingCall['display'] = call.DisplayName;
-      incomingCall['status'] = call.Status;
-      incomingCall['disconnect'] = false;
-      this.setState({ incomingCall });
-    }
-    let { directoryDialog } = this.state;
-    if(call && call.id && call.AnswerState === 'Answered' && !incomingCall.disconnect) {
-      if(directoryDialog) this.setState({ directoryDialog: false });
-      this.call();
-      JsXAPI.xapi.status
-        .get(`Call ${call.id} DisplayName`)
-        .then(caller => {
-          this.props.switch({
-            callView: true,
-            mainView: false,
-            meetingsView: false,
-            caller,
-            callId: call.id
-          });
-        });
-    } else if(call.id && call.ghost === 'True' && !incomingCall.id) {
-      console.log('error');
-      this.setState({ callError: true })
-    } else if(incomingCall.id && call.ghost) {
-      this.setState({ incomingCall: {}});
-    }
   }
 
   meetingHander = (nextMeeting) => {
@@ -161,10 +72,8 @@ export class Main extends React.Component<any,any> {
     }
   }
 
-  _closeConnection = () => JsXAPI.closeConnection();
-
-  _floatAction = () =>
-    <FloatingActionButton
+  _floatAction = () => {
+    return <FloatingActionButton
       onClick={this.redirect}
       backgroundColor={deepOrange400}
       style={{ marginLeft: 45 }}
@@ -175,6 +84,7 @@ export class Main extends React.Component<any,any> {
         }} />
       </FontIcon>
     </FloatingActionButton>
+  }
 
   redirectTimer = () => {
     this.timeout = setTimeout(() => {
@@ -189,15 +99,14 @@ export class Main extends React.Component<any,any> {
     }, 2000);
   }
 
-  redirect = () => this.props.switch({ meetingsView: true });
+  redirect = () => this.props.switch({ meetingsView: true, meetings: this.state.meetings });
 
   callRedirect = (update) => this.props.switch(update);
 
   render() {
     let MeetBadge: any;
-    let {
-      meetInTen, volume, status, directoryDialog, mic, callError, incomingCall
-    } = this.state;
+    let { meetInTen, incomingCall } = this.state;
+    let { volume, meetings, status, mic, directoryDialog, callError } = this.props;
     if(meetInTen) {
       MeetBadge =
         <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
@@ -213,7 +122,6 @@ export class Main extends React.Component<any,any> {
     }
     return (
       <div>
-        <p style={{ font: '14px arial', color: 'grey'}}>{this.props.account.name}></p>
         {
           directoryDialog ?
             <CallDirectory close={() => this.setState({directoryDialog: false })}
@@ -245,9 +153,7 @@ export class Main extends React.Component<any,any> {
               } else {
                 action = 'Activate';
               }
-              JsXAPI.updateWakeStatus(action).then((resp) => {
-                this.setState({ status: status === 'Standby' ? 'Awake': 'Standby' });
-              })
+              JsXAPI.updateWakeStatus(action);
             }}>
             <FontIcon>
               { status === 'Standby' ?
@@ -278,8 +184,7 @@ export class Main extends React.Component<any,any> {
               primary={true}
               badgeStyle={this.styles.badge2}>
               <IconButton style={{margin:0, padding:0}} onClick={() =>
-                JsXAPI.setAudio('Decrease').then(() =>
-                  this.setState({ volume: --volume }))
+                JsXAPI.setAudio('Decrease')
               }> <VolumeDown /> </IconButton>
             </Badge>
             <strong> Volume: {volume}</strong>
@@ -287,17 +192,14 @@ export class Main extends React.Component<any,any> {
               primary={true}
               badgeStyle={this.styles.badge2}>
               <IconButton style={{margin:0, padding:0}} onClick={() =>
-                JsXAPI.setAudio('Increase').then(() =>
-                  this.setState({ volume: ++volume }))
+                JsXAPI.setAudio('Increase')
               } > <VolumeUp /> </IconButton>
             </Badge>
             <br/>
             <IconButton style={{ marginLeft: 10, marginBottom: 10 }}
               onClick={() => {
                 let action = mic === 'On' ? 'Unmute' : 'Mute';
-                JsXAPI.setMic(action).then(() => {
-                  this.setState({ mic: action === 'Mute' ? 'On' : 'Off' });
-                });
+                JsXAPI.setMic(action);
               }} >
               {
                 mic === 'Off' ?
@@ -310,53 +212,8 @@ export class Main extends React.Component<any,any> {
             <div style={this.styles.divider}></div>
           </Paper>
         </div>
-        <Drawer open={incomingCall.hasOwnProperty('id')}
-          openSecondary={true}
-          containerStyle={{
-            position: 'absolute', height: 115, top: 10,
-            border: '1px solid red',
-            borderRadius: '8px'
-          }}
-          width={525}>
-          <h4 style={{width: 300, marginLeft: '15px' }} > Incoming Call from {incomingCall.display} </h4>
-          <p style={this.styles.para}>
-            <span>Callback Number</span><br />
-            <span>{incomingCall.callback}</span>
-          </p>
-          <IconButton onClick={this.dndCall}
-            style={this.styles.callIcon3}>
-            <DnDIcon />
-          </IconButton>
-          <IconButton onClick={this.rejectCall}
-            style={this.styles.callIcon2} > <CallEndIcon color='red' /> </IconButton>
-          <IconButton onClick={this.acceptCall}
-            style={this.styles.callIcon1}> <CallIcon color='green' /> </IconButton>
-        </Drawer>
       </div>
     );
-  }
-
-  dndCall = () => {
-    const { incomingCall: { id }} = this.state;
-    JsXAPI.xapi.command('Call Ignore', { CallId: id });
-  }
-
-  acceptCall = () => {
-    const { incomingCall: { id } } = this.state;
-    JsXAPI.xapi.command('Call Accept', { CallId: id });
-  };
-
-  rejectCall = (e) => {
-    let { incomingCall } = this.state;
-    incomingCall['disconnect'] = true;
-    this.setState({ incomingCall });
-    JsXAPI.xapi.command('Call Reject', { CallId: incomingCall.id }).then(console.log);
-    // If a Device Does Not have a Forward Busy Set Then the Incoming Call will Ring and Ring
-    // JsXAPI.xapi.command('Call Accept', { CallId: incomingCall.id }).then(() => {
-    //   setTimeout(() => {
-    //     JsXAPI.xapi.command('Call Reject', { CallId: incomingCall.id })
-    //   }, 100);
-    // })
   }
 
   styles: any = {

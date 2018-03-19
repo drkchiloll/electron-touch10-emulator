@@ -177,6 +177,9 @@ export class App extends React.Component<App.Props, App.State> {
 
   eventhandler = (stuffs) => {
     let { xapiData } = this.state;
+    if(stuffs && stuffs === 'closing') {
+      setTimeout(this.registerEvents, 1000);
+    }
     if(xapiData.meetings && xapiData.meetings.length === stuffs[0]) {
       return;
     } else {

@@ -118,7 +118,6 @@ export class App extends React.Component<App.Props, App.State> {
   callCheck = () => {
     return JsXAPI.getStatus('Call')
       .then((call:any) => {
-        console.log(call);
         if(!call) {
           return false;
         } else if(call.length === 1) {

@@ -1,4 +1,5 @@
-import * as React from 'react'
+import * as React from 'react';
+import * as Promise from 'bluebird';
 import { remote } from 'electron';
 import { Dialog, IconButton, Drawer } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
@@ -7,8 +8,9 @@ import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
 // Import Components
-import { Main, Meetings, Call, AccountDialog } from './components';
+import { Main, Meetings, Call, AccountDialog, CallDirectory } from './components';
 import { JsXAPI, Accounts } from './lib';
+import { CallHandler } from './lib/callhandler';
 
 export namespace App {
   export interface Props { }
@@ -17,12 +19,10 @@ export namespace App {
     mainView: boolean;
     meetingsView: boolean;
     callView: boolean;
-    meeting?: any;
     callId?: any;
     caller?: any;
     acctDialog: boolean;
     connected: boolean;
-    meetings: any;
     xapiData: {
       meeting: any;
       meetings: any;
@@ -35,6 +35,15 @@ export namespace App {
         callback?: string;
         display?: string;
         status?: string;
+        answered: boolean;
+      },
+      outgoingCall?: {
+        id?: string;
+        disconnect: boolean;
+        callback?: string;
+        display?: string;
+        status?: string;
+        answered: boolean;
       },
       callError: boolean;
       directoryDialog: boolean;
@@ -54,19 +63,18 @@ export class App extends React.Component<App.Props, App.State> {
       mainView: false,
       meetingsView: false,
       callView: false,
-      meeting: null,
       callId: null,
       caller: null,
       acctDialog: false,
       connected: true,
-      meetings: null,
       xapiData: {
         meeting: null,
         meetings: null,
         volume: 0,
         mic: 'Off',
         status: 'Standby',
-        incomingCall: {},
+        incomingCall: { answered: false, disconnect: false },
+        outgoingCall: { answered: false, disconnect: false },
         callError: false,
         directoryDialog: false
       }
@@ -89,8 +97,7 @@ export class App extends React.Component<App.Props, App.State> {
 
   initHandler = (account) => {
     this.connect(account)
-      .then(this.callCheck)
-      .then(result => !result ? this.xapiDataTracking() : null)
+      .then(this.xapiDataTracking)
       .then(() => {
         this.setState({
           mainView: true,
@@ -100,7 +107,7 @@ export class App extends React.Component<App.Props, App.State> {
         });
         this.registerEvents();
         JsXAPI.eventInterval = setInterval(JsXAPI.poller, 1000);
-      })
+      }).then(this.callCheck);
   }
 
   connect = (account) => {
@@ -118,6 +125,7 @@ export class App extends React.Component<App.Props, App.State> {
   callCheck = () => {
     return JsXAPI.getStatus('Call')
       .then((call:any) => {
+        console.log(call);
         if(!call) {
           return false;
         } else if(call.length === 1) {
@@ -127,10 +135,17 @@ export class App extends React.Component<App.Props, App.State> {
             caller: call[0].DisplayName,
             callId: call[0].id
           });
-          return call[0].id;
+          return true;
         }
       })
   }
+
+  callUpdate = (call) => ({
+    mainView: false, meetingsView: false,
+    callView: true,
+    caller: call.display,
+    callId: call.id
+  });
 
   xapiDataTracking = () => {
     return Promise.all([
@@ -171,7 +186,7 @@ export class App extends React.Component<App.Props, App.State> {
         this.setState({ xapiData });
       })
     }
-    console.log(JsXAPI.xapi.eventNames());
+    // console.log(JsXAPI.xapi.eventNames());
   }
 
   eventhandler = (stuffs) => {
@@ -188,34 +203,42 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   callhandler = call => {
+    let update: any = {};
     let { xapiData } = this.state;
-    let { incomingCall, directoryDialog, callError } = xapiData;
-    if(call && call.id &&
-      call.Direction === 'Incoming' && call.AnswerState === 'Unanswered') {
-      const win = remote.getCurrentWindow();
-      win.focus();
-      incomingCall['id'] = call.id;
-      incomingCall['callback'] = call.CallbackNumber;
-      incomingCall['display'] = call.DisplayName;
-      incomingCall['status'] = call.Status;
-      incomingCall['disconnect'] = false;
-      this.setState({xapiData});
-    }
-    if(call && call.id && call.AnswerState === 'Answered' && !incomingCall.disconnect) {
-      if(directoryDialog) {
-        xapiData['directoryDialog'] = false;
-        xapiData['incomingCall'] = {};
-        this.setState({ xapiData });
+    let { directoryDialog, callError } = xapiData;
+    const { incomingCall, outgoingCall } = CallHandler.read(call);
+    if(outgoingCall && outgoingCall.id) {
+      xapiData['outgoingCall'] = outgoingCall;
+      if(outgoingCall.display && !outgoingCall.disconnect) {
+        xapiData['outgoingCall'] = outgoingCall;
+        update = this.callUpdate(outgoingCall);
       }
-      this.callCheck();
-    } else if(call.id && call.ghost === 'True' && !incomingCall.id) {
-      console.log('error');
-      incomingCall['callError'] = true;
-      this.setState({ xapiData });
-    } else if(incomingCall.id && call.ghost) {
-      console.log('Go Away Dialog');
-      xapiData['incomingCall'] = {};
-      this.setState({ xapiData });
+      if(outgoingCall.disconnect && !outgoingCall.answered) {
+        callError = true;
+        xapiData['outgoingCall'] = { answered: false, disconnect: false };
+      }
+      if(outgoingCall.disconnect) {
+        xapiData['outgoingCall'] = { answered: false, disconnect: false };
+        this.updateView({
+          mainView: true, meetingsView: false
+        });
+      }
+    } else if(incomingCall && incomingCall.id) {
+      xapiData['incomingCall'] = incomingCall;
+      if(incomingCall.answered && !incomingCall.disconnect) {
+        update = this.callUpdate(incomingCall);
+      }
+      if(incomingCall.disconnect) {
+        this.updateView({
+          mainView: true,
+          meetingsView: false,
+          callView: false
+        })
+      }
+    }
+    this.setState({ xapiData });
+    if(update && update.callId) {
+      this.updateView(update);
     }
   }
 
@@ -243,13 +266,16 @@ export class App extends React.Component<App.Props, App.State> {
     const {
       mainView, meetingsView, callView
     } = args;
-    if(meetingsView) {
+    if(args.directory) {
+      let {xapiData} = this.state;
+      xapiData['directoryDialog'] = true;
+      this.setState({ xapiData });
+    } else if(meetingsView) {
       this.setState({
         meetingsView,
         mainView: false,
         callView: false,
-        acctDialog: false,
-        meetings: args.meetings
+        acctDialog: false
       });
     } else if(mainView) {
       this.setState({
@@ -293,7 +319,7 @@ export class App extends React.Component<App.Props, App.State> {
   render() {
     const {
       mainView, meetingsView, connected,
-      callView, acctDialog, account, meetings,
+      callView, acctDialog, account,
       xapiData: { incomingCall }
     } = this.state;
     return <div>
@@ -305,7 +331,7 @@ export class App extends React.Component<App.Props, App.State> {
         mainView ?
           <Main switch={this.updateView} {...this.state.xapiData } /> :
         meetingsView ?
-          <Meetings switch={this.updateView} meetings={meetings} /> :
+          <Meetings switch={this.updateView} meetings={this.state.xapiData.meetings} /> :
         callView ?
           <Call switch={this.updateView} { ...this.state } /> :
         acctDialog ?
@@ -319,7 +345,7 @@ export class App extends React.Component<App.Props, App.State> {
         onClick={this.modifyAccount} >
         <SettingsIcon />
       </IconButton>
-      <Drawer open={incomingCall.hasOwnProperty('id')}
+      <Drawer open={incomingCall.hasOwnProperty('id') && !incomingCall.answered && !incomingCall.disconnect}
         openSecondary={true}
         containerStyle={{
           position: 'absolute', height: 115, top: 10,
@@ -340,6 +366,16 @@ export class App extends React.Component<App.Props, App.State> {
         <IconButton onClick={this.acceptCall}
           style={this.styles.callIcon1}> <CallIcon color='green' /> </IconButton>
       </Drawer>
+      {
+        this.state.xapiData.directoryDialog ?
+          <CallDirectory switch={this.updateView} error={this.state.xapiData.callError}
+            close={() => {
+              let {xapiData} = this.state;
+              xapiData['directoryDialog'] = false;
+              this.setState({ xapiData });
+            }} /> :
+          null
+      }
     </div>
   }
 
@@ -352,13 +388,11 @@ export class App extends React.Component<App.Props, App.State> {
     let { xapiData } = this.state;
     let id = xapiData.incomingCall.id;
     JsXAPI.commander({ string: 'Call Accept', param: { CallId: id }});
-    xapiData['incomingCall'] = {};
   };
 
   rejectCall = (e) => {
     let { xapiData } = this.state;
     let id = xapiData.incomingCall.id;
-    xapiData['incomingCall']['disconnect'] = true;
     this.setState({ xapiData });
     JsXAPI.commander({
       string: 'Call Reject',

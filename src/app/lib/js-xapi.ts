@@ -49,8 +49,8 @@ export class JsXAPI {
       });
 
       this.xapi.on('error', (err) => {
+        console.log(err);
         this.event.emit('connection-error');
-        this.xapi.removeAllListeners('update');
         return reject(err);
       });
     });

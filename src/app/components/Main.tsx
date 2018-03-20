@@ -23,8 +23,6 @@ import {
 import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
-
-import { CallDirectory } from './index';
 import { JsXAPI, Time } from '../lib';
 import { remote } from 'electron';
 
@@ -56,9 +54,14 @@ export class Main extends React.Component<any,any> {
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
+
+    const { meetings } = this.props;
+    if(meetings && meetings.length > 0) {
+      this.meetingHandler(meetings[0]);
+    }
   }
 
-  meetingHander = (nextMeeting) => {
+  meetingHandler = (nextMeeting) => {
     const { startTime, endTime } = nextMeeting;
     const meetInTen = Time.meetInTen(startTime, endTime);
     this.setState({ meetInTen, nextMeeting });
@@ -105,7 +108,7 @@ export class Main extends React.Component<any,any> {
 
   render() {
     let MeetBadge: any;
-    let { meetInTen, incomingCall } = this.state;
+    let { meetInTen } = this.state;
     let { volume, meetings, status, mic, directoryDialog, callError } = this.props;
     if(meetInTen) {
       MeetBadge =
@@ -122,16 +125,9 @@ export class Main extends React.Component<any,any> {
     }
     return (
       <div>
-        {
-          directoryDialog ?
-            <CallDirectory close={() => this.setState({directoryDialog: false })}
-              switch={this.callRedirect}
-              error={callError} /> :
-            null
-        }
         <div style={{ left: this.state.left, top: this.state.top, position: 'absolute' }}>
           <FloatingActionButton backgroundColor={green500} iconStyle={{ height: 85, width: 85 }}
-            onClick={() => this.setState({ directoryDialog: true })} >
+            onClick={() => this.props.switch({ directory: true })} >
             <FontIcon>
               <VideoCall style={{ height: 60, width: 60, marginTop: '10px', color: '#CFD8DC' }} />
             </FontIcon>

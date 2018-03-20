@@ -20,14 +20,6 @@ export class Meetings extends React.Component<any, any> {
     sessionStorage.setItem('redirectCounter', '2')
   }
 
-  componentWillMount() {
-    setTimeout(() => this.getMeetings(), 200);
-  }
-
-  componentWillReceiveProps(newProps) {
-    this.getMeetings();
-  }
-
   getMeetings() {
     JsXAPI.getMeetings().then(meetings => {
       this.setState({ meetings })
@@ -99,7 +91,7 @@ export class Meetings extends React.Component<any, any> {
   }
 
   render() {
-    const { meetings }: any = this.state;
+    const { meetings } = this.props;
     return (
       <div>
         <IconButton style={this.styles.closeIcon}

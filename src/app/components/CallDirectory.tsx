@@ -9,7 +9,11 @@ import {
 import CorpDirecotryIcon from 'material-ui/svg-icons/communication/contact-phone';
 import CallHistoryIcon from 'material-ui/svg-icons/action/history';
 import CallIcon from 'material-ui/svg-icons/communication/call';
-import { indigo500, indigo200 } from 'material-ui/styles/colors'
+import DialPadIcon from 'material-ui/svg-icons/communication/dialpad';
+
+import { indigo500, indigo200 } from 'material-ui/styles/colors';
+
+import { Dialer } from './Dialer';
 
 export class CallDirectory extends React.Component<any,any> {
   searchTimeout: any;
@@ -82,11 +86,12 @@ export class CallDirectory extends React.Component<any,any> {
     const { error } = this.props;
     return (
       <Dialog open={true}
+        autoScrollBodyContent={true}
         contentStyle={{
           minHeight: '80vh',
           maxHeight: '80vh',
+          width: 475
         }}
-        autoScrollBodyContent={true}
         onRequestClose={() => {
           this.props.close();
         }} >
@@ -121,14 +126,17 @@ export class CallDirectory extends React.Component<any,any> {
             }
         </div>
         <Tabs value={tabValue}
-          tabItemContainerStyle={{width: 225, backgroundColor: 'white', height: 65}}
+          tabItemContainerStyle={{width: 275, backgroundColor: 'white', height: 65}}
           initialSelectedIndex={this.state.tabIdx}
-          inkBarStyle={{ background: indigo500 }}>
+          inkBarStyle={{ background: indigo500 }}
+          onChange={(tabValue, index) => {
+            this.setState({ tabValue });
+          }} >
           <Tab style={{ color: 'black' }}
             icon={<CorpDirecotryIcon style={{ color: 'black' }} /> }
             label='Directory'
             value='Corporate'>
-            <List style={{ width: 350, marginLeft: 40 }} >
+            <List style={{ width: 300, marginLeft: 5 }} >
               {
                 !users ? null :
                   users.map((u:any) => {
@@ -158,13 +166,27 @@ export class CallDirectory extends React.Component<any,any> {
             </List>
           </Tab>
           <Tab value='History'
-            icon={<CallHistoryIcon style={{ color: 'black' }} />}
+            icon={<CallHistoryIcon color='black' />}
             label='History'
             style={{ color: 'black' }} >
-          
+          </Tab>
+          <Tab label='DialPad'
+            style={{ color: 'black' }}
+            value='DialPad'
+            icon={ <DialPadIcon color='black' /> } >
+            <Dialer showBackspace={search ? true : false}
+              dial={this.makeCall}
+              update={(char) => this.setState({ search: search + char })}
+              delete={() => {
+                this.interval = setInterval(() => {
+                  this.setState({ search: search.substring(0, search.length-1)})
+                }, 500)
+              }}
+              mouseUp={() => clearInterval(this.interval)} />
           </Tab>
         </Tabs>
       </Dialog>
     );
   }
+  interval: any;
 }

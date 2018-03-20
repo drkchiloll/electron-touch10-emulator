@@ -46,113 +46,20 @@ const styles: any = {
 };
 
 export class Call extends React.Component<any, any> {
-  constructor(props) {
-    super(props);
-    this.state = { volume: 0, mic: 'Off' };
-  }
-
-  audio: any;
-
-  microphone: any;
-
-  callDisconnects: any;
-
-  componentWillUnmount() {
-    clearInterval(JsXAPI.eventInterval);
-    this.audio();
-    this.microphone();
-    JsXAPI.xapi.removeAllListeners();
-  }
-
-  componentDidMount() {
-    if(JsXAPI.xapi.eventNames().indexOf('updates') === -1) {
-      JsXAPI.xapi.on('update', this.eventHandler);
-    }
-    JsXAPI.eventInterval = setInterval(JsXAPI.poller, 1000);
-  }
-
-  componentWillMount() {
-    const { callId, meeting, caller } = this.props;
-    Promise.all([
-      JsXAPI.getAudio(),
-      JsXAPI.getMicStatus()
-    ]).then((results) => {
-      this.setState({
-        volume: results[0], mic: results[1]
-      });
-      this.registerEvents();
-    });
-  }
-
-  registerEvents = () => {
-    const { callId } = this.props;
-    this.callDisconnects = JsXAPI.xapi.feedback.on('/Status/Call', (data: any) => {
-      if(data.id && data.ghost === 'True') {
-        if(data.id === callId) {
-          this.props.switch({ mainView: true });
-          this.callDisconnects();
-        }
-      }
-    });
-    this.audio = JsXAPI.xapi.feedback.on('/Status/Audio Volume', volume =>
-      this.setState({ volume }));
-    this.microphone = JsXAPI.xapi.feedback.on(
-      '/Status/Audio Microphones Mute', mic => this.setState({ mic })
-    ); 
-  }
-
-  registerCall = () => {
-    const { callId } = this.props;
-    this.callDisconnects = JsXAPI.xapi.feedback.on('/Status/Call', (data: any) => {
-      if(data.id && data.ghost === 'True') {
-        if(data.id === callId) {
-          this.props.switch({ mainView: true });
-          this.callDisconnects();
-        }
-      }
-    });
-  }
-
-  registerAudio = () => {
-    this.audio = JsXAPI.xapi.feedback.on('/Status/Audio Volume', volume =>
-      this.setState({ volume }))
-  };
-
-  registerMic = () => {
-    this.microphone = JsXAPI.xapi.feedback.on(
-      '/Status/Audio Microphones Mute', mic => this.setState({ mic })
-    );
-  };
-
-  initEvents = () => {
-    JsXAPI.xapi.on('update', this.eventHandler);
-    this.registerEvents();
-  }
-
-  eventHandler = (updates) => {
-    if(updates === 'closing') return setTimeout(this.initEvents, 250);
-    let { volume, mic } = this.state;
-    let update:any = {};
-    if(volume !== updates[1]) update['volume'] = updates[1];
-    if(mic !== updates[3]) update['mic'] = updates[3];
-    if(update.volume || update.mic) {
-      this.setState(update);
-    }
-  }
-
   hangup = callId => {
     return JsXAPI.hangUp(callId).then(() => {
-      return JsXAPI.closeConnection();
-    }).then(() => {
-      this.props.switch({
-        mainView: true
-      });
-    });
+      setTimeout(() =>
+        this.props.switch({
+          callView: false,
+          meetingsView: false,
+          mainView: true
+        }), 100
+      )
+    })
   }
 
   render() {
-    let { meeting, caller, callId } = this.props;
-    let { volume, mic } = this.state;
+    let { meeting, caller, callId, xapiData } = this.props;
     let avatar: any, title: string;
     if(meeting) {
       let temp = meeting.endpoint.number;
@@ -163,7 +70,6 @@ export class Call extends React.Component<any, any> {
     }
     return (
       <div>
-        <p style={{ font: '14px arial', color: 'grey' }}>{this.props.account.name}></p>
         <Paper style={styles.main}>
           <Avatar style={styles.inner} backgroundColor='grey' size={85}>
             { avatar }
@@ -179,7 +85,7 @@ export class Call extends React.Component<any, any> {
                 JsXAPI.setAudio('Decrease')
               }> <VolumeDown /> </IconButton>
             </Badge>
-            <strong>Volume: {volume}</strong>
+            <strong>Volume: {xapiData.volume}</strong>
             <Badge badgeContent={<AddIcon color='white' style={styles.plusminusIcon} />}
               primary={true}
               badgeStyle={styles.badge2}>
@@ -189,11 +95,11 @@ export class Call extends React.Component<any, any> {
             </Badge>
             <IconButton style={{ marginLeft: 10, marginBottom: 10 }}
               onClick={() => {
-                let action = mic === 'On' ? 'Unmute' : 'Mute';
+                let action = xapiData.mic === 'On' ? 'Unmute' : 'Mute';
                 JsXAPI.setMic(action);
               }} >
               {
-                mic === 'Off' ?
+                xapiData.mic === 'Off' ?
                   <MicOnIcon /> :
                   <MicOffIcon />
               }
@@ -215,9 +121,7 @@ export class Call extends React.Component<any, any> {
             <TransferIcon />
           </FloatingActionButton>
           <FloatingActionButton style={styles.icon}
-            onClick={() => {
-              this.hangup(callId);
-            }}
+            onClick={() => this.hangup(callId)}
             backgroundColor='red' >
             <CallEndIcon />
           </FloatingActionButton>

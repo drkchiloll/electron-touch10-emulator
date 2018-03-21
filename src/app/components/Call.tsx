@@ -14,6 +14,7 @@ import TransferIcon from 'material-ui/svg-icons/navigation/arrow-forward';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import MicOnIcon from 'material-ui/svg-icons/av/mic';
 import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
+import DialPadIcon from 'material-ui/svg-icons/communication/dialpad';
 import { JsXAPI, Time } from '../lib';
 
 const styles: any = {
@@ -108,23 +109,30 @@ export class Call extends React.Component<any, any> {
           </div>
         </Paper>
         <div style={{ marginTop: '35px' }}>
-          <FloatingActionButton style={{ marginLeft: '250px' }} backgroundColor='black' >
-            <AddIcon />
-          </FloatingActionButton>
-          <FloatingActionButton style={styles.icon} backgroundColor='black' >
-            <ShareIcon className='share' />
-          </FloatingActionButton>
-          <FloatingActionButton style={styles.icon} backgroundColor='black' >
-            <PauseIcon />
-          </FloatingActionButton>
-          <FloatingActionButton style={styles.icon} backgroundColor='black' >
-            <TransferIcon />
-          </FloatingActionButton>
-          <FloatingActionButton style={styles.icon}
-            onClick={() => this.hangup(callId)}
-            backgroundColor='red' >
-            <CallEndIcon />
-          </FloatingActionButton>
+          <Avatar size={60} style={{ marginLeft: '195px' }} backgroundColor='black' >
+            <AddIcon color='white' />
+          </Avatar>
+          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+            <ShareIcon className='share' color='white' />
+          </Avatar>
+          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+            <PauseIcon color='white' />
+          </Avatar>
+          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+            <IconButton tooltip='Keypad' tooltipPosition='bottom-center'
+              onClick={() => console.log('hi')} >
+              <DialPadIcon color='white' />
+            </IconButton>
+          </Avatar>
+          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+            <TransferIcon color='white' />
+          </Avatar>
+          <Avatar size={60} style={styles.icon} backgroundColor='red'>
+            <IconButton
+              onClick={() => this.hangup(callId)} >
+              <CallEndIcon color='white' />
+            </IconButton>
+          </Avatar>
         </div>
       </div>
     )

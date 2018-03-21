@@ -161,19 +161,34 @@ export class JsXAPI {
   };
 
   static getDirectory({query = ''}) {
-    return this.commander({
-      string: 'Phonebook Search',
-      param: {
-        PhonebookId: 'default',
-        PhonebookType: 'Corporate',
-        SearchString: query,
-        Limit: 65534
-      }
-    }).then(({ Contact }) => {
-      if(!Contact) {
+    let contacts: any = [];
+
+    const search = (start, end) => {
+      return this.commander({
+        string: 'Phonebook Search',
+        param: {
+          PhonebookId: 'default',
+          PhonebookType: 'Corporate',
+          SearchString: query,
+          Offset: start,
+          Limit: end
+        }
+      }).then(({ Contact }) => {
+        if(!Contact) return contacts;
+        else if(Contact.length === end) {
+          contacts = contacts.concat(Contact);
+          return search(start+63, end);
+        } else {
+          contacts = contacts.concat(Contact);
+          return contacts;
+        }
+      })
+    };
+    return search(0,63).then((contacts) => {
+      if(contacts.length === 0) {
         return [];
       } else {
-        return Promise.reduce(Contact, (a, u: any) => {
+        return Promise.reduce(contacts, (a, u: any) => {
           if(u.Name === 'user') return a;
           let user: any = {
             id: u.id,
@@ -182,8 +197,8 @@ export class JsXAPI {
           if(u.ContactMethod && u.ContactMethod.length > 0) {
             return Promise.map(u.ContactMethod, ({ Number }) => {
               return { number: Number };
-            }).then(contacts => {
-              user['contacts'] = contacts;
+            }).then(listings => {
+              user['contacts'] = listings;
               a.push(user);
               return a;
             });

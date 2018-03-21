@@ -35,49 +35,100 @@ export class Main extends React.Component<any,any> {
       top: window.innerHeight / 3,
       meetInTen: false,
       nextMeeting: null,
-      volume: 0,
-      mic: 'Off',
-      status: 'Standby',
-      directoryDialog: false,
-      callError: false,
-      incomingCall: {},
-      meetings: null
+      meetingBadge: null,
+      durationInMs: null
     };
   }
 
-  timeout: any;
+  timeout: any = null;
 
-  componentWillMount() {
+  componentDidMount() {
     window.addEventListener('resize', () => {
       let { left, top } = this.state;
       left = window.innerWidth / 3.5;
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
-
     const { meetings } = this.props;
-    if(meetings && meetings.length > 0) {
-      this.meetingHandler(meetings[0]);
+    if(!JSON.parse(localStorage.getItem('nextMeeting')))
+      localStorage.setItem('nextMeeting', JSON.stringify({}));
+    this.compareMeetings(
+      JSON.parse(localStorage.getItem('nextMeeting')), meetings
+    )
+  }
+
+  componentWillReceiveProps() {
+    const { meetings } = this.props;
+    this.compareMeetings(
+      JSON.parse(localStorage.getItem('nextMeeting')), meetings);
+  }
+
+  storeMeeting(meeting) {
+    localStorage.setItem('nextMeeting', JSON.stringify(meeting));
+  }
+
+  compareMeetings = (nextMeeting, meetings) => {
+    let meeting: any;
+    if(nextMeeting.hasOwnProperty('id')) {
+      if(meetings && meetings instanceof Array && meetings.length > 0) {
+        meeting = meetings[0];
+        if(meeting.id === nextMeeting.id) {
+          if(meeting.startTime != nextMeeting.startTime) {
+            nextMeeting.startTime = meeting.startTime;
+            nextMeeting.endTime = meeting.endTime;
+            this.storeMeeting(nextMeeting);
+            if(nextMeeting.redirected) nextMeeting.redirected = false;
+            this.meetingHandler(nextMeeting);
+          } else if(!this.state.durationInMs && !this.state.meetInTen) {
+            this.meetingHandler(nextMeeting);
+          }
+        } else {
+          nextMeeting = meeting;
+          nextMeeting.redirected = false;
+          this.storeMeeting(nextMeeting);
+          this.meetingHandler(nextMeeting);
+        }
+      } else {
+        this.setState({ meetInTen: false});
+        if(meetings instanceof Array) {
+          this.storeMeeting({});
+          clearTimeout(this.timeout);
+        }
+      }
+    } else if(meetings && meetings.length > 0) {
+      console.log(meetings);
+      meeting = meetings[0];
+      if(meeting && meeting.id && meeting.startTime && meeting.endTime) {
+        meeting['redirected'] = false;
+        this.storeMeeting(meeting);
+        this.meetingHandler(meeting);
+      }
     }
   }
 
   meetingHandler = (nextMeeting) => {
     const { startTime, endTime } = nextMeeting;
     const meetInTen = Time.meetInTen(startTime, endTime);
-    this.setState({ meetInTen, nextMeeting });
+    let durationInMs: any;
     if(!meetInTen && !Time.meetingEnded(endTime)) {
       const x = Time.timesubtract(startTime).format();
-      const durationInMs = Time.durationUntilMeeting(x);
-      // console.log(durationInMs);
+      durationInMs = Time.durationUntilMeeting(x);
+      console.log(durationInMs);
       this.timeout = setTimeout(() => {
-        this.redirect();
+        this.setState({ meetInTen: true });
+        if(!nextMeeting.redirected) {
+          this.redirect(nextMeeting);
+        }
       }, durationInMs);
     }
+    this.setState({ meetInTen, durationInMs });
   }
 
   _floatAction = () => {
     return <FloatingActionButton
-      onClick={this.redirect}
+      onClick={() => {
+        this.redirect(JSON.parse(localStorage.getItem('nextMeeting')))
+      }}
       backgroundColor={deepOrange400}
       style={{ marginLeft: 45 }}
       iconStyle={{ height: 85, width: 85 }} >
@@ -89,43 +140,20 @@ export class Main extends React.Component<any,any> {
     </FloatingActionButton>
   }
 
-  redirectTimer = () => {
-    this.timeout = setTimeout(() => {
-      let redirectCounter = sessionStorage.getItem('redirectCounter');
-      if(!redirectCounter) {
-        sessionStorage.setItem('redirectCounter', '1');
-        this.redirect();
-      } else if(parseInt(redirectCounter, 10) === 1) {
-        sessionStorage.setItem('redirectCounter', '2');
-        this.redirect();
-      }
-    }, 2000);
+  redirect = (nextMeeting) => {
+    nextMeeting.redirected = true;
+    localStorage.setItem('nextMeeting', JSON.stringify(nextMeeting));
+    this.props.switch({ meetingsView: true });
   }
-
-  redirect = () => this.props.switch({ meetingsView: true, meetings: this.state.meetings });
-
-  callRedirect = (update) => this.props.switch(update);
 
   render() {
     let MeetBadge: any;
-    let { meetInTen } = this.state;
+    let { meetInTen, left, top } = this.state;
     let { volume, meetings, status, mic, directoryDialog, callError } = this.props;
-    if(meetInTen) {
-      MeetBadge =
-        <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1} >
-          {this._floatAction()}
-        </Badge>
-      this.redirectTimer();
-    } else {
-      let redirectCounter = sessionStorage.getItem('redirectCounter');
-      if(redirectCounter && parseInt(redirectCounter, 10) > 1) {
-        sessionStorage.setItem('redirectCounter', '0');
-      }
-      MeetBadge = this._floatAction();
-    }
+
     return (
       <div>
-        <div style={{ left: this.state.left, top: this.state.top, position: 'absolute' }}>
+        <div style={{ left, top, position: 'absolute' }}>
           <FloatingActionButton backgroundColor={green500} iconStyle={{ height: 85, width: 85 }}
             onClick={() => this.props.switch({ directory: true })} >
             <FontIcon>
@@ -140,8 +168,17 @@ export class Main extends React.Component<any,any> {
               }} />
             </FontIcon>
           </FloatingActionButton>
-          {MeetBadge}
-          <FloatingActionButton style={{marginLeft: '45px'}} backgroundColor={'grey'} iconStyle={{ height: 85, width: 85 }}
+          {
+            meetInTen ?
+              <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1}>
+                { this._floatAction() }
+              </Badge> :
+              this._floatAction()
+          }
+          <FloatingActionButton
+            style={{marginLeft: '45px'}}
+            backgroundColor={'grey'}
+            iconStyle={{ height: 85, width: 85 }}
             onClick={() => {
               let action: string;
               if(status === 'Standby') {

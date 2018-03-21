@@ -35,11 +35,19 @@ const styles: any = {
     position: 'absolute',
     right: 105,
     top: 55
+  },
+  makereceive: {
+    position: 'absolute',
+    right: 5,
+    top: 5
   }
 };
 
+let color = 'black';
+
 export const CallNotification = (props: any) => {
   const { call } = props;
+  color = color === 'black' ? 'red' : 'black';
   const callDirections = Object.keys(call);
   let direction: string, keyToUse: any, display: string, callback: string;
   if(callDirections.find(key => call[key].hasOwnProperty('id'))) {
@@ -62,8 +70,8 @@ export const CallNotification = (props: any) => {
       width={525} >
       {
         direction === 'in' ?
-          <InIcon style={{ float: 'right' }} /> :
-          <OutIcon style={{ float: 'right' }} />
+          <InIcon style={styles.makereceive} color={color} /> :
+          <OutIcon style={styles.makereceive} color={color} />
       }
       <h4 style={styles.header}> { callMessage } { display } </h4>
       <p style={styles.para}>

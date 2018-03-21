@@ -109,7 +109,7 @@ export class App extends React.Component<App.Props, App.State> {
           connected: true
         });
         this.registerEvents();
-        JsXAPI.eventInterval = setInterval(JsXAPI.poller, 1000);
+        JsXAPI.eventInterval = setInterval(JsXAPI.poller, 60000);
       }).then(this.callCheck);
   }
 
@@ -197,7 +197,7 @@ export class App extends React.Component<App.Props, App.State> {
     if(stuffs && stuffs === 'closing') {
       setTimeout(this.registerEvents, 1000);
     }
-    if(xapiData.meetings && xapiData.meetings.length === stuffs[0]) {
+    if(xapiData.meetings && xapiData.meetings.length === stuffs[0].length) {
       return;
     } else {
       xapiData['meetings'] = stuffs[0];
@@ -210,6 +210,8 @@ export class App extends React.Component<App.Props, App.State> {
     let { xapiData } = this.state;
     let { directoryDialog, callError } = xapiData;
     const { incomingCall, outgoingCall } = CallHandler.read(call);
+    const win = remote.getCurrentWindow();
+    win.focus();
     if(outgoingCall && outgoingCall.id) {
       xapiData['outgoingCall'] = outgoingCall;
       if(outgoingCall.display && !outgoingCall.disconnect) {
@@ -221,7 +223,7 @@ export class App extends React.Component<App.Props, App.State> {
         xapiData['outgoingCall'] = { answered: false, disconnect: false };
       }
       if(outgoingCall.disconnect) {
-        xapiData['outgoingCall'] = { answered: false, disconnect: false };
+        // xapiData['outgoingCall'] = { answered: false, disconnect: false };
         this.updateView({
           mainView: true, meetingsView: false
         });
@@ -339,9 +341,9 @@ export class App extends React.Component<App.Props, App.State> {
         callView ?
           <Call switch={this.updateView} { ...this.state } /> :
         acctDialog ?
-        <AccountDialog accountName={(name) => {}}
-          close={this.closeAccountManagement} /> :
-        null
+          <AccountDialog accountName={(name) => {}}
+            close={this.closeAccountManagement} /> :
+          null
       }
       <IconButton tooltip='Account Management'
         tooltipPosition='top-left'
@@ -361,33 +363,6 @@ export class App extends React.Component<App.Props, App.State> {
           null
       }
     </div>
-  }
-
-  dndCall = () => {
-    const { xapiData: {incomingCall: {id}} } = this.state;
-    JsXAPI.commander({ string: 'Call Ignore', param: { CallId: id }});
-  }
-
-  acceptCall = () => {
-    let { xapiData } = this.state;
-    let id = xapiData.incomingCall.id;
-    JsXAPI.commander({ string: 'Call Accept', param: { CallId: id }});
-  };
-
-  rejectCall = (e) => {
-    let { xapiData } = this.state;
-    let id = xapiData.incomingCall.id;
-    this.setState({ xapiData });
-    JsXAPI.commander({
-      string: 'Call Reject',
-      param: { CallId: id }
-    });
-    // If a Device Does Not have a Forward Busy Set Then the Incoming Call will Ring and Ring
-    // JsXAPI.xapi.command('Call Accept', { CallId: incomingCall.id }).then(() => {
-    //   setTimeout(() => {
-    //     JsXAPI.xapi.command('Call Reject', { CallId: incomingCall.id })
-    //   }, 100);
-    // })
   }
 
   styles: any = {

@@ -121,7 +121,7 @@ export class App extends React.Component<App.Props, App.State> {
     })
     .catch(e => {
       clearInterval(JsXAPI.eventInterval);
-      this.setState({ connected: false });
+      this.setState({ connected: false, acctDialog: true });
     });
   }
 

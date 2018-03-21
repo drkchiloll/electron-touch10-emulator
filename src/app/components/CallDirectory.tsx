@@ -31,9 +31,7 @@ export class CallDirectory extends React.Component<any,any> {
   call: any;
 
   componentDidMount() {
-    JsXAPI.getDirectory({}).then(users => {
-      this.setState({ users })
-    });
+    JsXAPI.getDirectory({}).then(users => this.setState({ users }));
   }
 
   componentDidUpdate() {
@@ -63,7 +61,7 @@ export class CallDirectory extends React.Component<any,any> {
 
   makeCall = () => {
     const { search } = this.state;
-    JsXAPI.dial(search).then(() => this.setState({showProgress: true}));
+    JsXAPI.dial(search).then(this.props.close);
   }
 
   styles = (): any => ({
@@ -139,15 +137,15 @@ export class CallDirectory extends React.Component<any,any> {
             <List style={{ width: 300, marginLeft: 5 }} >
               {
                 !users ? null :
-                  users.map((u:any) => {
+                  users.map((u:any, i:any) => {
                     return (
-                      <ListItem key={u.id}
+                      <ListItem key={i}
                         primaryText={u.name}
                         primaryTogglesNestedList={true}
                         nestedItems={
                           u.contacts.map((contact:any, index:any) => {
                             return (
-                              <ListItem key={`${u.id}_${index}`}
+                              <ListItem key={index}
                                 primaryText={contact.number}
                                 style={{ position: 'relative' }}>
                                 <IconButton onClick={this.makeCall}

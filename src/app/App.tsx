@@ -8,7 +8,10 @@ import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
 // Import Components
-import { Main, Meetings, Call, AccountDialog, CallDirectory } from './components';
+import {
+  Main, Meetings, Call, AccountDialog,
+  CallDirectory, CallNotification
+} from './components';
 import { JsXAPI, Accounts } from './lib';
 import { CallHandler } from './lib/callhandler';
 
@@ -320,8 +323,9 @@ export class App extends React.Component<App.Props, App.State> {
     const {
       mainView, meetingsView, connected,
       callView, acctDialog, account,
-      xapiData: { incomingCall }
+      xapiData: { incomingCall, outgoingCall }
     } = this.state;
+    const call = { incomingCall, outgoingCall };
     return <div>
       <p style={{ font: '14px arial', color: 'grey', width: 200 }}>{account.name}>
         <IsConnectedIcon style={{ position: 'absolute', top: 10 }}
@@ -345,27 +349,7 @@ export class App extends React.Component<App.Props, App.State> {
         onClick={this.modifyAccount} >
         <SettingsIcon />
       </IconButton>
-      <Drawer open={incomingCall.hasOwnProperty('id') && !incomingCall.answered && !incomingCall.disconnect}
-        openSecondary={true}
-        containerStyle={{
-          position: 'absolute', height: 115, top: 10,
-          border: '1px solid red',
-          borderRadius: '8px'
-        }}
-        width={525}>
-        <h4 style={{ width: 300, marginLeft: '15px' }} > Incoming Call from {incomingCall.display} </h4>
-        <p style={this.styles.para}>
-          <span>Callback Number</span><br />
-          <span>{incomingCall.callback}</span>
-        </p>
-        <IconButton onClick={this.dndCall} style={this.styles.callIcon3}>
-          <DnDIcon />
-        </IconButton>
-        <IconButton onClick={this.rejectCall}
-          style={this.styles.callIcon2} > <CallEndIcon color='red' /> </IconButton>
-        <IconButton onClick={this.acceptCall}
-          style={this.styles.callIcon1}> <CallIcon color='green' /> </IconButton>
-      </Drawer>
+      <CallNotification call={call} />
       {
         this.state.xapiData.directoryDialog ?
           <CallDirectory switch={this.updateView} error={this.state.xapiData.callError}

@@ -60,7 +60,7 @@ export const CallNotification = (props: any) => {
     keyToUse = false;
   }
 
-  const callMessage = direction === 'in' ? 'Incoming Call From:' : 'Outgoing Call From:';
+  const callMessage = direction === 'in' ? 'Incoming Call From:' : 'Outgoing Call To:';
   return (
     <Drawer
       open={keyToUse && call[keyToUse].hasOwnProperty('id') &&
@@ -79,14 +79,16 @@ export const CallNotification = (props: any) => {
         <br/>
         <span> { callback } </span>
       </p>
-      <IconButton style={styles.callIcon3}
+      <IconButton style={Object.assign(styles.callIcon3, {
+        display: direction === 'out' ? 'none' : 'inline-block'
+      })}
         onClick={() =>
           JsXAPI.commander({
-            string: 'Call Ignore',
+            string: 'Call Accept',
             param: { Callid: call[keyToUse].id }
           })
         } >
-        <DnDIcon />
+        <CallIcon color='green' />
       </IconButton>
       <IconButton style={styles.callIcon2}
         onClick={() =>
@@ -100,11 +102,11 @@ export const CallNotification = (props: any) => {
       <IconButton style={styles.callIcon1}
         onClick={() =>
           JsXAPI.commander({
-            string: 'Call Accept',
+            string: 'Call Ignore',
             param: { Callid: call[keyToUse].id }
           })
         } >
-        <CallIcon color='green' />
+        <DnDIcon />
       </IconButton>
     </Drawer>
   )

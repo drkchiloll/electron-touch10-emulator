@@ -2,7 +2,8 @@ import * as React from 'react';
 import * as Promise from 'bluebird';
 import {
   Paper, FloatingActionButton, Subheader, Avatar,
-  Chip, SvgIcon, Badge, Divider, FontIcon, IconButton
+  Chip, SvgIcon, Badge, Divider, FontIcon, IconButton,
+  Drawer, TextField
 } from 'material-ui';
 import AddIcon from 'material-ui/svg-icons/content/add';
 import DecreaseIcon from 'material-ui/svg-icons/content/remove'
@@ -15,7 +16,11 @@ import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import MicOnIcon from 'material-ui/svg-icons/av/mic';
 import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import DialPadIcon from 'material-ui/svg-icons/communication/dialpad';
+import CloseIcon from 'material-ui/svg-icons/navigation/close';
+
 import { JsXAPI, Time } from '../lib';
+
+import { Dialer } from './index';
 
 const styles: any = {
   main: {
@@ -44,9 +49,20 @@ const styles: any = {
   heading: { textAlign: 'center', padding: 0, margin: 0 },
   badge2: { top: 30, right: 28, width: 15, height: 15 },
   plusminusIcon: { width: 10, height: 10 },
+  drawer: {
+    position: 'absolute',
+    height: 450,
+    top: 200,
+    right: 100
+  },
 };
 
 export class Call extends React.Component<any, any> {
+  state = {
+    showDialer: false,
+    number: ''
+  }
+
   hangup = callId => {
     return JsXAPI.hangUp(callId).then(() => {
       setTimeout(() =>
@@ -59,8 +75,31 @@ export class Call extends React.Component<any, any> {
     })
   }
 
+  passDigits = () => {
+    let { number } = this.state;
+    const { callId } = this.props;
+    return JsXAPI.commander({
+      string: `Call DTMFSend`,
+      param: {
+        CallId: callId,
+        DTMFString: number + '#'
+      }
+    }).then((resp) => {
+      this.setState({ number: '', showDialer: false });
+    })
+  }
+
+  updateNumber = (char) => {
+    let { number } = this.state;
+    this.setState({ number: number + char });
+  }
+
+  closeDialer = () => this.setState({ showDialer: false, number: '' });
+
   render() {
+    let { number, showDialer } = this.state;
     let { meeting, caller, callId, xapiData } = this.props;
+    console.log(this.props);
     let avatar: any, title: string;
     if(meeting) {
       let temp = meeting.endpoint.number;
@@ -120,7 +159,10 @@ export class Call extends React.Component<any, any> {
           </Avatar>
           <Avatar size={60} style={styles.icon} backgroundColor='black' >
             <IconButton tooltip='Keypad' tooltipPosition='bottom-center'
-              onClick={() => console.log('hi')} >
+              onClick={() => {
+                let { showDialer } = this.state;
+                this.setState({ showDialer: showDialer ? false : true });
+              }} >
               <DialPadIcon color='white' />
             </IconButton>
           </Avatar>
@@ -134,6 +176,32 @@ export class Call extends React.Component<any, any> {
             </IconButton>
           </Avatar>
         </div>
+        <Drawer open={showDialer}
+          openSecondary={true}
+          containerStyle={{
+            position: 'absolute',
+            height: 450,
+            top: 200,
+            right: showDialer ? 100 : -1 /* Doesn't Show when it should be close */
+          }}
+          width={350} >
+          <TextField type='text' id='dialer' fullWidth={true}
+            inputStyle={{ marginLeft: 35, fontSize: 28, color: 'white' }}
+            style={{ backgroundColor: 'black', height: 75 }}
+            underlineShow={false}
+            value={this.state.number} />
+          <IconButton onClick={this.closeDialer} tooltip='close me'
+            tooltipPosition='bottom-left'
+            tooltipStyles={{top:10}}
+            iconStyle={{ height: 15, width: 15 }}
+            style={{ position: 'absolute', right: 10, top: 0, height:25, width:25, padding: 0, margin: 0 }} >
+            <CloseIcon color='white' />
+          </IconButton>
+          <Dialer showBackspace={number === '' ? false : true}
+            passDigits={this.passDigits}
+            update={this.updateNumber}
+            delete={(v) => this.setState({ number: number.substring(0, number.length - 1) })} />
+        </Drawer>
       </div>
     )
   }

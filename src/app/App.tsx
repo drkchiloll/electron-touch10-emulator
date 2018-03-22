@@ -227,18 +227,21 @@ export class App extends React.Component<App.Props, App.State> {
         this.updateView({
           mainView: true, meetingsView: false
         });
+        CallHandler.outgoingCall = {disconnect: false, answered: false };
       }
     } else if(incomingCall && incomingCall.id) {
       xapiData['incomingCall'] = incomingCall;
       if(incomingCall.answered && !incomingCall.disconnect) {
         update = this.callUpdate(incomingCall);
+        CallHandler.incomingCall = { disconnect: false, answered: false };
       }
       if(incomingCall.disconnect) {
         this.updateView({
           mainView: true,
           meetingsView: false,
           callView: false
-        })
+        });
+        CallHandler.incomingCall = {disconnect: false, answered: false};
       }
     }
     this.setState({ xapiData });

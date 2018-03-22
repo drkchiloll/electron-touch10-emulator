@@ -60,7 +60,26 @@ const styles: any = {
 export class Call extends React.Component<any, any> {
   state = {
     showDialer: false,
-    number: ''
+    number: '',
+    callback: null,
+    callbackHint: ''
+  }
+
+  componentDidMount() {
+    let { callId } = this.props;
+    let state: any = {};
+    let callback: string;
+    JsXAPI.getStatus('Call').then(calls => {
+      if(calls && calls.length > 0) {
+        callback = calls.find(c => c.id == callId).CallbackNumber;
+        state['callback'] = callback;
+        if(callback.includes('webex.com')) {
+          state['showDialer'] = true;
+          state['callbackHint'] = 'Enter PIN if Host';
+        }
+        this.setState(state);
+      }
+    });
   }
 
   hangup = callId => {
@@ -85,7 +104,7 @@ export class Call extends React.Component<any, any> {
         DTMFString: number + '#'
       }
     }).then((resp) => {
-      this.setState({ number: '', showDialer: false });
+      this.setState({ number: '', showDialer: false, callbackHint: '' });
     })
   }
 
@@ -94,12 +113,11 @@ export class Call extends React.Component<any, any> {
     this.setState({ number: number + char });
   }
 
-  closeDialer = () => this.setState({ showDialer: false, number: '' });
+  closeDialer = () => this.setState({ showDialer: false, number: '', callbackHint: '' });
 
   render() {
-    let { number, showDialer } = this.state;
+    let { number, showDialer, callback, callbackHint } = this.state;
     let { meeting, caller, callId, xapiData } = this.props;
-    console.log(this.props);
     let avatar: any, title: string;
     if(meeting) {
       let temp = meeting.endpoint.number;
@@ -186,6 +204,8 @@ export class Call extends React.Component<any, any> {
           }}
           width={350} >
           <TextField type='text' id='dialer' fullWidth={true}
+            hintText={callbackHint}
+            hintStyle={{marginLeft: 35, fontSize: 20, color: 'grey'}}
             inputStyle={{ marginLeft: 35, fontSize: 28, color: 'white' }}
             style={{ backgroundColor: 'black', height: 75 }}
             underlineShow={false}

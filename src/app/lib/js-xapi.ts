@@ -34,22 +34,25 @@ export class JsXAPI {
       this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
         username: this.account.username,
         password: this.account.password,
-        readyTimeout: 3500
+        readyTimeout: 5000,
+        keepaliveInterval: 6670
       });
 
       this.xapi.on('ready', () => {
         console.log('we are connected');
+        resolve('success');
         this.reconnectTimeout = setTimeout(() => {
           console.log('session timeout');
           this.xapi.emit('update', 'closing');
           this.xapi.close();
           return this.connect();
         }, 600000);
-        return resolve('success');
       });
 
       this.xapi.on('error', (err) => {
         console.log(err);
+        clearTimeout(this.reconnectTimeout);
+        clearInterval(this.eventInterval);
         this.event.emit('connection-error');
         return reject(err);
       });
@@ -60,8 +63,6 @@ export class JsXAPI {
     // cmd.string = 'the xCommand'
     // cmd.param = Parameters {} of the Command
     return this.xapi.command(cmd.string, cmd.param).catch(() => {
-      clearTimeout(this.reconnectTimeout);
-      clearInterval(this.eventInterval);
       this.event.emit('connection-error');
     });
   };

@@ -93,9 +93,13 @@ export class App extends React.Component<App.Props, App.State> {
         this.setState({ acctDialog: true });
       } else {
         this.setState({ account });
-        return this.initHandler(account);
       }
     }
+  }
+
+  componentDidMount() {
+    const { account } = this.state;
+    return this.initHandler(account);
   }
 
   initHandler = (account) => {
@@ -116,19 +120,20 @@ export class App extends React.Component<App.Props, App.State> {
   connect = (account) => {
     JsXAPI.account = account;
     return JsXAPI.init().then(() => {
-      this.connErrors();
+      this.connErrors({connected: true});
       return;
     })
     .catch(e => {
-      clearInterval(JsXAPI.eventInterval);
-      this.setState({ connected: false, acctDialog: true });
+      if(JsXAPI.event.eventNames().indexOf('connection-error') === -1) {
+        this.setState({ connected: false });
+        this.connErrors({ connected: false });
+      }
     });
   }
 
   callCheck = () => {
     return JsXAPI.getStatus('Call')
       .then((call:any) => {
-        console.log(call);
         if(!call) {
           return false;
         } else if(call.length === 1) {
@@ -223,17 +228,19 @@ export class App extends React.Component<App.Props, App.State> {
         xapiData['outgoingCall'] = { answered: false, disconnect: false };
       }
       if(outgoingCall.disconnect) {
-        // xapiData['outgoingCall'] = { answered: false, disconnect: false };
         this.updateView({
           mainView: true, meetingsView: false
         });
         CallHandler.outgoingCall = {disconnect: false, answered: false };
+        xapiData['outgoingCall'] = CallHandler.outgoingCall;
+
       }
     } else if(incomingCall && incomingCall.id) {
       xapiData['incomingCall'] = incomingCall;
       if(incomingCall.answered && !incomingCall.disconnect) {
         update = this.callUpdate(incomingCall);
         CallHandler.incomingCall = { disconnect: false, answered: false };
+        xapiData['incomingCall'] = CallHandler.incomingCall;
       }
       if(incomingCall.disconnect) {
         this.updateView({
@@ -242,6 +249,7 @@ export class App extends React.Component<App.Props, App.State> {
           callView: false
         });
         CallHandler.incomingCall = {disconnect: false, answered: false};
+        xapiData['incomingCall'] = CallHandler.incomingCall;
       }
     }
     this.setState({ xapiData });
@@ -250,12 +258,11 @@ export class App extends React.Component<App.Props, App.State> {
     }
   }
 
-  connErrors = () => {
+  connErrors = ({ connected }) => {
     const { account } = this.state;
     if(JsXAPI.event.eventNames().indexOf('connection-error') === -1) {
       JsXAPI.event.addListener('connection-error', () => {
         console.log('error event called');
-        clearInterval(JsXAPI.eventInterval);
         this.setState({
           connected: false,
           mainView: false,
@@ -264,6 +271,7 @@ export class App extends React.Component<App.Props, App.State> {
         });
         this.initHandler(account);
       });
+      if(!connected) this.initHandler(account);
     }
   }
 
@@ -348,7 +356,7 @@ export class App extends React.Component<App.Props, App.State> {
             close={this.closeAccountManagement} /> :
           null
       }
-      <IconButton tooltip='Account Management'
+      <IconButton tooltip='Codec Management'
         tooltipPosition='top-left'
         style={{position: 'absolute', bottom: 0, right: 10}}
         onClick={this.modifyAccount} >

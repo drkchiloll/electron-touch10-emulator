@@ -18,44 +18,9 @@ import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import DialPadIcon from 'material-ui/svg-icons/communication/dialpad';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 
-import { JsXAPI, Time } from '../lib';
+import { JsXAPI, Time, MeetingHelper } from '../lib';
 
 import { Dialer } from './index';
-
-const styles: any = {
-  main: {
-    borderRadius: '7px',
-    position: 'relative',
-    marginLeft: '150px',
-    marginTop: '150px',
-    width: '600px',
-    height: '350px'
-  },
-  inner: {
-    marginTop: '85px',
-    marginLeft: '230px',
-    width: 140,
-    height: 140
-  },
-  icon: {
-    marginLeft: '32px'
-  },
-  divider: { height: 10 },
-  div2: {
-    position: 'absolute',
-    bottom: 0
-  },
-  paper: { borderRadius: '7px', border: '1px solid black' },
-  heading: { textAlign: 'center', padding: 0, margin: 0 },
-  badge2: { top: 30, right: 28, width: 15, height: 15 },
-  plusminusIcon: { width: 10, height: 10 },
-  drawer: {
-    position: 'absolute',
-    height: 450,
-    top: 200,
-    right: 100
-  },
-};
 
 export class Call extends React.Component<any, any> {
   state = {
@@ -66,6 +31,11 @@ export class Call extends React.Component<any, any> {
   }
 
   componentDidMount() {
+    let nextMeeting = MeetingHelper.getNext();
+    if(nextMeeting.hasOwnProperty('redirected') && !nextMeeting.redirected) {
+      nextMeeting.redirected = true;
+      MeetingHelper.setNext(nextMeeting);
+    }
     let { callId } = this.props;
     let state: any = {};
     let callback: string;
@@ -128,25 +98,25 @@ export class Call extends React.Component<any, any> {
     }
     return (
       <div>
-        <Paper style={styles.main}>
-          <Avatar style={styles.inner} backgroundColor='grey' size={85}>
+        <Paper style={this.styles.main}>
+          <Avatar style={this.styles.inner} backgroundColor='grey' size={85}>
             { avatar }
           </Avatar>
           <Subheader style={{textAlign: 'center'}}>
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
-          <div style={styles.div2}>
-            <Badge badgeContent={<DecreaseIcon color='white' style={styles.plusminusIcon} />}
+          <div style={this.styles.div}>
+            <Badge badgeContent={<DecreaseIcon color='white' style={this.styles.plusminusIcon} />}
               primary={true}
-              badgeStyle={styles.badge2}>
+              badgeStyle={this.styles.badge}>
               <IconButton onClick={() =>
                 JsXAPI.setAudio('Decrease')
               }> <VolumeDown /> </IconButton>
             </Badge>
             <strong>Volume: {xapiData.volume}</strong>
-            <Badge badgeContent={<AddIcon color='white' style={styles.plusminusIcon} />}
+            <Badge badgeContent={<AddIcon color='white' style={this.styles.plusminusIcon} />}
               primary={true}
-              badgeStyle={styles.badge2}>
+              badgeStyle={this.styles.badge}>
               <IconButton onClick={() =>
                 JsXAPI.setAudio('Increase')
               } > <VolumeUp /> </IconButton>
@@ -169,13 +139,13 @@ export class Call extends React.Component<any, any> {
           <Avatar size={60} style={{ marginLeft: '195px' }} backgroundColor='black' >
             <AddIcon color='white' />
           </Avatar>
-          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
             <ShareIcon className='share' color='white' />
           </Avatar>
-          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
             <PauseIcon color='white' />
           </Avatar>
-          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
             <IconButton tooltip='Keypad' tooltipPosition='bottom-center'
               onClick={() => {
                 let { showDialer } = this.state;
@@ -184,10 +154,10 @@ export class Call extends React.Component<any, any> {
               <DialPadIcon color='white' />
             </IconButton>
           </Avatar>
-          <Avatar size={60} style={styles.icon} backgroundColor='black' >
+          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
             <TransferIcon color='white' />
           </Avatar>
-          <Avatar size={60} style={styles.icon} backgroundColor='red'>
+          <Avatar size={60} style={this.styles.icon} backgroundColor='red'>
             <IconButton
               onClick={() => this.hangup(callId)} >
               <CallEndIcon color='white' />
@@ -204,17 +174,18 @@ export class Call extends React.Component<any, any> {
           }}
           width={350} >
           <TextField type='text' id='dialer' fullWidth={true}
+            disabled
             hintText={callbackHint}
-            hintStyle={{marginLeft: 35, fontSize: 20, color: 'grey'}}
-            inputStyle={{ marginLeft: 35, fontSize: 28, color: 'white' }}
-            style={{ backgroundColor: 'black', height: 75 }}
+            hintStyle={this.styles.txthint}
+            inputStyle={this.styles.txtinput}
+            style={this.styles.text}
             underlineShow={false}
             value={this.state.number} />
           <IconButton onClick={this.closeDialer} tooltip='close me'
             tooltipPosition='bottom-left'
             tooltipStyles={{top:10}}
-            iconStyle={{ height: 15, width: 15 }}
-            style={{ position: 'absolute', right: 10, top: 0, height:25, width:25, padding: 0, margin: 0 }} >
+            iconStyle={this.styles.closeIcon}
+            style={this.styles.closebtn} >
             <CloseIcon color='white' />
           </IconButton>
           <Dialer showBackspace={number === '' ? false : true}
@@ -224,5 +195,44 @@ export class Call extends React.Component<any, any> {
         </Drawer>
       </div>
     )
+  }
+
+  styles:any = {
+    main: {
+      borderRadius: '7px',
+      position: 'relative',
+      marginLeft: '150px',
+      marginTop: '150px',
+      width: '600px',
+      height: '350px'
+    },
+    inner: {
+      marginTop: '85px',
+      marginLeft: '230px',
+      width: 140,
+      height: 140
+    },
+    icon: {
+      marginLeft: '32px'
+    },
+    div: {
+      position: 'absolute',
+      bottom: 0
+    },
+    badge: { top: 30, right: 28, width: 15, height: 15 },
+    plusminusIcon: { width: 10, height: 10 },
+    closeIcon: { height: 15, width: 15 },
+    closebtn: {
+      position: 'absolute',
+      right: 10,
+      top: 0,
+      height: 25,
+      width: 25,
+      padding: 0,
+      margin: 0
+    },
+    text: { backgroundColor: 'black', height: 75 },
+    txthint: { marginLeft: 35, fontSize: 20, color: 'grey', top: 25 },
+    txtinput: { marginLeft: 35, fontSize: 28, color: 'white', cursor: 'none' }
   }
 }

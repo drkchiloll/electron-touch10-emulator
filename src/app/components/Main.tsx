@@ -50,21 +50,10 @@ export class Main extends React.Component<any,any> {
       this.setState({ left, top });
     });
     this.meetingSetup(this.props.meetings)
-    // const { meetings } = this.props;
-    // if(!JSON.parse(localStorage=.getItem('nextMeeting')))
-    //   localStorage.setItem('nextMeeting', JSON.stringify({}));
-    // this.compareMeetings(
-    //   JSON.parse(localStorage.getItem('nextMeeting')), meetings
-    // )
   }
 
   componentWillReceiveProps(props) {
-    // const { meetings } = this.props;
     this.meetingSetup(props.meetings);
-    // if(meetings && meetings instanceof Array) {
-    //   this.compareMeetings(
-    //     JSON.parse(localStorage.getItem('nextMeeting')), meetings);
-    // }
   }
 
   meetingSetup = (meetings) => {
@@ -146,7 +135,7 @@ export class Main extends React.Component<any,any> {
       const x = Time.timesubtract(startTime).format();
       if(this.state.durationInMs > 0) clearTimeout(this.timeout);
       durationInMs = Time.durationUntilMeeting(x);
-      console.log(durationInMs);
+      // console.log(durationInMs);
       this.timeout = setTimeout(() => {
         this.setState({ meetInTen: true });
         const theMeeting = MeetingHelper.getNext();

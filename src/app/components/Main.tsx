@@ -23,7 +23,7 @@ import {
 import {
   deepOrange400, lightBlueA200, green500, grey50
 } from 'material-ui/styles/colors';
-import { JsXAPI, Time } from '../lib';
+import { JsXAPI, Time, MeetingHelper } from '../lib';
 import { remote } from 'electron';
 
 
@@ -49,18 +49,42 @@ export class Main extends React.Component<any,any> {
       top = window.innerHeight / 3;
       this.setState({ left, top });
     });
-    const { meetings } = this.props;
-    if(!JSON.parse(localStorage.getItem('nextMeeting')))
-      localStorage.setItem('nextMeeting', JSON.stringify({}));
-    this.compareMeetings(
-      JSON.parse(localStorage.getItem('nextMeeting')), meetings
-    )
+    this.meetingSetup(this.props.meetings)
+    // const { meetings } = this.props;
+    // if(!JSON.parse(localStorage=.getItem('nextMeeting')))
+    //   localStorage.setItem('nextMeeting', JSON.stringify({}));
+    // this.compareMeetings(
+    //   JSON.parse(localStorage.getItem('nextMeeting')), meetings
+    // )
   }
 
-  componentWillReceiveProps() {
-    const { meetings } = this.props;
-    this.compareMeetings(
-      JSON.parse(localStorage.getItem('nextMeeting')), meetings);
+  componentWillReceiveProps(props) {
+    // const { meetings } = this.props;
+    this.meetingSetup(props.meetings);
+    // if(meetings && meetings instanceof Array) {
+    //   this.compareMeetings(
+    //     JSON.parse(localStorage.getItem('nextMeeting')), meetings);
+    // }
+  }
+
+  meetingSetup = (meetings) => {
+    if(meetings && meetings instanceof Array && meetings.length > 0) {
+      if(!Time.meetingEnded(meetings[0])) {
+        MeetingHelper.compareNextMeetings(meetings[0])
+          .then((nextMeeting) => {
+            if(nextMeeting.hasOwnProperty('id')) {
+              this.meetingHandler(nextMeeting);
+            }
+          });
+      } else if(meetings.length > 1) {
+        MeetingHelper.compareNextMeeting(meetings[1])
+          .then(this.meetingHandler);
+      }
+    } else {
+      MeetingHelper.setNext({});
+      clearTimeout(this.timeout);
+      this.setState({ durationInMs: 0, meetInTen: false });
+    }
   }
 
   storeMeeting(meeting) {
@@ -73,7 +97,8 @@ export class Main extends React.Component<any,any> {
       if(meetings && meetings instanceof Array && meetings.length > 0) {
         meeting = meetings[0];
         if(meeting.id === nextMeeting.id) {
-          if(meeting.startTime != nextMeeting.startTime) {
+          if((meeting.startTime != nextMeeting.startTime) ||
+             (meeting.endTime != nextMeeting.endTime)) {
             nextMeeting.startTime = meeting.startTime;
             nextMeeting.endTime = meeting.endTime;
             this.storeMeeting(nextMeeting);
@@ -83,10 +108,17 @@ export class Main extends React.Component<any,any> {
             this.meetingHandler(nextMeeting);
           }
         } else {
-          nextMeeting = meeting;
-          nextMeeting.redirected = false;
-          this.storeMeeting(nextMeeting);
-          this.meetingHandler(nextMeeting);
+          if(meetings.length > 1) {
+            nextMeeting = meetings[1];
+            nextMeeting.redirected = false;
+            this.storeMeeting(nextMeeting);
+            this.meetingHandler(nextMeeting);
+          } else {
+            nextMeeting = meeting;
+            nextMeeting.redirected = false;
+            this.storeMeeting(nextMeeting);
+            this.meetingHandler(nextMeeting);
+          }
         }
       } else {
         this.setState({ meetInTen: false});
@@ -112,14 +144,16 @@ export class Main extends React.Component<any,any> {
     let durationInMs: any;
     if(!meetInTen && !Time.meetingEnded(endTime)) {
       const x = Time.timesubtract(startTime).format();
+      if(this.state.durationInMs > 0) clearTimeout(this.timeout);
       durationInMs = Time.durationUntilMeeting(x);
       console.log(durationInMs);
       this.timeout = setTimeout(() => {
         this.setState({ meetInTen: true });
-        if(!nextMeeting.redirected) {
-          this.redirect(nextMeeting);
-        }
+        const theMeeting = MeetingHelper.getNext();
+        if(!theMeeting.redirected) this.redirect(theMeeting);
       }, durationInMs);
+    } else if(meetInTen && !Time.meetingEnded(endTime) && !nextMeeting.redirected) {
+      setTimeout(() => this.redirect(nextMeeting), 500);
     }
     this.setState({ meetInTen, durationInMs });
   }

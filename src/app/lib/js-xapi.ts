@@ -2,6 +2,7 @@ import axios from 'axios';
 import * as Promise from 'bluebird';
 import * as jsxapi from 'jsxapi';
 import { EventEmitter } from 'events';
+import { Time } from './index';
 
 export interface Booking {
   Id: string;
@@ -82,18 +83,23 @@ export class JsXAPI {
     }).then((bookings:any) => {
       const { status, ResultInfo: { TotalRows } } = bookings;
       if(bookings && (parseInt(TotalRows, 10) >= 1)) {
-        return Promise.map(bookings.Booking, (meeting: Booking) => {
-          return {
-            id: meeting.Id,
-            title: meeting.Title,
-            startTime: meeting.Time.StartTime,
-            endTime: meeting.Time.EndTime,
-            endpoint: {
-              number: meeting.DialInfo.Calls.Call[0].Number,
-              type: meeting.DialInfo.Calls.Call[0].CallType
-            }
-          };
-        })
+        return Promise.reduce(bookings.Booking, (a: any, meeting: Booking) => {
+          if(!Time.meetingEnded(meeting.Time.EndTime)) {
+            a.push({
+              id: meeting.Id,
+              title: meeting.Title,
+              startTime: meeting.Time.StartTime,
+              endTime: meeting.Time.EndTime,
+              endpoint: {
+                number: meeting.DialInfo.Calls.Call[0].Number,
+                type: meeting.DialInfo.Calls.Call[0].CallType
+              }
+            });
+            return a;
+          } else {
+            return a;
+          }
+        }, []);
       } else {
         return [];
       }

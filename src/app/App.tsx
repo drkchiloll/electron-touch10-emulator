@@ -12,7 +12,7 @@ import {
   Main, Meetings, Call, AccountDialog,
   CallDirectory, CallNotification
 } from './components';
-import { JsXAPI, Accounts } from './lib';
+import { JsXAPI, Accounts, MeetingHelper } from './lib';
 import { CallHandler } from './lib/callhandler';
 
 export namespace App {
@@ -72,7 +72,7 @@ export class App extends React.Component<App.Props, App.State> {
       connected: true,
       xapiData: {
         meeting: null,
-        meetings: null,
+        meetings: [],
         volume: 0,
         mic: 'Off',
         status: 'Standby',
@@ -106,6 +106,7 @@ export class App extends React.Component<App.Props, App.State> {
     this.connect(account)
       .then(this.xapiDataTracking)
       .then(() => {
+        JsXAPI.eventInterval = setInterval(JsXAPI.poller, 7500);
         this.setState({
           mainView: true,
           acctDialog: false,
@@ -113,7 +114,6 @@ export class App extends React.Component<App.Props, App.State> {
           connected: true
         });
         this.registerEvents();
-        JsXAPI.eventInterval = setInterval(JsXAPI.poller, 60000);
       }).then(this.callCheck);
   }
 
@@ -201,13 +201,30 @@ export class App extends React.Component<App.Props, App.State> {
     let { xapiData } = this.state;
     if(stuffs && stuffs === 'closing') {
       setTimeout(this.registerEvents, 1000);
+    } 
+    
+    let meetings: any;
+    if(stuffs && stuffs[0] instanceof Array) {
+      meetings = stuffs[0];
+      if(meetings.length > 0) {
+        if(meetings.length === xapiData.meetings.length) {
+          let toUpdate = MeetingHelper.compare(meetings, xapiData.meetings);
+          if(toUpdate) {
+            xapiData.meetings = meetings;
+            this.setState({ xapiData });
+          }
+        } else {
+          xapiData.meetings = meetings;
+          this.setState({ xapiData });
+        }
+      } else if(meetings.length === 0) {
+        if(xapiData.meetings.length != 0) {
+          xapiData.meetings = [];
+          this.setState({ xapiData });
+        }
+      }
     }
-    if(xapiData.meetings && xapiData.meetings.length === stuffs[0].length) {
-      return;
-    } else {
-      xapiData['meetings'] = stuffs[0];
-      this.setState({ xapiData });
-    }
+
   }
 
   callhandler = call => {

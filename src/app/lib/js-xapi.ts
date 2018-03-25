@@ -63,8 +63,9 @@ export class JsXAPI {
   static commander(cmd:any) {
     // cmd.string = 'the xCommand'
     // cmd.param = Parameters {} of the Command
-    return this.xapi.command(cmd.string, cmd.param).catch(() => {
-      this.event.emit('connection-error');
+    return this.xapi.command(cmd.string, cmd.param).catch((e) => {
+      console.log(e);
+      // this.event.emit('connection-error');
     });
   };
 

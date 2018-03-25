@@ -1,6 +1,6 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
-import { remote } from 'electron';
+import { remote, ipcRenderer } from 'electron';
 import { Dialog, IconButton, Drawer } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
 import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
@@ -10,7 +10,7 @@ import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
 // Import Components
 import {
   Main, Meetings, Call, AccountDialog,
-  CallDirectory, CallNotification
+  CallDirectory, CallNotification, Update
 } from './components';
 import { JsXAPI, Accounts, MeetingHelper } from './lib';
 import { CallHandler } from './lib/callhandler';
@@ -18,6 +18,7 @@ import { CallHandler } from './lib/callhandler';
 export namespace App {
   export interface Props { }
   export interface State {
+    update: boolean;
     account: any;
     mainView: boolean;
     meetingsView: boolean;
@@ -62,6 +63,7 @@ export class App extends React.Component<App.Props, App.State> {
   constructor(props) {
     super(props);
     this.state = {
+      update: false,
       account: null,
       mainView: false,
       meetingsView: false,
@@ -85,6 +87,9 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   componentWillMount() {
+    ipcRenderer.on('update', (e) => {
+      this.setState({ update: true });
+    });
     const accounts = Accounts.get();
     let account: any;
     if(accounts) {
@@ -352,7 +357,7 @@ export class App extends React.Component<App.Props, App.State> {
   render() {
     const {
       mainView, meetingsView, connected,
-      callView, acctDialog, account,
+      callView, acctDialog, account, update,
       xapiData: { incomingCall, outgoingCall }
     } = this.state;
     const call = { incomingCall, outgoingCall };
@@ -380,6 +385,7 @@ export class App extends React.Component<App.Props, App.State> {
         <SettingsIcon />
       </IconButton>
       <CallNotification call={call} />
+      { update ? <Update update={update} close={this.closeUpdator} /> : null }
       {
         this.state.xapiData.directoryDialog ?
           <CallDirectory switch={this.updateView} error={this.state.xapiData.callError}
@@ -392,6 +398,8 @@ export class App extends React.Component<App.Props, App.State> {
       }
     </div>
   }
+
+  closeUpdator = () => this.setState({ update: false });
 
   styles: any = {
     callIcon1: {

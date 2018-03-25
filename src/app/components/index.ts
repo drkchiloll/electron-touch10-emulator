@@ -6,3 +6,4 @@ export { CallDirectory } from './CallDirectory';
 export { AccountDialog } from './Accounts';
 export { Dialer } from './Dialer';
 export { CallNotification } from './CallNotification';
+export { Update } from './Update';

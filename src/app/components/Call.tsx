@@ -39,13 +39,22 @@ export class Call extends React.Component<any, any> {
     let { callId } = this.props;
     let state: any = {};
     let callback: string;
+
     JsXAPI.getStatus('Call').then(calls => {
       if(calls && calls.length > 0) {
         callback = calls.find(c => c.id == callId).CallbackNumber;
         state['callback'] = callback;
         if(callback.includes('webex.com')) {
           state['showDialer'] = true;
-          state['callbackHint'] = 'Enter PIN if Host';
+          state['callbackHint'] = 'Enter PIN + # if Host';
+          JsXAPI.commander({
+            string: 'UserInterface Message Prompt Display',
+            param: {
+              Duration: 45,
+              Title: 'WebEx Pin',
+              Text: '#'
+            }
+          });
         }
         this.setState(state);
       }
@@ -71,15 +80,29 @@ export class Call extends React.Component<any, any> {
       string: `Call DTMFSend`,
       param: {
         CallId: callId,
-        DTMFString: number + '#'
+        DTMFString: number
       }
     }).then((resp) => {
+      JsXAPI.commander({
+        string: 'UserInterface Message Prompt Clear',
+        param: {}
+      })
       this.setState({ number: '', showDialer: false, callbackHint: '' });
     })
   }
 
   updateNumber = (char) => {
-    let { number } = this.state;
+    let { number, callback } = this.state;
+    if(callback.includes('webex.com')) {
+      JsXAPI.commander({
+        string: 'UserInterface Message Prompt Display',
+        param: {
+          Duration: 45,
+          Title: 'WebEx Pin Entry',
+          Text: number + char
+        }
+      });
+    }
     this.setState({ number: number + char });
   }
 

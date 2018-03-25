@@ -1,4 +1,4 @@
-import { app, Menu } from 'electron';
+import { app, Menu, BrowserWindow } from 'electron';
 
 let menuTemplate:any = [{
   label: 'Edit',
@@ -63,11 +63,16 @@ let menuTemplate:any = [{
 }]
 
 if(process.platform === 'darwin') {
-  const name = app.getName()
+  const name = 'Cisco Codec Emulator' //app.getName()
   menuTemplate.unshift({
     label: name,
     submenu: [{
       role: 'about'
+    }, {
+      label: 'Check for Updates...',
+      click(item: any, focusedWindow: any) {
+        focusedWindow.webContents.send('update');
+      }
     }, {
       type: 'separator'
     }, {

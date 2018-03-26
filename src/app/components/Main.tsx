@@ -157,7 +157,7 @@ export class Main extends React.Component<any,any> {
       iconStyle={{ height: 85, width: 85 }} >
       <FontIcon>
         <Meeting style={{
-          width: 55, height: 45, color: '#CFD8DC', marginTop: '20px'
+          width: 55, height: 45, color: 'white', marginTop: '20px'
         }} />
       </FontIcon>
     </FloatingActionButton>
@@ -180,14 +180,14 @@ export class Main extends React.Component<any,any> {
           <FloatingActionButton backgroundColor={green500} iconStyle={{ height: 85, width: 85 }}
             onClick={() => this.props.switch({ directory: true })} >
             <FontIcon>
-              <VideoCall style={{ height: 60, width: 60, marginTop: '10px', color: '#CFD8DC' }} />
+              <VideoCall style={{ height: 60, width: 60, marginTop: '10px', color: 'white' }} />
             </FontIcon>
           </FloatingActionButton>
           <FloatingActionButton backgroundColor={lightBlueA200} style={{ marginLeft: 45 }}
             iconStyle={{ height: 85, width: 85 }}>
             <FontIcon>
               <Share className='share' style={{
-                width: 30, height: 40, marginTop: '20px', color: '#CFD8DC'
+                width: 30, height: 40, marginTop: '20px', color: 'white'
               }} />
             </FontIcon>
           </FloatingActionButton>

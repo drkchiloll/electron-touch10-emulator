@@ -62,6 +62,15 @@ let menuTemplate:any = [{
   }]
 }]
 
+if(process.platform === 'win32') {
+  menuTemplate[menuTemplate.length -1].submenu.push({
+    label: 'Check for Updates...',
+    click(item: any, focusedWindow: any) {
+      focusedWindow.webContents.send('update');
+    }
+  });
+}
+
 if(process.platform === 'darwin') {
   const name = 'Cisco Codec Emulator' //app.getName()
   menuTemplate.unshift({

@@ -1,8 +1,5 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
-import VideoCall from 'material-ui/svg-icons/av/videocam';
-import Share from 'material-ui/svg-icons/content/content-copy'
-import Meeting from 'material-ui/svg-icons/action/event';
 import AddIcon from 'material-ui/svg-icons/content/add';
 import VolumeUp from 'material-ui/svg-icons/av/volume-up';
 import VolumeDown from 'material-ui/svg-icons/av/volume-down';
@@ -26,6 +23,9 @@ import {
 import { JsXAPI, Time, MeetingHelper } from '../lib';
 import { remote } from 'electron';
 
+const MeetingsSvg = require('../imgs/Meetings.svg');
+const CallSvg = require('../imgs/Call.svg');
+const ShareSvg = require('../imgs/Share.svg');
 
 export class Main extends React.Component<any,any> {
   constructor(props) {
@@ -148,19 +148,13 @@ export class Main extends React.Component<any,any> {
   }
 
   _floatAction = () => {
-    return <FloatingActionButton
+    return <IconButton
       onClick={() => {
         this.redirect(JSON.parse(localStorage.getItem('nextMeeting')))
       }}
-      backgroundColor={deepOrange400}
-      style={{ marginLeft: 45 }}
-      iconStyle={{ height: 85, width: 85 }} >
-      <FontIcon>
-        <Meeting style={{
-          width: 55, height: 45, color: 'white', marginTop: '20px'
-        }} />
-      </FontIcon>
-    </FloatingActionButton>
+      style={{ marginLeft: 80, height: 75, width: 75 }}>
+      <FontIcon><img src={MeetingsSvg} height={75} width={75} /></FontIcon>
+    </IconButton>
   }
 
   redirect = (nextMeeting) => {
@@ -176,21 +170,35 @@ export class Main extends React.Component<any,any> {
 
     return (
       <div>
+        <IconButton style={{position: 'absolute', top: 0, right: 5}}
+          tooltip={status}
+          tooltipPosition='bottom-left'
+          tooltipStyles={{top: 25}}
+          onClick={() => {
+            let action: string;
+            if(status === 'Standby') {
+              action = 'Deactivate';
+            } else {
+              action = 'Activate';
+            }
+            JsXAPI.updateWakeStatus(action);
+          }}>
+          <FontIcon >
+            {status === 'Standby' ?
+              <StandbyIcon style={this.styles.wakeIcons} /> :
+              <AwakeIcon style={this.styles.wakeIcons} />}
+          </FontIcon>
+        </IconButton>
         <div style={{ left, top, position: 'absolute' }}>
-          <FloatingActionButton backgroundColor={green500} iconStyle={{ height: 85, width: 85 }}
+          <IconButton style={{height:80, width:80}}
             onClick={() => this.props.switch({ directory: true })} >
-            <FontIcon>
-              <VideoCall style={{ height: 60, width: 60, marginTop: '10px', color: 'white' }} />
+            <FontIcon><img src={CallSvg} height={75} width={75} /></FontIcon>
+          </IconButton>
+          <IconButton  style={{ marginLeft: 48 }} >
+            <FontIcon >
+              <img src={ShareSvg} height={75} width={75} />
             </FontIcon>
-          </FloatingActionButton>
-          <FloatingActionButton backgroundColor={lightBlueA200} style={{ marginLeft: 45 }}
-            iconStyle={{ height: 85, width: 85 }}>
-            <FontIcon>
-              <Share className='share' style={{
-                width: 30, height: 40, marginTop: '20px', color: 'white'
-              }} />
-            </FontIcon>
-          </FloatingActionButton>
+          </IconButton>
           {
             meetInTen ?
               <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1}>
@@ -198,25 +206,6 @@ export class Main extends React.Component<any,any> {
               </Badge> :
               this._floatAction()
           }
-          <FloatingActionButton
-            style={{marginLeft: '45px'}}
-            backgroundColor={'grey'}
-            iconStyle={{ height: 85, width: 85 }}
-            onClick={() => {
-              let action: string;
-              if(status === 'Standby') {
-                action = 'Deactivate';
-              } else {
-                action = 'Activate';
-              }
-              JsXAPI.updateWakeStatus(action);
-            }}>
-            <FontIcon>
-              { status === 'Standby' ?
-                <StandbyIcon style={this.styles.wakeIcons} /> :
-                <AwakeIcon style={this.styles.wakeIcons} />}
-            </FontIcon>
-          </FloatingActionButton>
         </div>
         <div style={{
           left: this.state.left,
@@ -224,12 +213,11 @@ export class Main extends React.Component<any,any> {
           position: 'absolute'
         }}>
           <div style={this.styles.div1}>
-            Call
-            <span style={this.styles.span1}> Share </span>
+            <b>Call</b>
+            <span style={this.styles.span1}> <b>Share</b> </span>
             <span style={{
-              marginLeft: meetInTen ? 95 : 80
-            }}> Meetings </span>
-            <span style={{marginLeft: meetInTen ? 92 : 70}}> {status} </span>
+              marginLeft: meetInTen ? 92 : 72
+            }}> <b>Meetings</b> </span>
           </div>
         </div>
         <div style={this.styles.div2}>
@@ -293,7 +281,7 @@ export class Main extends React.Component<any,any> {
       marginLeft: '15px',
       marginBottom: '15px',
     },
-    badge1: { top: 22, right: 23 },
+    badge1: { top: 30, right: 12 },
     actionBtn: { marginLeft: 45 },
     btnIcon: { height: 85, width: 85 },
     meetingIcon: {
@@ -302,8 +290,8 @@ export class Main extends React.Component<any,any> {
       color: '#CFD8DC',
       marginTop: '20px'
     },
-    div1: { marginLeft: 30 },
-    span1: { marginLeft: 95 },
+    div1: { marginLeft: 36 },
+    span1: { marginLeft: 90 },
     div2: {
       position: 'absolute',
       bottom: 20
@@ -314,9 +302,8 @@ export class Main extends React.Component<any,any> {
     badge2: { top: 30, right: 28, width: 15, height: 15 },
     divider: { height: 10 },
     wakeIcons: {
-      width: 40,
-      height: 50,
-      marginTop: '15px',
+      width: 25,
+      height: 25,
       color: 'black'
     }
   }

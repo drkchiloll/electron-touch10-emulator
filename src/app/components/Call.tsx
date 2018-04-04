@@ -18,6 +18,13 @@ import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import DialPadIcon from 'material-ui/svg-icons/communication/dialpad';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 
+const AddCall = require('../imgs/AddCall.svg');
+const TransferCall = require('../imgs/TransferCall.svg');
+const HoldCall = require('../imgs/HoldCall.svg');
+const ShareInCall = require('../imgs/ShareInCall.svg');
+const KeyPad = require('../imgs/KeyPad.svg');
+const EndCall = require('../imgs/EndCall.svg');
+
 import { JsXAPI, Time, MeetingHelper } from '../lib';
 
 import { Dialer } from './index';
@@ -159,33 +166,32 @@ export class Call extends React.Component<any, any> {
           </div>
         </Paper>
         <div style={{ marginTop: '35px' }}>
-          <Avatar size={60} style={{ marginLeft: '195px' }} backgroundColor='black' >
-            <AddIcon color='white' />
-          </Avatar>
-          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
-            <ShareIcon className='share' color='white' />
-          </Avatar>
-          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
-            <PauseIcon color='white' />
-          </Avatar>
-          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
-            <IconButton tooltip='Keypad' tooltipPosition='bottom-center'
-              onClick={() => {
-                let { showDialer } = this.state;
-                this.setState({ showDialer: showDialer ? false : true });
-              }} >
-              <DialPadIcon color='white' />
-            </IconButton>
-          </Avatar>
-          <Avatar size={60} style={this.styles.icon} backgroundColor='black' >
-            <TransferIcon color='white' />
-          </Avatar>
-          <Avatar size={60} style={this.styles.icon} backgroundColor='red'>
-            <IconButton
-              onClick={() => this.hangup(callId)} >
-              <CallEndIcon color='white' />
-            </IconButton>
-          </Avatar>
+          <IconButton style={{ marginLeft: '190px', marginRight: '15px' }}
+            disableTouchRipple={true}>
+            <FontIcon> <img src={AddCall} height={60} width={60} /> </FontIcon>
+          </IconButton>
+          <IconButton style={this.styles.icon} disableTouchRipple={true}>
+            <FontIcon> <img src={ShareInCall} height={60} width={60} /> </FontIcon>
+          </IconButton>
+          <IconButton style={this.styles.icon} disableTouchRipple={true}>
+            <FontIcon> <img src={HoldCall} height={60} width={60} /> </FontIcon>
+          </IconButton>
+          <IconButton style={this.styles.icon} tooltip='Keypad' tooltipPosition='bottom-center'
+            disableTouchRipple={true}
+            onClick={() => {
+              const { showDialer } = this.state;
+              this.setState({ showDialer: showDialer ? false: true })
+            }} >
+            <FontIcon> <img src={KeyPad} height={60} width={60} /> </FontIcon>
+          </IconButton>
+          <IconButton style={this.styles.icon}>
+            <FontIcon> <img src={TransferCall} height={60} width={60} /> </FontIcon>
+          </IconButton>
+          <IconButton style={this.styles.icon}
+            disableTouchRipple={true}
+            onClick={() => this.hangup(callId) } >
+            <FontIcon> <img src={EndCall} height={60} width={60} /> </FontIcon>
+          </IconButton>
         </div>
         <Drawer open={showDialer}
           openSecondary={true}
@@ -236,7 +242,8 @@ export class Call extends React.Component<any, any> {
       height: 140
     },
     icon: {
-      marginLeft: '32px'
+      marginLeft: '25px',
+      height: 65, width: 65
     },
     div: {
       position: 'absolute',

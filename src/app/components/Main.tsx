@@ -153,7 +153,7 @@ export class Main extends React.Component<any,any> {
         this.redirect(JSON.parse(localStorage.getItem('nextMeeting')))
       }}
       style={{ marginLeft: 80, height: 75, width: 75 }}>
-      <FontIcon><img src={MeetingsSvg} height={75} width={75} /></FontIcon>
+      <FontIcon><img src={MeetingsSvg} height={85} width={85} /></FontIcon>
     </IconButton>
   }
 
@@ -192,11 +192,11 @@ export class Main extends React.Component<any,any> {
         <div style={{ left, top, position: 'absolute' }}>
           <IconButton style={{height:80, width:80}}
             onClick={() => this.props.switch({ directory: true })} >
-            <FontIcon><img src={CallSvg} height={75} width={75} /></FontIcon>
+            <FontIcon><img src={CallSvg} height={85} width={85} /></FontIcon>
           </IconButton>
           <IconButton  style={{ marginLeft: 48 }} >
             <FontIcon >
-              <img src={ShareSvg} height={75} width={75} />
+              <img src={ShareSvg} height={85} width={85} />
             </FontIcon>
           </IconButton>
           {
@@ -290,7 +290,7 @@ export class Main extends React.Component<any,any> {
       color: '#CFD8DC',
       marginTop: '20px'
     },
-    div1: { marginLeft: 36 },
+    div1: { marginLeft: 40 },
     span1: { marginLeft: 90 },
     div2: {
       position: 'absolute',

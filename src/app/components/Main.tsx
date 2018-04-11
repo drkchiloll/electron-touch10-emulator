@@ -216,7 +216,7 @@ export class Main extends React.Component<any,any> {
             <b>Call</b>
             <span style={this.styles.span1}> <b>Share</b> </span>
             <span style={{
-              marginLeft: meetInTen ? 92 : 72
+              marginLeft: meetInTen ? 88 : 72
             }}> <b>Meetings</b> </span>
           </div>
         </div>
@@ -281,7 +281,7 @@ export class Main extends React.Component<any,any> {
       marginLeft: '15px',
       marginBottom: '15px',
     },
-    badge1: { top: 30, right: 12 },
+    badge1: { top: 35, right: 5 },
     actionBtn: { marginLeft: 45 },
     btnIcon: { height: 85, width: 85 },
     meetingIcon: {

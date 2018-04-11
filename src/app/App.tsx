@@ -2,11 +2,13 @@ import * as React from 'react';
 import * as Promise from 'bluebird';
 import { remote, ipcRenderer } from 'electron';
 import { Dialog, IconButton, Drawer } from 'material-ui';
+import { IconMenu, MenuItem } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
 import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
 import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
+import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 // Import Components
 import {
   Main, Meetings, Call, AccountDialog,
@@ -20,6 +22,7 @@ export namespace App {
   export interface State {
     update: boolean;
     account: any;
+    accounts: any[];
     mainView: boolean;
     meetingsView: boolean;
     callView: boolean;
@@ -63,6 +66,7 @@ export class App extends React.Component<App.Props, App.State> {
   constructor(props) {
     super(props);
     this.state = {
+      accounts: [],
       update: false,
       account: null,
       mainView: false,
@@ -101,7 +105,7 @@ export class App extends React.Component<App.Props, App.State> {
       if(account.name === 'New' && !account.host) {
         this.setState({ acctDialog: true });
       } else {
-        this.setState({ account });
+        this.setState({ account, accounts });
       }
     }
   }
@@ -355,16 +359,61 @@ export class App extends React.Component<App.Props, App.State> {
     this.initHandler(account);
   }
 
+  changeAccount = (e: any, {props: { value }}: any) => {
+    let { account, accounts } = this.state;
+    if(account != value) {
+      if(JsXAPI.xapi) JsXAPI.xapi.close();
+      account.selected = false;
+      value.selected = true;
+      let updatedAccounts = accounts.map((acct: any) => {
+        if(acct.host == account) acct.selected = false;
+        if(acct.host == value.host) acct.selected = true;
+        return acct;
+      });
+      Accounts.save(updatedAccounts);
+      this.setState({
+        accounts: updatedAccounts,
+        account: value
+      });
+      this.initHandler(value);
+    }
+  }
+
   render() {
     const {
-      mainView, meetingsView, connected,
+      mainView, meetingsView, connected, accounts,
       callView, acctDialog, account, update,
       xapiData: { incomingCall, outgoingCall }
     } = this.state;
     const call = { incomingCall, outgoingCall };
     return <div>
-      <p style={{ font: '14px arial', color: 'grey', width: 200 }}>{account.name}>
-        <IsConnectedIcon style={{ position: 'absolute', top: 10 }}
+      <IconMenu style={{position: 'absolute', top: 0, width: 35}}
+        iconButtonElement={
+          <IconButton disabled={accounts && accounts.length < 1 ? true : false}
+            tooltip='Toggle Codec'
+            tooltipPosition='bottom-right' >
+              <MoreVertIcon />
+          </IconButton>
+        }
+        anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
+        targetOrigin={{ horizontal: 'left', vertical: 'top' }}
+        onItemClick={this.changeAccount}
+      >
+        {
+          accounts && accounts.length > 0 ?
+            accounts.map((acct: any, indx: number) => 
+              <MenuItem
+                value={acct}
+                primaryText={acct.name} key={`account_${indx}`} />
+            )
+          : null
+        }
+      </IconMenu>
+      <p style={{
+        font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
+        marginTop: '16px'
+      }}>{account.name}>
+        <IsConnectedIcon style={{ position: 'absolute', top: 12, marginLeft: '2px' }}
           color={connected ? 'green' : 'red'} />
       </p>
       {

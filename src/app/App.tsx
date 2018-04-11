@@ -94,6 +94,10 @@ export class App extends React.Component<App.Props, App.State> {
     let account: any;
     if(accounts) {
       account = accounts.find(a => a.selected);
+      if(!account) {
+        accounts[0].selected = true;
+        account = accounts[0];
+      }
       if(account.name === 'New' && !account.host) {
         this.setState({ acctDialog: true });
       } else {
@@ -261,14 +265,11 @@ export class App extends React.Component<App.Props, App.State> {
       xapiData['incomingCall'] = incomingCall;
       if(incomingCall.answered && !incomingCall.disconnect) {
         update = this.callUpdate(incomingCall);
-        CallHandler.incomingCall = { disconnect: false, answered: false };
-        xapiData['incomingCall'] = CallHandler.incomingCall;
       }
-      if(incomingCall.disconnect) {
+      if(call.ghost == 'True') {
         this.updateView({
           mainView: true,
-          meetingsView: false,
-          callView: false
+          meetingsView: false
         });
         CallHandler.incomingCall = {disconnect: false, answered: false};
         xapiData['incomingCall'] = CallHandler.incomingCall;
@@ -300,7 +301,6 @@ export class App extends React.Component<App.Props, App.State> {
   updateView = (args: any) => {
     // Main -> Meetings List
     // Meeting -> Call
-    // console.log(args);
     const {
       mainView, meetingsView, callView
     } = args;
@@ -316,6 +316,7 @@ export class App extends React.Component<App.Props, App.State> {
         acctDialog: false
       });
     } else if(mainView) {
+      console.log('hangup');
       this.setState({
         mainView,
         meetingsView: false,

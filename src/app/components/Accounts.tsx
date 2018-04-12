@@ -5,7 +5,7 @@ import {
   FlatButton, Paper, TextField, List,
   BottomNavigation, BottomNavigationItem,
   Subheader, Snackbar, SelectField, makeSelectable,
-  FontIcon, Divider
+  FontIcon, Divider, CircularProgress
 } from 'material-ui';
 const SelectableList = makeSelectable(List);
 
@@ -22,7 +22,8 @@ export class AccountDialog extends React.Component<any,any> {
     selected: 0,
     accounts: null,
     account: null,
-    message: ''
+    message: '',
+    close: false
   }
 
   styles: any = {
@@ -61,6 +62,8 @@ export class AccountDialog extends React.Component<any,any> {
 
   shareAccountName = name => this.props.accountName(name);
 
+  closeClick = () => this.setState({ close: true });
+
   dialogActions = () => {
     const { accounts } = this.state;
     return [
@@ -72,14 +75,20 @@ export class AccountDialog extends React.Component<any,any> {
         onClick={this.save}
       />,
       <FlatButton
-        label='Close'
-        icon={<FontIcon><CloseIcon /></FontIcon>}
+        label={this.state.close ? '': 'Close'}
+        icon={
+            this.state.close ? <CircularProgress size={20} thickness={3} /> :
+            <FontIcon><CloseIcon /></FontIcon>
+        }
         primary={true}
         onClick={() => {
-          let selected = accounts.findIndex(a => a.selected);
-          let account = accounts[selected];
-          this.setState({ account, selected, accounts });
-          this.props.close();
+          this.closeClick();
+          setTimeout(() => {
+            let selected = accounts.findIndex(a => a.selected);
+            let account = accounts[selected];
+            this.setState({ account, selected, accounts });
+            this.props.close();
+          }, 250);
         }}
       />
     ];

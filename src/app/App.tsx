@@ -294,7 +294,7 @@ export class App extends React.Component<App.Props, App.State> {
           meetingsView: false,
           callView: false
         });
-        setTimeout(() => this.initHandler(account), 5000);
+        this.initHandler(account);
       });
       if(!connected) setTimeout(() => this.initHandler(account), 5000);
     }

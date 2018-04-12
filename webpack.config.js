@@ -47,7 +47,7 @@ let dev = {
 			test: /\.css$/,
 			use: ['style-loader', 'css-loader']
 		}, {
-			test: /.woff$|.woff2$|.ttf$|.eot$|.svg$/,
+			test: /.woff$|.woff2$|.ttf$|.eot$|.svg$|.jpg$/,
 			loader: 'url-loader'
 		}]
 	},

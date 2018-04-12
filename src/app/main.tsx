@@ -30,6 +30,9 @@ const muiTheme = getMuiTheme({
   },
   fontFamily: `'Times New Roman'`
 });
+const BGImg = require('./imgs/t10.jpg');
+document.body.style.backgroundImage = `url(${BGImg})`;
+document.body.style.backgroundSize = '1024px';
 
 const Root = () => (
   <MuiThemeProvider muiTheme={muiTheme}>

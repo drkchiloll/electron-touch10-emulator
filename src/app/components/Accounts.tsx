@@ -69,7 +69,6 @@ export class AccountDialog extends React.Component<any,any> {
     return [
       <FlatButton
         label='Save'
-        icon={<FontIcon> <SaveIcon /> </FontIcon>}
         primary={true}
         keyboardFocused={true}
         onClick={this.save}
@@ -78,7 +77,7 @@ export class AccountDialog extends React.Component<any,any> {
         label={this.state.close ? '': 'Close'}
         icon={
             this.state.close ? <CircularProgress size={20} thickness={3} /> :
-            <FontIcon><CloseIcon /></FontIcon>
+            null
         }
         primary={true}
         onClick={() => {

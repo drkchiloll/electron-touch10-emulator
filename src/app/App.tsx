@@ -130,8 +130,8 @@ export class App extends React.Component<App.Props, App.State> {
         this.registerEvents();
       }).then(this.callCheck)
       .catch(() => {
-        this.connErrors({ connected: false })
-      })
+        this.connErrors({ connected: false });
+      });
   }
 
   connect = (account) => {
@@ -140,12 +140,6 @@ export class App extends React.Component<App.Props, App.State> {
       this.connErrors({connected: true});
       return;
     })
-    .catch(e => {
-      if(JsXAPI.event.eventNames().indexOf('connection-error') === -1) {
-        this.setState({ connected: false });
-        this.connErrors({ connected: false });
-      }
-    });
   }
 
   callCheck = () => {
@@ -300,9 +294,9 @@ export class App extends React.Component<App.Props, App.State> {
           meetingsView: false,
           callView: false
         });
-        this.initHandler(account);
+        setTimeout(() => this.initHandler(account), 5000);
       });
-      if(!connected) setTimeout(() => this.initHandler(account), 250);
+      if(!connected) setTimeout(() => this.initHandler(account), 5000);
     }
   }
 

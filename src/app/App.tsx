@@ -75,7 +75,7 @@ export class App extends React.Component<App.Props, App.State> {
       callId: null,
       caller: null,
       acctDialog: false,
-      connected: true,
+      connected: false,
       xapiData: {
         meeting: null,
         meetings: [],
@@ -101,8 +101,9 @@ export class App extends React.Component<App.Props, App.State> {
       if(!account) {
         accounts[0].selected = true;
         account = accounts[0];
+        this.setState({ account });
       }
-      if(account.name === 'New' && !account.host) {
+      if(!account.host) {
         this.setState({ acctDialog: true });
       } else {
         this.setState({ account, accounts });
@@ -127,7 +128,10 @@ export class App extends React.Component<App.Props, App.State> {
           connected: true
         });
         this.registerEvents();
-      }).then(this.callCheck);
+      }).then(this.callCheck)
+      .catch(() => {
+        this.connErrors({ connected: false })
+      })
   }
 
   connect = (account) => {
@@ -298,7 +302,7 @@ export class App extends React.Component<App.Props, App.State> {
         });
         this.initHandler(account);
       });
-      if(!connected) this.initHandler(account);
+      if(!connected) setTimeout(() => this.initHandler(account), 250);
     }
   }
 
@@ -356,6 +360,7 @@ export class App extends React.Component<App.Props, App.State> {
   closeAccountManagement = () => {
     const accounts = Accounts.get();
     let account = accounts.find(a => a.selected);
+    this.setState({ accounts, account });
     this.initHandler(account);
   }
 
@@ -380,12 +385,13 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   render() {
-    const {
+    let {
       mainView, meetingsView, connected, accounts,
       callView, acctDialog, account, update,
       xapiData: { incomingCall, outgoingCall }
     } = this.state;
     const call = { incomingCall, outgoingCall };
+    if(!account) account = { name: 'New' }
     return <div>
       <IconMenu style={{position: 'absolute', top: 0, width: 35}}
         iconButtonElement={

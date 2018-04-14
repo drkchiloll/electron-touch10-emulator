@@ -35,7 +35,7 @@ export class JsXAPI {
       this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
         username: this.account.username,
         password: this.account.password,
-        readyTimeout: 5000,
+        readyTimeout: 9000,
         keepaliveInterval: 6670
       });
 
@@ -120,10 +120,17 @@ export class JsXAPI {
   };
 
   static setAudio(action) {
-    return this.commander({
-      string: `Audio Volume ${action}`,
-      param: { Steps: 1 }
-    });
+    if(Number.isInteger(action)) {
+      return this.commander({
+        string: 'Audio Volume Set',
+        param: { Level: action }
+      });
+    } else {
+      return this.commander({
+        string: `Audio Volume ${action}`,
+        param: { Steps: 1 }
+      });
+    }
   };
 
   // action: String; Mute | Unmute

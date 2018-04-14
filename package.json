@@ -13,7 +13,6 @@
     "package:win64": "node_modules/.bin/electron-packager ./ VideoCodec_Emulator --platform=win32 --arch=x64 --prune=true --ignore=src/app --ignore=node_modules/@types --ignore=node_modules/electron* --app-version=1.0.3 --icon ./resources/touch10_panel.ico",
     "clean": "cd dist && rm app.bundle.js app.bundle.js.map main.bundle.js main.bundle.js.map && cd .."
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/material-ui": "^0.21.1",
     "@types/node": "^7.0.55",
@@ -23,6 +22,7 @@
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
     "bufferutil": "^3.0.3",
+    "ciscospark": "^1.30.2",
     "css-loader": "^0.26.1",
     "electron": "^1.8.2",
     "electron-packager": "^11.1.0",
@@ -33,6 +33,7 @@
     "material-ui": "^0.20.0",
     "moment": "^2.21.0",
     "moment-timezone": "^0.5.14",
+    "rc-slider": "^8.6.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
     "style-loader": "^0.13.1",
@@ -41,6 +42,7 @@
     "url-loader": "^0.5.6",
     "utf-8-validate": "^4.0.0",
     "webpack": "^2.2.1",
-    "webpack-merge": "^3.0.0"
+    "webpack-merge": "^3.0.0",
+    "material-ui-slider-label": "git+https://github.com/tariqwest/material-ui-slider-label.git"
   }
 }

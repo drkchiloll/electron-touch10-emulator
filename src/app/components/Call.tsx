@@ -135,35 +135,6 @@ export class Call extends React.Component<any, any> {
           <Subheader style={{textAlign: 'center'}}>
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
-          <div style={this.styles.div}>
-            <Badge badgeContent={<DecreaseIcon color='white' style={this.styles.plusminusIcon} />}
-              primary={true}
-              badgeStyle={this.styles.badge}>
-              <IconButton onClick={() =>
-                JsXAPI.setAudio('Decrease')
-              }> <VolumeDown /> </IconButton>
-            </Badge>
-            <strong>Volume: {xapiData.volume}</strong>
-            <Badge badgeContent={<AddIcon color='white' style={this.styles.plusminusIcon} />}
-              primary={true}
-              badgeStyle={this.styles.badge}>
-              <IconButton onClick={() =>
-                JsXAPI.setAudio('Increase')
-              } > <VolumeUp /> </IconButton>
-            </Badge>
-            <IconButton style={{ marginLeft: 10, marginBottom: 10 }}
-              onClick={() => {
-                let action = xapiData.mic === 'On' ? 'Unmute' : 'Mute';
-                JsXAPI.setMic(action);
-              }} >
-              {
-                xapiData.mic === 'Off' ?
-                  <MicOnIcon /> :
-                  <MicOffIcon />
-              }
-            </IconButton>
-            <strong>Microphones</strong>
-          </div>
         </Paper>
         <div style={{ marginTop: '35px' }}>
           <IconButton style={{ marginLeft: '190px', marginRight: '15px' }}

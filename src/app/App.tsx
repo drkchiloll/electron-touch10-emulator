@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
 import { remote, ipcRenderer } from 'electron';
-import { Dialog, IconButton, Drawer } from 'material-ui';
+import { Dialog, IconButton } from 'material-ui';
 import { IconMenu, MenuItem } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
 import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
@@ -9,17 +9,24 @@ import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
+
 // Import Components
 import {
   Main, Meetings, Call, AccountDialog,
-  CallDirectory, CallNotification, Update
+  CallDirectory, CallNotification,
+  Update, Controls
 } from './components';
 import { JsXAPI, Accounts, MeetingHelper } from './lib';
 import { CallHandler } from './lib/callhandler';
 
+const authorizationString = 'https://api.ciscospark.com/v1/authorize?client_id=Cfaffe557c65e048bba5295a29f51a93928f7432cc7eef6e67f0a47f66a8bc948&response_type=code&redirect_uri=https%3A%2F%2Fexample.webex.com&scope=spark%3Aall%20spark%3Akms&state=01234567890'
+
+import * as CiscoSpark from 'ciscospark';
+
 export namespace App {
   export interface Props { }
   export interface State {
+    video: boolean;
     update: boolean;
     account: any;
     accounts: any[];
@@ -76,6 +83,7 @@ export class App extends React.Component<App.Props, App.State> {
       caller: null,
       acctDialog: false,
       connected: false,
+      video: false,
       xapiData: {
         meeting: null,
         meetings: [],
@@ -91,6 +99,39 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   componentWillMount() {
+    let spark: any = new CiscoSpark({
+      credentials: 'OGM5ODE2NDYtNzgzNC00MGM4LWJmMGYtZTg3NDU1MjFkMGVhOWJhYWZkODAtYzI3'
+    });
+    spark.phone.register();
+    // const call = spark.phone.dial('+13148992311@wwtatc.com');
+    // call.on('connected', () => {
+    //   console.log('hello world')
+    //   call.on('remoteMediaStream:change', () => {
+    //     this.setState({ video: true });
+    //     const farEndVideo: any = document.getElementById('farEnd');
+    //     farEndVideo.srcObject = call.remoteMediaStream;
+    //   });
+    // });
+    spark.phone.on('call:incoming', (call) => {
+      // Set up listeners to update the UI if the callee chooses to answer the call.
+      call.on('remoteMediaStream:change', () => {
+        this.setState({ video: true });
+        const farEndVideo: any = document.getElementById('farEnd');
+        farEndVideo.srcObject = call.remoteMediaStream;
+      });
+      // call.on('localMediaStream:change', () => {
+      //   document.getElementById('outgoing-video').srcObject = call.localMediaStream;
+      //   // Mute the local video so you don't hear yourself speaking
+      //   document.getElementById('outgoing-video').muted = true;
+      // });
+
+      // Let the caller know that you've indicated to the callee that there's an incoming call
+      call.acknowledge();
+
+      // Answer the call
+      call.answer();
+    });
+
     ipcRenderer.on('update', (e) => {
       this.setState({ update: true });
     });
@@ -294,9 +335,9 @@ export class App extends React.Component<App.Props, App.State> {
           meetingsView: false,
           callView: false
         });
-        this.initHandler(account);
+        setTimeout(() => this.initHandler(account), 15000);
       });
-      if(!connected) setTimeout(() => this.initHandler(account), 5000);
+      if(!connected) setTimeout(() => this.initHandler(account), 15000);
     }
   }
 
@@ -381,13 +422,14 @@ export class App extends React.Component<App.Props, App.State> {
   render() {
     let {
       mainView, meetingsView, connected, accounts,
-      callView, acctDialog, account, update,
+      callView, acctDialog, account, update, video,
       xapiData: { incomingCall, outgoingCall }
     } = this.state;
     const call = { incomingCall, outgoingCall };
     if(!account) account = { name: 'New' }
     return <div>
-      <IconMenu style={{position: 'absolute', top: 0, width: 35}}
+      <IconMenu
+        style={{position: 'absolute', top: 0, width: 35}}
         iconButtonElement={
           <IconButton disabled={accounts && accounts.length < 1 ? true : false}
             tooltip='Toggle Codec'
@@ -397,8 +439,7 @@ export class App extends React.Component<App.Props, App.State> {
         }
         anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
         targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-        onItemClick={this.changeAccount}
-      >
+        onItemClick={this.changeAccount} >
         {
           accounts && accounts.length > 0 ?
             accounts.map((acct: any, indx: number) => 
@@ -409,13 +450,25 @@ export class App extends React.Component<App.Props, App.State> {
           : null
         }
       </IconMenu>
-      <p style={{
-        font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
-        marginTop: '16px'
-      }}>{account.name}>
+      <p
+        style={{
+          font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
+          marginTop: '16px'
+        }}>
+        {account.name}>
         <IsConnectedIcon style={{ position: 'absolute', top: 12, marginLeft: '2px' }}
           color={connected ? 'green' : 'red'} />
       </p>
+      <div
+        style={{
+          display: video ? 'inline' : 'none',
+          postion: 'absolute',
+          top: 50,
+          left: 20
+        }}>
+        <video id='farEnd' width={200} height={200} autoPlay></video>
+      </div>
+      <Controls {...this.state.xapiData } />
       {
         mainView ?
           <Main switch={this.updateView} {...this.state.xapiData } /> :
@@ -435,7 +488,7 @@ export class App extends React.Component<App.Props, App.State> {
         <SettingsIcon />
       </IconButton>
       <CallNotification call={call} />
-      { update ? <Update update={update} close={this.closeUpdator} /> : null }
+      <Update update={update} close={this.closeUpdator} />
       {
         this.state.xapiData.directoryDialog ?
           <CallDirectory switch={this.updateView} error={this.state.xapiData.callError}

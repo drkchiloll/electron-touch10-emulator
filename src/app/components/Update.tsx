@@ -71,7 +71,7 @@ export class Update extends React.Component<any, any> {
                 tooltip='close'
                 tooltipPosition='bottom-left'
                 tooltipStyles={{top: 25}} >
-                <CloseIcon />              
+                <CloseIcon />
               </IconButton> :
               null
         }

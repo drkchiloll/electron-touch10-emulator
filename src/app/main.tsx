@@ -28,6 +28,11 @@ const muiTheme = getMuiTheme({
     textColor: indigo500,
     backgroundColor: '#d7dddd',
   },
+  slider: {
+    handleSize: 22,
+    handleSizeActive: 25,
+    trackColor: 'black'
+  },
   fontFamily: `'Times New Roman'`
 });
 const BGImg = require('./imgs/t10.jpg');

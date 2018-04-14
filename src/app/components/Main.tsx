@@ -1,28 +1,10 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
-import AddIcon from 'material-ui/svg-icons/content/add';
-import VolumeUp from 'material-ui/svg-icons/av/volume-up';
-import VolumeDown from 'material-ui/svg-icons/av/volume-down';
-import DecreaseIcon from 'material-ui/svg-icons/content/remove'
-import AwakeIcon from 'material-ui/svg-icons/action/visibility';
-import StandbyIcon from 'material-ui/svg-icons/action/visibility-off';
-import MicOnIcon from 'material-ui/svg-icons/av/mic';
-import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
-import CallIcon from 'material-ui/svg-icons/communication/call';
-import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
-import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
-import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
-import {
-  FloatingActionButton, Badge, FontIcon,
-  Subheader, IconButton, Paper, Divider,
-  Drawer
-} from 'material-ui';
-import {
-  deepOrange400, lightBlueA200, green500, grey50
-} from 'material-ui/styles/colors';
+import { Badge, FontIcon } from 'material-ui';
+import { Subheader, IconButton, Drawer } from 'material-ui';
+import { colors } from 'material-ui/styles';
+const { deepOrange400, lightBlueA200, green500, grey50 } = colors;
 import { JsXAPI, Time, MeetingHelper } from '../lib';
-import { remote } from 'electron';
-
 const MeetingsSvg = require('../imgs/Meetings.svg');
 const CallSvg = require('../imgs/Call.svg');
 const ShareSvg = require('../imgs/Share.svg');
@@ -36,7 +18,9 @@ export class Main extends React.Component<any,any> {
       meetInTen: false,
       nextMeeting: null,
       meetingBadge: null,
-      durationInMs: null
+      durationInMs: null,
+      volumeDirection: 'up',
+      showVolume: false
     };
   }
 
@@ -54,6 +38,11 @@ export class Main extends React.Component<any,any> {
 
   componentWillReceiveProps(props) {
     this.meetingSetup(props.meetings);
+    if(props.volume >= this.props.volume) {
+      this.setState({ volumeDirection: 'up' })
+    } else {
+      this.setState({ volumeDirection: 'down' });
+    }
   }
 
   meetingSetup = (meetings) => {
@@ -165,30 +154,10 @@ export class Main extends React.Component<any,any> {
 
   render() {
     let MeetBadge: any;
-    let { meetInTen, left, top } = this.state;
+    let { meetInTen, left, top, volumeDirection, showVolume } = this.state;
     let { volume, meetings, status, mic, directoryDialog, callError } = this.props;
-
     return (
       <div>
-        <IconButton style={{position: 'absolute', top: 0, right: 5}}
-          tooltip={status}
-          tooltipPosition='bottom-left'
-          tooltipStyles={{top: 25}}
-          onClick={() => {
-            let action: string;
-            if(status === 'Standby') {
-              action = 'Deactivate';
-            } else {
-              action = 'Activate';
-            }
-            JsXAPI.updateWakeStatus(action);
-          }}>
-          <FontIcon >
-            {status === 'Standby' ?
-              <StandbyIcon style={this.styles.wakeIcons} /> :
-              <AwakeIcon style={this.styles.wakeIcons} />}
-          </FontIcon>
-        </IconButton>
         <div style={{ left, top, position: 'absolute' }}>
           <IconButton style={{height:80, width:80}}
             onClick={() => this.props.switch({ directory: true })} >
@@ -220,91 +189,14 @@ export class Main extends React.Component<any,any> {
             }}> <b>Meetings</b> </span>
           </div>
         </div>
-        <div style={this.styles.div2}>
-          <Paper style={this.styles.paper} rounded={false} >
-            <h5 style={this.styles.heading}> Controls </h5>
-            <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
-            <Badge badgeContent={<DecreaseIcon color='white' style={this.styles.plusminusIcon} />}
-              primary={true}
-              badgeStyle={this.styles.badge2}>
-              <IconButton style={{margin:0, padding:0}} onClick={() =>
-                JsXAPI.setAudio('Decrease')
-              }> <VolumeDown /> </IconButton>
-            </Badge>
-            <strong> Volume: {volume}</strong>
-            <Badge badgeContent={<AddIcon color='white' style={this.styles.plusminusIcon} />}
-              primary={true}
-              badgeStyle={this.styles.badge2}>
-              <IconButton style={{margin:0, padding:0}} onClick={() =>
-                JsXAPI.setAudio('Increase')
-              } > <VolumeUp /> </IconButton>
-            </Badge>
-            <br/>
-            <IconButton style={{ marginLeft: 10, marginBottom: 10 }}
-              onClick={() => {
-                let action = mic === 'On' ? 'Unmute' : 'Mute';
-                JsXAPI.setMic(action);
-              }} >
-              {
-                mic === 'Off' ?
-                  <MicOnIcon /> :
-                  <MicOffIcon />
-              }
-            </IconButton>
-            <strong>Microphones</strong>
-            <Divider style={{ border: '.7px solid black', backgroundColor: 'black' }} />
-            <div style={this.styles.divider}></div>
-          </Paper>
-        </div>
       </div>
     );
   }
 
   styles: any = {
-    callIcon1: {
-      position: 'absolute',
-      right: 25,
-      top: 55
-    },
-    callIcon2: {
-      position: 'absolute',
-      right: 65,
-      top: 55
-    },
-    callIcon3: {
-      position: 'absolute',
-      right: 105,
-      top: 55
-    },
-    para: {
-      lineHeight: 1.1,
-      marginLeft: '15px',
-      marginBottom: '15px',
-    },
     badge1: { top: 35, right: 5 },
-    actionBtn: { marginLeft: 45 },
-    btnIcon: { height: 85, width: 85 },
-    meetingIcon: {
-      width: 55,
-      height: 55,
-      color: '#CFD8DC',
-      marginTop: '20px'
-    },
     div1: { marginLeft: 40 },
     span1: { marginLeft: 90 },
-    div2: {
-      position: 'absolute',
-      bottom: 20
-    },
-    paper: { borderRadius: '7px', border: '1px solid black' },
     heading: { textAlign: 'center', padding: 0, margin: 0 },
-    plusminusIcon: { width: 10, height: 10, margin: 0, padding: 0 },
-    badge2: { top: 30, right: 28, width: 15, height: 15 },
-    divider: { height: 10 },
-    wakeIcons: {
-      width: 25,
-      height: 25,
-      color: 'black'
-    }
   }
 }

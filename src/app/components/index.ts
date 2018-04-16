@@ -8,4 +8,4 @@ export { Dialer } from './Dialer';
 export { CallNotification } from './CallNotification';
 export { Update } from './Update';
 export { Controls } from './Controls';
-export { AccountToggle } from './AccountToggle';
+export { CodecHeaderToggle } from './CodecHeaderToggle';

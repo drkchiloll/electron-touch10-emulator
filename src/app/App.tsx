@@ -2,26 +2,22 @@ import * as React from 'react';
 import * as Promise from 'bluebird';
 import { remote, ipcRenderer } from 'electron';
 import { Dialog, IconButton } from 'material-ui';
-import { IconMenu, MenuItem } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
-import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
 import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
-import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
-import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 
 // Import Components
 import {
   Main, Meetings, Call, AccountDialog,
   CallDirectory, CallNotification,
-  Update, Controls, AccountToggle
+  Update, Controls, CodecHeaderToggle
 } from './components';
 import { JsXAPI, Accounts, MeetingHelper } from './lib';
 import { CallHandler } from './lib/callhandler';
 
-const authorizationString = 'https://api.ciscospark.com/v1/authorize?client_id=Cfaffe557c65e048bba5295a29f51a93928f7432cc7eef6e67f0a47f66a8bc948&response_type=code&redirect_uri=https%3A%2F%2Fexample.webex.com&scope=spark%3Aall%20spark%3Akms&state=01234567890'
+// const authorizationString = 'https://api.ciscospark.com/v1/authorize?client_id=Cfaffe557c65e048bba5295a29f51a93928f7432cc7eef6e67f0a47f66a8bc948&response_type=code&redirect_uri=https%3A%2F%2Fexample.webex.com&scope=spark%3Aall%20spark%3Akms&state=01234567890'
 
-import * as CiscoSpark from 'ciscospark';
+// import * as CiscoSpark from 'ciscospark';
 
 export namespace App {
   export interface Props { }
@@ -99,38 +95,31 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   componentWillMount() {
-    let spark: any = new CiscoSpark({
-      credentials: 'OGM5ODE2NDYtNzgzNC00MGM4LWJmMGYtZTg3NDU1MjFkMGVhOWJhYWZkODAtYzI3'
-    });
-    spark.phone.register();
+    // let spark: any = new CiscoSpark({
+    //   credentials: 'OGM5ODE2NDYtNzgzNC00MGM4LWJmMGYtZTg3NDU1MjFkMGVhOWJhYWZkODAtYzI3'
+    // });
+    // spark.phone.register();
     // const call = spark.phone.dial('+13148992311@wwtatc.com');
     // call.on('connected', () => {
-    //   console.log('hello world')
     //   call.on('remoteMediaStream:change', () => {
     //     this.setState({ video: true });
     //     const farEndVideo: any = document.getElementById('farEnd');
     //     farEndVideo.srcObject = call.remoteMediaStream;
     //   });
     // });
-    spark.phone.on('call:incoming', (call) => {
-      // Set up listeners to update the UI if the callee chooses to answer the call.
-      call.on('remoteMediaStream:change', () => {
-        this.setState({ video: true });
-        const farEndVideo: any = document.getElementById('farEnd');
-        farEndVideo.srcObject = call.remoteMediaStream;
-      });
+    // spark.phone.on('call:incoming', (call) => {
+    //   call.on('remoteMediaStream:change', () => {
+    //     this.setState({ video: true });
+    //     const farEndVideo: any = document.getElementById('farEnd');
+    //     farEndVideo.srcObject = call.remoteMediaStream;
+    //   });
       // call.on('localMediaStream:change', () => {
       //   document.getElementById('outgoing-video').srcObject = call.localMediaStream;
-      //   // Mute the local video so you don't hear yourself speaking
       //   document.getElementById('outgoing-video').muted = true;
       // });
-
-      // Let the caller know that you've indicated to the callee that there's an incoming call
-      call.acknowledge();
-
-      // Answer the call
-      call.answer();
-    });
+    //   call.acknowledge();
+    //   call.answer();
+    // });
 
     ipcRenderer.on('update', (e) => {
       this.setState({ update: true });
@@ -428,39 +417,12 @@ export class App extends React.Component<App.Props, App.State> {
     const call = { incomingCall, outgoingCall };
     if(!account) account = { name: 'New' }
     return <div>
-      <AccountToggle accounts={accounts} change={this.changeAccount} />
-      {/* <IconMenu
-        style={{position: 'absolute', top: 0, width: 35}}
-        iconButtonElement={
-          <IconButton disabled={accounts && accounts.length < 1 ? true : false}
-            tooltip='Toggle Codec'
-            tooltipPosition='bottom-right' >
-              <MoreVertIcon />
-          </IconButton>
-        }
-        anchorOrigin={{ horizontal: 'left', vertical: 'top' }}
-        targetOrigin={{ horizontal: 'left', vertical: 'top' }}
-        onItemClick={this.changeAccount} >
-        {
-          accounts && accounts.length > 0 ?
-            accounts.map((acct: any, indx: number) => 
-              <MenuItem
-                value={acct}
-                primaryText={acct.name} key={`account_${indx}`} />
-            )
-          : null
-        }
-      </IconMenu> */}
-      <p
-        style={{
-          font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
-          marginTop: '16px'
-        }}>
-        {account.name}>
-        <IsConnectedIcon style={{ position: 'absolute', top: 12, marginLeft: '2px' }}
-          color={connected ? 'green' : 'red'} />
-      </p>
-      <div
+      <CodecHeaderToggle
+        connected={connected}
+        account={account}
+        accounts={accounts || [{name: 'New'}]}
+        change={this.changeAccount} />
+      {/* <div
         style={{
           display: video ? 'inline' : 'none',
           postion: 'absolute',
@@ -468,7 +430,7 @@ export class App extends React.Component<App.Props, App.State> {
           left: 20
         }}>
         <video id='farEnd' width={200} height={200} autoPlay></video>
-      </div>
+      </div> */}
       <Controls {...this.state.xapiData } />
       {
         mainView ?

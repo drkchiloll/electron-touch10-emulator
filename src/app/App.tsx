@@ -14,7 +14,7 @@ import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import {
   Main, Meetings, Call, AccountDialog,
   CallDirectory, CallNotification,
-  Update, Controls
+  Update, Controls, AccountToggle
 } from './components';
 import { JsXAPI, Accounts, MeetingHelper } from './lib';
 import { CallHandler } from './lib/callhandler';
@@ -423,12 +423,13 @@ export class App extends React.Component<App.Props, App.State> {
     let {
       mainView, meetingsView, connected, accounts,
       callView, acctDialog, account, update, video,
-      xapiData: { incomingCall, outgoingCall }
+      xapiData: { incomingCall, outgoingCall, directoryDialog }
     } = this.state;
     const call = { incomingCall, outgoingCall };
     if(!account) account = { name: 'New' }
     return <div>
-      <IconMenu
+      <AccountToggle accounts={accounts} change={this.changeAccount} />
+      {/* <IconMenu
         style={{position: 'absolute', top: 0, width: 35}}
         iconButtonElement={
           <IconButton disabled={accounts && accounts.length < 1 ? true : false}
@@ -449,7 +450,7 @@ export class App extends React.Component<App.Props, App.State> {
             )
           : null
         }
-      </IconMenu>
+      </IconMenu> */}
       <p
         style={{
           font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
@@ -490,7 +491,7 @@ export class App extends React.Component<App.Props, App.State> {
       <CallNotification call={call} />
       <Update update={update} close={this.closeUpdator} />
       {
-        this.state.xapiData.directoryDialog ?
+        directoryDialog ?
           <CallDirectory switch={this.updateView} error={this.state.xapiData.callError}
             close={() => {
               let {xapiData} = this.state;

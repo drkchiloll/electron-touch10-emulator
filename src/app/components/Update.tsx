@@ -12,16 +12,19 @@ export class Update extends React.Component<any, any> {
     didUpdate: false
   }
 
-  componentWillMount() {
+  componentWillReceiveProps(props) {
     let message: string;
-    updator.start().then(didUpdate => {
-      if(didUpdate) {
-        message = 'App Update Completed';
-      } else {
-        message = 'You have the Latest Version';
-      }
-      this.setState({ updated: true, didUpdate, message });
-    });
+    if(props.update) {
+      updator.start().then(didUpdate => {
+        console.log('I am trying to update..hahahah');
+        if(didUpdate) {
+          message = 'App Update Completed';
+        } else {
+          message = 'You have the Latest Version';
+        }
+        this.setState({ updated: true, didUpdate, message });
+      });
+    }
   }
 
   render() {

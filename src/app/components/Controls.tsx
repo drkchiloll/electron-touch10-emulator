@@ -9,7 +9,7 @@ import MicOnIcon from 'material-ui/svg-icons/av/mic';
 import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import VidCam from 'material-ui/svg-icons/image/switch-video';
 import Slider from 'material-ui-slider-label/Slider';
-import { IconButton, FontIcon, Drawer } from 'material-ui';
+import { IconButton, FontIcon, Paper } from 'material-ui';
 import { JsXAPI, Time, MeetingHelper } from '../lib';
 
 export class Controls extends React.Component<any, any> {
@@ -77,15 +77,14 @@ export class Controls extends React.Component<any, any> {
               <AwakeIcon style={this.styles.icons} />}
           </FontIcon>
         </IconButton>
-        <Drawer open={showVolume}
+        <Paper
           zDepth={0}
-          openSecondary={true}
           width={195}
-          containerStyle={{
+          style={{
             position: 'absolute',
             top: 45,
             height: 60,
-            right: showVolume ? 0 : -1
+            right: showVolume ? 0 : -1000
           }} >
           <Slider min={0} max={100} step={1}
             onMouseLeave={() => this.setState({ showVolume: false })}
@@ -103,7 +102,7 @@ export class Controls extends React.Component<any, any> {
                   }} >{volume}</div>
               return <Volume />;
             })()} />
-        </Drawer>
+        </Paper>
       </div>
     );
   }

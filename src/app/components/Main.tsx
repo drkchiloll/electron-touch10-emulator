@@ -1,5 +1,4 @@
 import * as React from 'react';
-import * as Promise from 'bluebird';
 import { Badge, FontIcon } from 'material-ui';
 import { Subheader, IconButton, Drawer } from 'material-ui';
 import { colors } from 'material-ui/styles';
@@ -8,6 +7,7 @@ import { JsXAPI, Time, MeetingHelper } from '../lib';
 const MeetingsSvg = require('../imgs/Meetings.svg');
 const CallSvg = require('../imgs/Call.svg');
 const ShareSvg = require('../imgs/Share.svg');
+import { Grid, Row, Col } from 'react-flexbox-grid';
 
 export class Main extends React.Component<any,any> {
   constructor(props) {
@@ -137,13 +137,23 @@ export class Main extends React.Component<any,any> {
   }
 
   _floatAction = () => {
-    return <IconButton
-      onClick={() => {
-        this.redirect(JSON.parse(localStorage.getItem('nextMeeting')))
-      }}
-      style={{ marginLeft: 80, height: 75, width: 75 }}>
-      <FontIcon><img src={MeetingsSvg} height={85} width={85} /></FontIcon>
-    </IconButton>
+    const { meetInTen } = this.state;
+    return (
+      <div>
+        <IconButton style={{position: 'absolute', top: 0}}
+          onClick={() => {
+            this.redirect(JSON.parse(localStorage.getItem('nextMeeting')))
+          }}>
+          <FontIcon><img src={MeetingsSvg} height={85} width={85} /></FontIcon>
+        </IconButton>
+        <strong style={{
+            position: 'absolute',
+            bottom: meetInTen ? -95: 0,
+            marginLeft: 26,
+            marginTop: meetInTen ? 10 : 12
+          }}> Meetings </strong>
+      </div>
+    )
   }
 
   redirect = (nextMeeting) => {
@@ -157,44 +167,48 @@ export class Main extends React.Component<any,any> {
     let { meetInTen, left, top, volumeDirection, showVolume } = this.state;
     let { volume, meetings, status, mic, directoryDialog, callError } = this.props;
     return (
-      <div>
-        <div style={{ left, top, position: 'absolute' }}>
-          <IconButton style={{height:80, width:80}}
-            onClick={() => this.props.switch({ directory: true })} >
-            <FontIcon><img src={CallSvg} height={85} width={85} /></FontIcon>
-          </IconButton>
-          <IconButton  style={{ marginLeft: 48 }} >
-            <FontIcon >
-              <img src={ShareSvg} height={85} width={85} />
-            </FontIcon>
-          </IconButton>
-          {
-            meetInTen ?
-              <Badge badgeContent={1} primary={true} badgeStyle={this.styles.badge1}>
-                { this._floatAction() }
-              </Badge> :
-              this._floatAction()
-          }
+        <div style={{ left: 155, top, position: 'absolute', right: 125 }}>
+          <Grid fluid>
+            <Row>
+              <Col xs={4}>
+                <IconButton style={{ height: 80, width: 80 }}
+                  onClick={() => this.props.switch({ directory: true })} >
+                  <FontIcon><img src={CallSvg} height={85} width={85} /></FontIcon>
+                </IconButton>
+                <div style={{ marginTop: 10}}>
+                  <Col><strong style={{marginLeft: 37}}> Call </strong></Col>
+                </div>
+              </Col>
+              <Col xs={4}>
+                <IconButton style={{ height: 80, width: 80 }}>
+                  <FontIcon >
+                    <img src={ShareSvg} height={85} width={85} />
+                  </FontIcon>
+                </IconButton>
+                <div style={{ marginTop: 10}}>
+                  <Col><strong style={{ marginLeft: 30 }}> Sharing </strong></Col>
+                </div>
+              </Col>
+              <Col xs={4}>
+                {
+                  meetInTen ?
+                    <Badge
+                      badgeContent={1}
+                      primary={true}
+                      badgeStyle={this.styles.badge1}>
+                      {this._floatAction()}
+                    </Badge> :
+                    this._floatAction()
+                }
+              </Col>
+            </Row>
+          </Grid>
         </div>
-        <div style={{
-          left: this.state.left,
-          top: this.state.top + (meetInTen ? 125 : 100),
-          position: 'absolute'
-        }}>
-          <div style={this.styles.div1}>
-            <b>Call</b>
-            <span style={this.styles.span1}> <b>Share</b> </span>
-            <span style={{
-              marginLeft: meetInTen ? 88 : 72
-            }}> <b>Meetings</b> </span>
-          </div>
-        </div>
-      </div>
     );
   }
 
   styles: any = {
-    badge1: { top: 35, right: 5 },
+    badge1: { top: 10, left: 84 },
     div1: { marginLeft: 40 },
     span1: { marginLeft: 90 },
     heading: { textAlign: 'center', padding: 0, margin: 0 },

@@ -14,6 +14,7 @@
     "clean": "cd dist && rm app.bundle.js app.bundle.js.map main.bundle.js main.bundle.js.map && cd .."
   },
   "devDependencies": {
+    "@types/jsonwebtoken": "^7.2.6",
     "@types/material-ui": "^0.21.1",
     "@types/node": "^7.0.55",
     "@types/react": "^15.0.14",
@@ -24,25 +25,33 @@
     "bufferutil": "^3.0.3",
     "ciscospark": "^1.30.2",
     "css-loader": "^0.26.1",
-    "electron": "^1.8.2",
+    "electron": "^1.8.4",
     "electron-packager": "^11.1.0",
     "electron-rebuild": "^1.7.3",
     "file-loader": "^0.10.1",
     "json-loader": "^0.5.4",
+    "jsonwebtoken": "^8.2.1",
     "jsxapi": "^4.1.2",
     "material-ui": "^0.20.0",
+    "material-ui-slider-label": "git+https://github.com/tariqwest/material-ui-slider-label.git",
     "moment": "^2.21.0",
     "moment-timezone": "^0.5.14",
     "rc-slider": "^8.6.1",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
+    "react-modal-resizable-draggable": "^0.1.0",
+    "sparkguest": "^0.4.0",
     "style-loader": "^0.13.1",
     "typescript": "^2.7.2",
     "uglifyjs-webpack-plugin": "^1.2.2",
     "url-loader": "^0.5.6",
     "utf-8-validate": "^4.0.0",
     "webpack": "^2.2.1",
-    "webpack-merge": "^3.0.0",
-    "material-ui-slider-label": "git+https://github.com/tariqwest/material-ui-slider-label.git"
+    "webpack-merge": "^3.0.0"
+  },
+  "dependencies": {
+    "@ciscospark/plugin-phone": "^1.30.2",
+    "@ciscospark/react-ciscospark": "git+https://github.com/ciscospark/react-ciscospark.git",
+    "react-flexbox-grid": "^2.0.0"
   }
 }

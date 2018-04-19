@@ -40,18 +40,20 @@ let dev = {
 		rules: [{
 			test: /\.tsx?$/,
 			loader: "awesome-typescript-loader",
+			exclude: /(node_modules|server.js)/,
 			options: {
 				transpileOnly: false
 			}
 		}, {
 			test: /\.css$/,
-			use: ['style-loader', 'css-loader']
+			loader: 'style-loader!css-loader?modules',
+			exclude: /flexboxgrid/
 		}, {
 			test: /.woff$|.woff2$|.ttf$|.eot$|.svg$|.jpg$/,
 			loader: 'url-loader'
 		}]
-	},
-	externals: nodeModules,
+	}
+	// externals: nodeModules,
 };
 
 let prod = {

@@ -23,12 +23,14 @@ export class Controls extends React.Component<any, any> {
   render() {
     let {
       volume, meetings, status,
-      mic, directoryDialog
+      mic, directoryDialog, token
     } = this.props;
     let { volumeDirection, showVolume } = this.state;
     return (
       <div>
-        <IconButton style={Object.assign(
+        <IconButton onClick={() => this.props.spark()}
+          disabled={!token}
+          style={Object.assign(
             JSON.parse(JSON.stringify(this.styles.icnbtn)), { right: 120 }
           )}>
           <FontIcon><VidCam style={this.styles.icons} /></FontIcon>

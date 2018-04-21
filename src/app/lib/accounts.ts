@@ -6,6 +6,11 @@ export interface Account {
   password: string;
   selected: boolean;
   name: string;
+  email?: string;
+  room?: {
+    id: string;
+    sipAddress: string;
+  }
 }
 
 export class Accounts {
@@ -13,13 +18,26 @@ export class Accounts {
 
   static get() {
     let accounts = JSON.parse(localStorage.getItem('accounts'));
-    if(!accounts) {
-      this.save([this.newaccount()]);
+    if(!accounts || accounts.length === 0) {
+      accounts = [];
+      accounts.push({
+        name: 'New', host:'10.10.10.10',username:'admin',password:'adming',
+        selected: true
+      });
+      localStorage.setItem('accounts', JSON.stringify(accounts));
       return JSON.parse(localStorage.getItem('accounts'));
     } else {
       return accounts;
     }
   };
+
+  static update(account: Account) {
+    let accounts: Account[] = this.get();
+    let acctIdx = accounts.findIndex(a => a.name == account.name);
+    accounts[acctIdx] = account;
+    this.save(accounts);
+    return { accounts, account };
+  }
 
   static save(accounts: Account[]): void {
     localStorage.setItem('accounts', JSON.stringify(accounts));

@@ -37,8 +37,7 @@ const muiTheme = getMuiTheme({
 });
 const BGImg = require('./imgs/t10.jpg');
 document.body.style.backgroundImage = `url(${BGImg})`;
-document.body.style.backgroundSize = '1024px';
-
+document.body.style.backgroundSize = '100%';
 const Root = () => (
   <MuiThemeProvider muiTheme={muiTheme}>
     <App />

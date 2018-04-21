@@ -3,4 +3,9 @@ import { Time } from './time';
 import { Accounts } from './accounts';
 import { MeetingHelper } from './meetings-helper';
 import { Updates } from './updator';
-export { JsXAPI, Time, Accounts, MeetingHelper, Updates };
+import { SparkGuest, SparkGuestConstructor } from './spark-guest';
+
+export {
+  JsXAPI, Time, Accounts, MeetingHelper,
+  Updates, SparkGuest, SparkGuestConstructor
+};

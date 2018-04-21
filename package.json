@@ -24,6 +24,7 @@
     "bluebird": "^3.5.1",
     "bufferutil": "^3.0.3",
     "ciscospark": "^1.30.2",
+    "createref": "^0.5.0",
     "css-loader": "^0.26.1",
     "electron": "^1.8.4",
     "electron-packager": "^11.1.0",
@@ -36,11 +37,12 @@
     "material-ui-slider-label": "git+https://github.com/tariqwest/material-ui-slider-label.git",
     "moment": "^2.21.0",
     "moment-timezone": "^0.5.14",
-    "rc-slider": "^8.6.1",
+    "nipplejs": "^0.6.8",
     "react": "^16.2.0",
     "react-dom": "^16.2.0",
+    "react-flexbox-grid": "^2.0.0",
+    "react-joystick": "^1.0.3",
     "react-modal-resizable-draggable": "^0.1.0",
-    "sparkguest": "^0.4.0",
     "style-loader": "^0.13.1",
     "typescript": "^2.7.2",
     "uglifyjs-webpack-plugin": "^1.2.2",
@@ -49,9 +51,5 @@
     "webpack": "^2.2.1",
     "webpack-merge": "^3.0.0"
   },
-  "dependencies": {
-    "@ciscospark/plugin-phone": "^1.30.2",
-    "@ciscospark/react-ciscospark": "git+https://github.com/ciscospark/react-ciscospark.git",
-    "react-flexbox-grid": "^2.0.0"
-  }
+  "dependencies": {}
 }

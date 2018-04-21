@@ -186,7 +186,7 @@ export class Main extends React.Component<any,any> {
                   </FontIcon>
                 </IconButton>
                 <div style={{ marginTop: 10}}>
-                  <Col><strong style={{ marginLeft: 30 }}> Sharing </strong></Col>
+                  <Col><strong style={{ marginLeft: 34 }}> Share </strong></Col>
                 </div>
               </Col>
               <Col xs={4}>

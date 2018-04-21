@@ -46,8 +46,8 @@ let dev = {
 			}
 		}, {
 			test: /\.css$/,
-			loader: 'style-loader!css-loader?modules',
-			exclude: /flexboxgrid/
+			use: ['style-loader', 'css-loader'],
+			include: /flexboxgrid/
 		}, {
 			test: /.woff$|.woff2$|.ttf$|.eot$|.svg$|.jpg$/,
 			loader: 'url-loader'

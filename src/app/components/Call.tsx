@@ -136,8 +136,11 @@ export class Call extends React.Component<any, any> {
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
         </Paper>
-        <div style={{ marginTop: '35px' }}>
-          <IconButton style={{ marginLeft: '190px', marginRight: '15px' }}
+        <div style={{ position: 'absolute', bottom: 160}}>
+          <IconButton style={{
+              marginLeft:  '190px',
+              marginRight: '15px'
+            }}
             disableTouchRipple={true}>
             <FontIcon> <img src={AddCall} height={60} width={60} /> </FontIcon>
           </IconButton>
@@ -202,7 +205,7 @@ export class Call extends React.Component<any, any> {
       borderRadius: '7px',
       position: 'relative',
       marginLeft: '150px',
-      marginTop: '150px',
+      marginTop: '100px',
       width: '600px',
       height: '350px'
     },
@@ -214,7 +217,8 @@ export class Call extends React.Component<any, any> {
     },
     icon: {
       marginLeft: '25px',
-      height: 65, width: 65
+      height: 65, width: 65,
+      zIndex: 1001
     },
     div: {
       position: 'absolute',

@@ -29,4 +29,8 @@ export abstract class Time {
       later = moment(new Date(date));
     return moment.duration(later.diff(now)).asMilliseconds();
   }
+
+  static createIsoStr(date) {
+    return date.seconds(0).milliseconds(0).toISOString();
+  }
 }

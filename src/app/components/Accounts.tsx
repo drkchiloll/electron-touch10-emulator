@@ -14,7 +14,7 @@ import TrashIcon from 'material-ui/svg-icons/action/delete';
 import SaveIcon from 'material-ui/svg-icons/content/save';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 
-import { Accounts } from '../lib';
+import { Accounts, JsXAPI } from '../lib';
 
 export class AccountDialog extends React.Component<any,any> {
   state = {
@@ -43,13 +43,21 @@ export class AccountDialog extends React.Component<any,any> {
   save = () => {
     const { accounts, selected } = this.state;
     let account = accounts[selected];
-    Accounts.save(accounts);
-    let message = `${account.name} updated successfully`;
-    this.shareAccountName(account.name);
-    this.setState({
-      accounts,
-      message,
-      snack: true
+    JsXAPI.account = account;
+    return JsXAPI.connect().then(() => {
+      return JsXAPI.getUnit();
+    }).then((metaData) => {
+      account['email'] = JSON.parse(JSON.stringify(metaData)).email;
+      delete metaData.email;
+      account['metaData'] = metaData;
+      Accounts.save(accounts);
+      let message = `${account.name} updated successfully`;
+      this.shareAccountName(account.name);
+      this.setState({
+        accounts,
+        message,
+        snack: true
+      });
     });
   }
 
@@ -65,7 +73,7 @@ export class AccountDialog extends React.Component<any,any> {
   closeClick = () => this.setState({ close: true });
 
   dialogActions = () => {
-    const { accounts } = this.state;
+    const { accounts, close } = this.state;
     return [
       <FlatButton
         label='Save'
@@ -73,23 +81,21 @@ export class AccountDialog extends React.Component<any,any> {
         keyboardFocused={true}
         onClick={this.save}
       />,
-      <FlatButton
-        label={this.state.close ? '': 'Close'}
-        icon={
-            this.state.close ? <CircularProgress size={20} thickness={3} /> :
-            null
-        }
-        primary={true}
-        onClick={() => {
-          this.closeClick();
-          setTimeout(() => {
-            let selected = accounts.findIndex(a => a.selected);
-            let account = accounts[selected];
-            this.setState({ account, selected, accounts });
-            this.props.close();
-          }, 250);
-        }}
-      />
+        close ? <CircularProgress size={20}
+          style={{marginRight: '20px', marginTop: '10px'}} /> :
+        <FlatButton
+          label='Close'
+          primary={true}
+          onClick={() => {
+            this.closeClick();
+            setTimeout(() => {
+              let selected = accounts.findIndex(a => a.selected);
+              let account = accounts[selected];
+              this.setState({ account, selected, accounts });
+              this.props.close();
+            }, 250);
+          }}
+        />
     ];
   }
 

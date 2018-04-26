@@ -1,9 +1,10 @@
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
 import axios from 'axios';
 import * as Promise from 'bluebird';
 import * as jsxapi from 'jsxapi';
 import { EventEmitter } from 'events';
 import { Time } from './index';
-
+import * as j2x from 'js2xmlparser';
 export interface Booking {
   Id: string;
   Title: string;
@@ -16,7 +17,7 @@ export class JsXAPI {
   public static event = new EventEmitter();
   public static poller: any;
   public static eventInterval: any;
-  public static account: {host, username, password, name, selected};
+  public static account: {host, username, password, name, selected, room?};
   private static reconnectTimeout: any;
 
   static init() {
@@ -74,7 +75,149 @@ export class JsXAPI {
       .status
       .get(status)
       .catch(() => this.event.emit('connection-error'));
+  };
+
+  static parseNetwork(nets) {
+    return Promise.map(nets, (net: any) => {
+      console.log(net);
+      let netprops = {
+        network: {
+          address: net.IPv4.Address,
+          gateway: net.IPv4.Gateway,
+          mask: net.IPv4.SubnetMask
+        },
+        vlan: {
+          voice: net.VLAN.Voice.VlanId
+        },
+        macAddress: net.Ethernet.MacAddress,
+        speed: net.Ethernet.Speed,
+        connectedSwitch: (() => {
+          return Object.keys(net.CDP).reduce((o: any, key: string) => {
+            let prop = key.substring(0, 1).toLowerCase() + key.substring(1);
+            o[prop] = net.CDP[key];
+            return o;
+          }, {})
+        })(),
+        dns: {
+          domain: net.DNS.Domain,
+          servers: (() => {
+            return net.DNS.Server.reduce((a: any, server:any) => {
+              if(server.Address) a.push({ address: server.Address });
+              return a;
+            }, []);
+          })()
+        }
+      };
+      return netprops;
+    });
+  };
+
+  static parseUnit(unit) {
+    return {
+      sn: unit.Hardware.Module.SerialNumber,
+      temp: unit.Hardware.Module.Temperature,
+      product: unit.Hardware.ProductId,
+      softwareVersion: unit.Hardware.Software.Version,
+      // We can get ActiveCalls, InProgress Calls, & Suspended Calls
+    };
+  };
+
+  static parseSIP(sip) {
+    let sipProps = {
+      primary: {
+        uri: sip.Registration[0].URI,
+        registered: sip.Registration[0].Status === 'Registered' ? true : false
+      }
+    };
+    if(sip.AlternateURI && sip.AlternateURI.Primary.URI) {
+      sipProps['secondary'] = { uri: sip.AlternateURI.Primary.URI };
+      sipProps['email'] = sip.AlternateURI.Primary.URI;
+    } else {
+      sipProps['email'] = sip.Registration[0].URI;
+    }
+    return sipProps;
+  };
+
+  static generateBooking({start,end,title}) {
+    return {
+      Booking: {
+        Id: 1,
+        Title: title,
+        Agenda: title,
+        Privacy: 'Public',
+        Organizer: {
+          FirstName: 'Samuel',
+          LastName: 'Womack',
+          Email: 'samuel.womack@wwt.com'
+        },
+        Time: {
+          StartTime: Time.createIsoStr(start),
+          StartTimeBuffer: 300,
+          EndTime: Time.createIsoStr(end),
+          EndTimeBuffer: 0
+        },
+        MaximumMeetingExtension: 32,
+        BookingStatus: 'OK',
+        BookingStatusMessage: '',
+        Webex: {
+          Enabled: 'False',
+          MeetingNumber: '',
+          Password: ''
+        },
+        Encryption: 'BestEffort',
+        Role: 'Master',
+        Recording: 'Disabled',
+        DialInfo: {
+          Calls: {
+            Call: {
+              Number: '88857218136@meet.ciscospark.com',
+              Protocol: 'SIP',
+              CallRate: 6000,
+              CallType: 'Video'
+            }
+          },
+          ConnectMode: 'OBTP'
+        }
+      }
+    };
   }
+
+  static createBooking(params) {
+    let booking = this.generateBooking(params);
+    const request = axios.create({
+      baseURL: `https://${this.account.host}`,
+      auth: { username: this.account.username, password: this.account.password },
+      headers: { 'Content-Type': 'text/plain', 'Accept': 'text/plain' },
+      adapter: require('axios/lib/adapters/http')
+    });
+    return request.post('/xmlapi/session/begin')
+      .then(resp => {
+        request.defaults.headers['Cookie'] = resp.headers['set-cookie'][0];
+        return request.post(
+          '/bookingsputxml',
+          j2x.parse('Bookings', booking).toString()
+        )})
+      .then(resp => request.post('/xmlapi/session/end'));
+  }
+
+  static getUnit() {
+    return Promise.all([
+      this.getStatus('Network').then((nets) => this.parseNetwork(nets)),
+      this.getStatus('SystemUnit').then((unit) => this.parseUnit(unit)),
+      this.getStatus('UserInterface ContactInfo').then(({Name}) =>
+        ({ name: Name || 'not defined' })),
+      this.getStatus('SIP').then(sip => this.parseSIP(sip))
+    ]).then(results => {
+      let additionalProps: any = {
+        networkConnections: results[0],
+        hardware: results[1],
+        name: results[2].name,
+        email: results[3].email,
+        sip: results[3]
+      };
+      return additionalProps;
+    });
+  };
 
   static getMeetings() {
     // console.log('getting meetings');

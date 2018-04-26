@@ -32,6 +32,10 @@ export class SparkGuest {
         Accept: 'application/json'
       }
     });
+    if(!localStorage.getItem('sparkguest')) {
+      const sparkguest = { user: username, id: userid };
+      localStorage.setItem('sparkguest', JSON.stringify(sparkguest));
+    }
   }
 
   generateGuestToken() {

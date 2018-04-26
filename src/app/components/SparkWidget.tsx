@@ -127,7 +127,7 @@ export class SparkWidget extends React.Component<any, any> {
     return (
       <div id='spark-call'>
         <Grid fluid>
-          <div style={{ position: 'absolute',top: -42, left: 157}}>
+          <div style={{ position: 'absolute', top: -42, left: 157}}>
             <audio id='farend-audio' autoPlay ></audio>
             <video id='farend-video' height={700} width={600} autoPlay ></video>
           </div>
@@ -137,7 +137,7 @@ export class SparkWidget extends React.Component<any, any> {
                 <Row>
                   <Col xsOffset={6}>
                     <div className='joystick' style={{ position: 'absolute', top: 412 }}>
-                      {this.call ? <JoyStick /> : null}
+                      <JoyStick />
                     </div>
                   </Col>
                 </Row>

@@ -1,27 +1,28 @@
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import * as Promise from 'bluebird';
 import { remote, ipcRenderer } from 'electron';
 import { Dialog, IconButton } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
 import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
-
 // Import Components
 import {
   Main, Meetings, Call, AccountDialog,
   CallDirectory, CallNotification,
   Update, Controls, CodecHeaderToggle
 } from './components';
+import { SparkWidget } from './components/SparkWidget';
 import { JsXAPI, Accounts, MeetingHelper } from './lib';
+import { SparkGuest, SparkGuestConstructor } from './lib';
 import { CallHandler } from './lib/callhandler';
-
-// const authorizationString = 'https://api.ciscospark.com/v1/authorize?client_id=Cfaffe557c65e048bba5295a29f51a93928f7432cc7eef6e67f0a47f66a8bc948&response_type=code&redirect_uri=https%3A%2F%2Fexample.webex.com&scope=spark%3Aall%20spark%3Akms&state=01234567890'
-
-// import * as CiscoSpark from 'ciscospark';
 
 export namespace App {
   export interface Props { }
   export interface State {
+    widgetHeight: number;
+    token: string;
+    openWidget: boolean;
     video: boolean;
     update: boolean;
     account: any;
@@ -69,6 +70,9 @@ export class App extends React.Component<App.Props, App.State> {
   constructor(props) {
     super(props);
     this.state = {
+      token: '',
+      openWidget: false,
+      widgetHeight: 60,
       accounts: [],
       update: false,
       account: null,
@@ -95,32 +99,6 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   componentWillMount() {
-    // let spark: any = new CiscoSpark({
-    //   credentials: 'OGM5ODE2NDYtNzgzNC00MGM4LWJmMGYtZTg3NDU1MjFkMGVhOWJhYWZkODAtYzI3'
-    // });
-    // spark.phone.register();
-    // const call = spark.phone.dial('+13148992311@wwtatc.com');
-    // call.on('connected', () => {
-    //   call.on('remoteMediaStream:change', () => {
-    //     this.setState({ video: true });
-    //     const farEndVideo: any = document.getElementById('farEnd');
-    //     farEndVideo.srcObject = call.remoteMediaStream;
-    //   });
-    // });
-    // spark.phone.on('call:incoming', (call) => {
-    //   call.on('remoteMediaStream:change', () => {
-    //     this.setState({ video: true });
-    //     const farEndVideo: any = document.getElementById('farEnd');
-    //     farEndVideo.srcObject = call.remoteMediaStream;
-    //   });
-      // call.on('localMediaStream:change', () => {
-      //   document.getElementById('outgoing-video').srcObject = call.localMediaStream;
-      //   document.getElementById('outgoing-video').muted = true;
-      // });
-    //   call.acknowledge();
-    //   call.answer();
-    // });
-
     ipcRenderer.on('update', (e) => {
       this.setState({ update: true });
     });
@@ -143,7 +121,31 @@ export class App extends React.Component<App.Props, App.State> {
 
   componentDidMount() {
     const { account } = this.state;
-    return this.initHandler(account);
+    // return this.initHandler(account);
+    return Promise.all([
+      this.initHandler(account),
+      this.teamsRoomCheck(account)
+    ]);
+  }
+
+  teamsRoomCheck = (account: any) => {
+    const teamsGuest = new SparkGuest({
+      userid: '987654321',
+      username: 'myNewUser'
+    });
+    return teamsGuest.createTokens()
+      .then(token => {
+        this.setState({ token });
+        if(account.room) {
+          return;
+        } else {
+          // Set Up Space for the Connections that need to be Made..
+          // account['email'] = 'roomkit@wwtatc.com';
+          return teamsGuest.setupRoom(account)
+            .then((updatedAccount) => Accounts.update(updatedAccount))
+            .then(({ accounts, account }) => this.setState({ accounts, account }));
+        }
+      });
   }
 
   initHandler = (account) => {
@@ -404,7 +406,10 @@ export class App extends React.Component<App.Props, App.State> {
         accounts: updatedAccounts,
         account: value
       });
-      this.initHandler(value);
+      Promise.all([
+        this.initHandler(value),
+        this.teamsRoomCheck(account)
+      ]);
     }
   }
 
@@ -412,7 +417,8 @@ export class App extends React.Component<App.Props, App.State> {
     let {
       mainView, meetingsView, connected, accounts,
       callView, acctDialog, account, update, video,
-      xapiData: { incomingCall, outgoingCall, directoryDialog }
+      xapiData: { incomingCall, outgoingCall, directoryDialog },
+      widgetHeight, token, openWidget
     } = this.state;
     const call = { incomingCall, outgoingCall };
     if(!account) account = { name: 'New' }
@@ -421,17 +427,11 @@ export class App extends React.Component<App.Props, App.State> {
         connected={connected}
         account={account}
         accounts={accounts || [{name: 'New'}]}
-        change={this.changeAccount} />
-      {/* <div
-        style={{
-          display: video ? 'inline' : 'none',
-          postion: 'absolute',
-          top: 50,
-          left: 20
-        }}>
-        <video id='farEnd' width={200} height={200} autoPlay></video>
-      </div> */}
-      <Controls {...this.state.xapiData } />
+        change={this.changeAccount}
+      />
+      <Controls {...this.state.xapiData }
+        token={token}
+        spark={() => this.setState({ openWidget: true })} />
       {
         mainView ?
           <Main switch={this.updateView} {...this.state.xapiData } /> :
@@ -450,7 +450,7 @@ export class App extends React.Component<App.Props, App.State> {
         onClick={this.modifyAccount} >
         <SettingsIcon />
       </IconButton>
-      <CallNotification call={call} />
+      <CallNotification dialedNumber={account} call={call} />
       <Update update={update} close={this.closeUpdator} />
       {
         directoryDialog ?
@@ -460,7 +460,19 @@ export class App extends React.Component<App.Props, App.State> {
               xapiData['directoryDialog'] = false;
               this.setState({ xapiData });
             }} /> :
-          null
+        openWidget ?
+          <SparkWidget
+            caller={call}
+            open={openWidget}
+            close={() => {
+              ReactDOM.unmountComponentAtNode(
+                document.querySelector('#spark-call')
+              );
+              this.setState({ openWidget: false })
+            }}
+            token={token}
+            account={account} />
+          : null
       }
     </div>
   }

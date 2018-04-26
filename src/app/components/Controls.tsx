@@ -9,15 +9,19 @@ import MicOnIcon from 'material-ui/svg-icons/av/mic';
 import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
 import VidCam from 'material-ui/svg-icons/image/switch-video';
 import Slider from 'material-ui-slider-label/Slider';
+import MeetingIcon from 'material-ui/svg-icons/action/event';
 import { IconButton, FontIcon, Paper } from 'material-ui';
 import { JsXAPI, Time, MeetingHelper } from '../lib';
+import { OBTPMeeting } from './OBTPMeeting/index'
 
 export class Controls extends React.Component<any, any> {
   constructor(props) {
     super(props);
     this.state = {
       volumeDirection: 'up',
-      showVolume: false
+      showVolume: false,
+      openMeeting: false,
+      popEl: null
     };
   }
   render() {
@@ -28,7 +32,21 @@ export class Controls extends React.Component<any, any> {
     let { volumeDirection, showVolume } = this.state;
     return (
       <div>
-        <IconButton onClick={() => this.props.spark()}
+        <IconButton
+          onClick={(e) => {
+            e.preventDefault();
+            this.setState({
+              popEl: e.currentTarget,
+              openMeeting: true
+            })
+          }}
+          style={Object.assign(
+            JSON.parse(JSON.stringify(this.styles.icnbtn)), { right: 160 }
+          )}>
+          <FontIcon><MeetingIcon style={this.styles.icons} /></FontIcon>
+        </IconButton>
+        <IconButton
+          onClick={() => this.props.spark()}
           disabled={!token}
           style={Object.assign(
             JSON.parse(JSON.stringify(this.styles.icnbtn)), { right: 120 }
@@ -37,9 +55,9 @@ export class Controls extends React.Component<any, any> {
         </IconButton>
         <IconButton style={Object.assign(
             JSON.parse(JSON.stringify(this.styles.icnbtn)), {right: 80}
-          )}
-          onMouseEnter={() => this.setState({ showVolume: true })} >
-          <FontIcon>
+          )} >
+          <FontIcon style={{padding: 0, margin: 0}}
+            onMouseEnter={() => this.setState({ showVolume: true })}>
             {volume == '0' ? <VolumeOff style={this.styles.icons} /> :
               volumeDirection === 'up' ?
                 <VolumeUp style={this.styles.icons} /> :
@@ -79,17 +97,19 @@ export class Controls extends React.Component<any, any> {
               <AwakeIcon style={this.styles.icons} />}
           </FontIcon>
         </IconButton>
-        <Paper
-          zDepth={0}
-          width={195}
+        <OBTPMeeting open={this.state.openMeeting}
+          close={() => this.setState({ openMeeting: false })} />
+        <Paper zDepth={0}
+          onMouseLeave={() => this.setState({ showVolume: false })}
+          width={260}
           style={{
             position: 'absolute',
+            zIndex: 1,
             top: 45,
-            height: 60,
+            height: 110,
             right: showVolume ? 0 : -1000
           }} >
           <Slider min={0} max={100} step={1}
-            onMouseLeave={() => this.setState({ showVolume: false })}
             style={{ position: 'absolute', width: 150, top: -12, right: 18, height: 40 }}
             value={parseInt(volume, 10)}
             onChange={(e, vol) => JsXAPI.setAudio(vol)}

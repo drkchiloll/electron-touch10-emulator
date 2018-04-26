@@ -93,17 +93,22 @@ export class SparkGuest {
 
   setupRoom(codec: any) {
     let emulatorDetails: any = JSON.parse(JSON.stringify(codec));
+    let roomId: string;
     return this.request.post('/rooms', {
       title: codec.name.toUpperCase()
     })
     .then((resp) => ({ id: resp.data.id }))
     .then(({id}) => {
+      roomId = id;
+      let members = [codec.email, 'samuel.womack@wwt.com'];
       return Promise.all([
-        this.request.get(`/rooms/${id}`)
+        this.request.get(`/rooms/${roomId}`)
           .then(({data: {sipAddress}}) => Object.assign(
-            emulatorDetails, { room: { id, sipAddress }})),
-        this.request.post('/memberships', {
-          roomId: id, personEmail: codec.email
+            emulatorDetails, { room: { id: roomId, sipAddress }})),
+        Promise.each(members, (member) => {
+          return this.request.post('/memberships', {
+            roomId, personEmail: member
+          })
         })
       ])
     }).then(() => emulatorDetails);

@@ -159,19 +159,21 @@ export class SparkWidget extends React.Component<any, any> {
                 </Row>
                 <Row>
                   <Col xsOffset={5} xs={3}>
-                    <Chip style={{ width: 80, height: 26, marginLeft: '35px' }}
-                        backgroundColor={blueGrey100} >
-                      <IconButton style={{ position: 'absolute', left: -3, top: -10 }}
-                        iconStyle={{ height: '14px', width: '14px' }}
-                        onClick={() => this.zoom('In')} >
-                        <ZoomInIcon color='black' />
-                      </IconButton>
-                      <IconButton style={{ position: 'absolute', right: -3, top: -10 }}
-                        iconStyle={{ height: '14px', width: '14px' }}
-                        onClick={() => this.zoom('Out')} >
-                        <ZoomOutIcon color='black' />
-                      </IconButton>
-                    </Chip>
+                    <div style={{ marginTop: '-100px' }} >
+                      <Chip style={{ width: 80, height: 26, marginLeft: '35px' }}
+                          backgroundColor={blueGrey100} >
+                        <IconButton style={{ position: 'absolute', left: -3, top: -10 }}
+                          iconStyle={{ height: '14px', width: '14px' }}
+                          onClick={() => this.zoom('In')} >
+                          <ZoomInIcon color='black' />
+                        </IconButton>
+                        <IconButton style={{ position: 'absolute', right: -3, top: -10 }}
+                          iconStyle={{ height: '14px', width: '14px' }}
+                          onClick={() => this.zoom('Out')} >
+                          <ZoomOutIcon color='black' />
+                        </IconButton>
+                      </Chip>
+                    </div>
                   </Col>
                 </Row>
               </div> :

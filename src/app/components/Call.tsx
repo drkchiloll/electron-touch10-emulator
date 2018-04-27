@@ -136,7 +136,7 @@ export class Call extends React.Component<any, any> {
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
         </Paper>
-        <div style={{ position: 'absolute', bottom: 180}}>
+        <div style={{ marginTop: '25px' }}>
           <IconButton style={{
               marginLeft:  '190px',
               marginRight: '15px'

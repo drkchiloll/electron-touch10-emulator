@@ -2,16 +2,20 @@ import * as React from 'react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker-cssmodules.css';
 import * as moment from 'moment';
-import { Dialog, TextField, FlatButton, CircularProgress } from 'material-ui';
+import {
+  Dialog, TextField, FlatButton, CircularProgress, Subheader
+} from 'material-ui';
+import Chips from 'react-chips';
 import { Row, Col } from 'react-flexbox-grid';
-import { JsXAPI } from '../../lib';
+import { JsXAPI, SparkGuest, SparkGuestConstructor } from '../../lib';
 
 export class OBTPMeeting extends React.Component<any, any> {
   state = {
     start: null,
     end: null,
     title: 'Demo OBTP Meeting',
-    creating: false
+    creating: false,
+    chips: ['samuel.womack@wwt.com']
   };
 
   handleTime() {
@@ -43,10 +47,61 @@ export class OBTPMeeting extends React.Component<any, any> {
 
   createMeeting = () => {
     this.setState({ creating: true });
-    const { start, end, title } = this.state;
-    JsXAPI.createBooking(this.state).then(() => {
-      this.closeModal();
+    const { token } = this.props;
+    const { start, end, title, chips } = this.state;
+    const { userid, username } = JSON.parse(localStorage.getItem('sparkguest'));
+    const guest = new SparkGuest({
+      userid, username
     });
+    return guest.obtpSparkRoom(token.token, title, chips)
+      .then((newMeeting) => {
+        JsXAPI.commander({
+          string: 'Bookings List',
+          param: {}
+        }).then(meetings => {
+          let booking: any[], item: number;
+          if(meetings.Booking) {
+            item = meetings.Booking.length + 1;
+            booking = meetings.Booking.map((book, i) => {
+              let t = JSON.parse(JSON.stringify(book));
+              delete t.DialInfo.Calls;
+              let calls = book.DialInfo.Calls.Call[0];
+              t.DialInfo['Calls'] = { Call: { _item: 1, ...calls } };
+              Object.keys(t).forEach(key => {
+                if(key === 'BookingStatusMessage') delete t[key];
+                if(key === 'MeetingExtensionAvailability') delete t[key];
+                if(key === 'Organizer') delete t[key].Id;
+                if(key === 'Webex') {
+                  delete t[key].Url;
+                  delete t[key].MeetingNumber;
+                  delete t[key].Password;
+                  delete t[key].HostKey;
+                  delete t[key].DialInNumber;
+                }
+              })
+              let b = { _item: i+1, ...t };
+              return b;
+            });
+          } else {
+            booking = [];
+            item = 1;
+          }
+          let meet: any = JsXAPI.generateBooking({
+            id: newMeeting.roomId,
+            start,
+            end,
+            title,
+            number: newMeeting.sipAddress,
+            item
+          });
+          booking.push(meet);
+          let bookingsXML = JsXAPI.js2xml(booking);
+          console.log(bookingsXML);
+          JsXAPI.createBooking(bookingsXML).then(() => {
+            this.closeModal();
+          });
+        });
+      });
   }
 
   closeModal = () => {
@@ -59,8 +114,10 @@ export class OBTPMeeting extends React.Component<any, any> {
     this.props.close();
   }
 
+  changeChips = chips => this.setState({ chips });
+
   render() {
-    const { creating } = this.state;
+    const { creating, chips } = this.state;
     return (
       <Dialog open={this.props.open}
         style={this.styles.dialog}
@@ -80,9 +137,7 @@ export class OBTPMeeting extends React.Component<any, any> {
           <Col sm={5} >
             <DatePicker
               selected={this.state.start}
-              onChange={(date) => {
-                this.setState({ start: date })
-              }}
+              onChange={(date) => this.setState({start: date})}
               showTimeSelect
               timeIntervals={15}
               includeTimes={this.handleTime()}
@@ -99,10 +154,7 @@ export class OBTPMeeting extends React.Component<any, any> {
           <Col sm={2} >
             <DatePicker
               selected={this.state.end}
-              onChange={(date) => {
-                this.setState({ end: date })
-              }}
-              onBlur={() => { console.log('I was blurred') }}
+              onChange={(date) => this.setState({end: date})}
               showTimeSelect={true}
               showTimeSelectOnly={true}
               includeTimes={this.handleTime()}
@@ -116,6 +168,16 @@ export class OBTPMeeting extends React.Component<any, any> {
                   floatingLabelShrinkStyle={this.styles.floatLabel}
                   inputStyle={this.styles.input} />
               } />
+          </Col>
+        </Row>
+        <div style={{marginLeft: '-15px'}}>
+          <Subheader> Optional Participants </Subheader>
+        </div>
+        <Row>
+          <Col xs={12} >
+            <Chips value={chips}
+              placeholder='Email Address'
+              onChange={this.changeChips} />
           </Col>
         </Row>
       </Dialog>

@@ -97,8 +97,10 @@ export class Controls extends React.Component<any, any> {
               <AwakeIcon style={this.styles.icons} />}
           </FontIcon>
         </IconButton>
-        <OBTPMeeting open={this.state.openMeeting}
-          close={() => this.setState({ openMeeting: false })} />
+        <OBTPMeeting
+          open={this.state.openMeeting}
+          close={() => this.setState({ openMeeting: false })}
+          token={token} />
         <Paper zDepth={0}
           onMouseLeave={() => this.setState({ showVolume: false })}
           width={260}

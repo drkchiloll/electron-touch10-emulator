@@ -21,7 +21,7 @@ export namespace App {
   export interface Props { }
   export interface State {
     widgetHeight: number;
-    token: string;
+    token: any;
     openWidget: boolean;
     video: boolean;
     update: boolean;
@@ -67,10 +67,12 @@ export class App extends React.Component<App.Props, App.State> {
   public microphone:any;
   public audio:any;
   public wakeStatus:any;
+  public bookings:any;
+  public teamsGuest: SparkGuest;
   constructor(props) {
     super(props);
     this.state = {
-      token: '',
+      token: null,
       openWidget: false,
       widgetHeight: 60,
       accounts: [],
@@ -129,21 +131,21 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   teamsRoomCheck = (account: any) => {
-    const teamsGuest = new SparkGuest({
-      userid: '987654321',
-      username: 'myNewUser'
+    this.teamsGuest = new SparkGuest({
+      userid: '1vfjjgg4bph9',
+      username: 'CE_Emulator'
     });
-    return teamsGuest.createTokens()
+    return this.teamsGuest.createTokens()
       .then(token => {
         this.setState({ token });
         if(account.room) {
           return;
         } else {
-          // Set Up Space for the Connections that need to be Made..
-          // account['email'] = 'roomkit@wwtatc.com';
-          return teamsGuest.setupRoom(account)
-            .then((updatedAccount) => Accounts.update(updatedAccount))
-            .then(({ accounts, account }) => this.setState({ accounts, account }));
+          return this.teamsGuest.setupRoom(account)
+            .then((updatedAccount) =>
+              Accounts.update(updatedAccount))
+            .then(({ accounts, account }) =>
+              this.setState({ accounts, account }));
         }
       });
   }
@@ -161,7 +163,7 @@ export class App extends React.Component<App.Props, App.State> {
         });
         this.registerEvents();
       }).then(this.callCheck)
-      .catch(() => {
+      .catch((e) => {
         this.connErrors({ connected: false });
       });
   }
@@ -235,9 +237,16 @@ export class App extends React.Component<App.Props, App.State> {
         let { xapiData } = this.state;
         xapiData['mic'] = mic.Mute;
         this.setState({ xapiData });
+      });
+      this.bookings = JsXAPI.xapi.event.on('Bookings', (bookings) => {
+        if(bookings.End) {
+          this.teamsGuest.deleteRoom({
+            roomId: bookings.Id,
+            token: this.state.token.token
+          });
+        }
       })
     }
-    // console.log(JsXAPI.xapi.eventNames());
   }
 
   eventhandler = (stuffs) => {
@@ -245,7 +254,6 @@ export class App extends React.Component<App.Props, App.State> {
     if(stuffs && stuffs === 'closing') {
       setTimeout(this.registerEvents, 1000);
     } 
-    
     let meetings: any;
     if(stuffs && stuffs[0] instanceof Array) {
       meetings = stuffs[0];
@@ -267,7 +275,6 @@ export class App extends React.Component<App.Props, App.State> {
         }
       }
     }
-
   }
 
   callhandler = call => {
@@ -387,7 +394,10 @@ export class App extends React.Component<App.Props, App.State> {
     const accounts = Accounts.get();
     let account = accounts.find(a => a.selected);
     this.setState({ accounts, account });
-    this.initHandler(account);
+    return Promise.all([
+      this.initHandler(account),
+      this.teamsRoomCheck(account)
+    ]);
   }
 
   changeAccount = (e: any, {props: { value }}: any) => {
@@ -465,9 +475,9 @@ export class App extends React.Component<App.Props, App.State> {
             caller={call}
             open={openWidget}
             close={() => {
-              ReactDOM.unmountComponentAtNode(
-                document.querySelector('#spark-call')
-              );
+              // ReactDOM.unmountComponentAtNode(
+              //   document.querySelector('#spark-call')
+              // );
               this.setState({ openWidget: false })
             }}
             token={token}

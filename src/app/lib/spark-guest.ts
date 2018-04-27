@@ -95,6 +95,12 @@ export class SparkGuest {
     })
   }
 
+  deleteRoom({roomId, token}) {
+    this.request.defaults.headers['Authorization'] =
+      `Bearer ${token}`;
+    return this.request.delete(`/rooms/${roomId}`);
+  }
+
   setupRoom(codec: any) {
     let emulatorDetails: any = JSON.parse(JSON.stringify(codec));
     let roomId: string;
@@ -116,6 +122,25 @@ export class SparkGuest {
         })
       ])
     }).then(() => emulatorDetails);
+  }
+
+  obtpSparkRoom(token, title, emailList) {
+    this.request.defaults.headers = {
+      Authorization: `Bearer ${token}`
+    };
+    let roomId: string, sipAddress: string;
+    return this.request.post('/rooms', {title})
+      .then(({ data: {id} }) => {
+        roomId = id;
+        return this.request.get(`/rooms/${roomId}`)})
+      .then(({ data: {sipAddress}}) => {
+        sipAddress = sipAddress;
+        return Promise.each(emailList, personEmail => {
+          return this.request.post('/memberships', {
+            roomId, personEmail
+          });
+        }).then(() => ({sipAddress, roomId}));
+      }).then((meetingDetails) => meetingDetails);
   }
 }
 /**

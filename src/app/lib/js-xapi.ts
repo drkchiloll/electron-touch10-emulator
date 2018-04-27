@@ -4,7 +4,7 @@ import * as Promise from 'bluebird';
 import * as jsxapi from 'jsxapi';
 import { EventEmitter } from 'events';
 import { Time } from './index';
-import * as j2x from 'js2xmlparser';
+import * as X2JS  from 'easyxml';
 export interface Booking {
   Id: string;
   Title: string;
@@ -117,7 +117,7 @@ export class JsXAPI {
       sn: unit.Hardware.Module.SerialNumber,
       temp: unit.Hardware.Module.Temperature,
       product: unit.Hardware.ProductId,
-      softwareVersion: unit.Hardware.Software.Version,
+      // softwareVersion: unit.Hardware.Software.Version,
       // We can get ActiveCalls, InProgress Calls, & Suspended Calls
     };
   };
@@ -138,52 +138,57 @@ export class JsXAPI {
     return sipProps;
   };
 
-  static generateBooking({start,end,title}) {
+  static generateBooking({start,end,title,number,id,item}) {
     return {
-      Booking: {
-        Id: 1,
-        Title: title,
-        Agenda: title,
-        Privacy: 'Public',
-        Organizer: {
-          FirstName: 'Samuel',
-          LastName: 'Womack',
-          Email: 'samuel.womack@wwt.com'
+      _item: item,
+      Id: id,
+      Title: title,
+      Agenda: title,
+      Privacy: 'Public',
+      Organizer: {
+        FirstName: 'Samuel',
+        LastName: 'Womack',
+        Email: 'samuel.womack@wwt.com'
+      },
+      Time: {
+        StartTime: Time.createIsoStr(start),
+        StartTimeBuffer: 300,
+        EndTime: Time.createIsoStr(end),
+        EndTimeBuffer: 0
+      },
+      MaximumMeetingExtension: 32,
+      BookingStatus: 'OK',
+      Webex: {
+        Enabled: 'False',
+      },
+      Encryption: 'BestEffort',
+      Role: 'Master',
+      Recording: 'Disabled',
+      DialInfo: {
+        Calls: {
+          Call: {
+            _item: 1,
+            Number: number,
+            Protocol: 'SIP',
+            CallRate: 6000,
+            CallType: 'Video'
+          }
         },
-        Time: {
-          StartTime: Time.createIsoStr(start),
-          StartTimeBuffer: 300,
-          EndTime: Time.createIsoStr(end),
-          EndTimeBuffer: 0
-        },
-        MaximumMeetingExtension: 32,
-        BookingStatus: 'OK',
-        BookingStatusMessage: '',
-        Webex: {
-          Enabled: 'False',
-          MeetingNumber: '',
-          Password: ''
-        },
-        Encryption: 'BestEffort',
-        Role: 'Master',
-        Recording: 'Disabled',
-        DialInfo: {
-          Calls: {
-            Call: {
-              Number: '88857218136@meet.ciscospark.com',
-              Protocol: 'SIP',
-              CallRate: 6000,
-              CallType: 'Video'
-            }
-          },
-          ConnectMode: 'OBTP'
-        }
+        ConnectMode: 'OBTP'
       }
     };
+  };
+
+  static js2xml(js) {
+    let x = new X2JS({
+      rootArray: 'Bookings',
+      singularize: true,
+      manifest: true,
+    });
+    return x.render(js);
   }
 
-  static createBooking(params) {
-    let booking = this.generateBooking(params);
+  static createBooking(booking) {
     const request = axios.create({
       baseURL: `https://${this.account.host}`,
       auth: { username: this.account.username, password: this.account.password },
@@ -195,7 +200,7 @@ export class JsXAPI {
         request.defaults.headers['Cookie'] = resp.headers['set-cookie'][0];
         return request.post(
           '/bookingsputxml',
-          j2x.parse('Bookings', booking).toString()
+          booking
         )})
       .then(resp => request.post('/xmlapi/session/end'));
   }
@@ -208,6 +213,7 @@ export class JsXAPI {
         ({ name: Name || 'not defined' })),
       this.getStatus('SIP').then(sip => this.parseSIP(sip))
     ]).then(results => {
+      console.log(results);
       let additionalProps: any = {
         networkConnections: results[0],
         hardware: results[1],
@@ -226,6 +232,7 @@ export class JsXAPI {
       param: {}
     }).then((bookings:any) => {
       const { status, ResultInfo: { TotalRows } } = bookings;
+      // console.log(bookings);
       if(bookings && (parseInt(TotalRows, 10) >= 1)) {
         return Promise.reduce(bookings.Booking, (a: any, meeting: Booking) => {
           if(!Time.meetingEnded(meeting.Time.EndTime)) {

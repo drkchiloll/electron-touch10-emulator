@@ -63,6 +63,7 @@ export class SparkWidget extends React.Component<any, any> {
       if(this.call.remoteMediaStream) {
         const track = this.call.remoteMediaStream.getTracks().find((t) => t.kind === kind);
         if(track) {
+          console.log(track.id);
           const farend: any = document.getElementById(`farend-${kind}`)
           farend.srcObject = new MediaStream([track]);
         }

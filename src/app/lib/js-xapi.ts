@@ -232,19 +232,24 @@ export class JsXAPI {
       param: {}
     }).then((bookings:any) => {
       const { status, ResultInfo: { TotalRows } } = bookings;
-      // console.log(bookings);
       if(bookings && (parseInt(TotalRows, 10) >= 1)) {
         return Promise.reduce(bookings.Booking, (a: any, meeting: Booking) => {
           if(!Time.meetingEnded(meeting.Time.EndTime)) {
+            const { DialInfo }: any = meeting;
+            let number: string, type: string;
+            if(DialInfo.ConnectMode === 'Manual') {
+              number = '12345'
+              type = 'manual';
+            } else {
+              number = DialInfo.Calls.Call[0].Number;
+              type = DialInfo.Calls.Call[0].CallType;
+            }
             a.push({
               id: meeting.Id,
               title: meeting.Title,
               startTime: meeting.Time.StartTime,
               endTime: meeting.Time.EndTime,
-              endpoint: {
-                number: meeting.DialInfo.Calls.Call[0].Number,
-                type: meeting.DialInfo.Calls.Call[0].CallType
-              }
+              endpoint: { number, type }
             });
             return a;
           } else {

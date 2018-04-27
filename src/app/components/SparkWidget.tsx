@@ -27,19 +27,22 @@ export class SparkWidget extends React.Component<any, any> {
 
   sparks = (token) => {
     if(!this.call) {
-      JsXAPI.dial(this.props.account.room.sipAddress);
+      const { account: { metaData, room: { sipAddress }} } = this.props;
+      // JsXAPI.dial(sipAddress);
       const spark = this.createTeamsInstance(this.props.token.token);
-      spark.phone.register().then(() => {
-        this.placeCall(this.props.account.room.sipAddress);
+      return spark.phone.register().then(() => {
+        return this.placeCall(sipAddress).then(() => {
+          setTimeout(() => JsXAPI.dial(sipAddress), 1500);
+        });
       });
     }
   }
 
   createTeamsInstance = (token) => {
     const spark: any = CiscoSpark.init({
-      // config: {
-      //   phone: { enableExperimentalGroupCallingSupport: true },
-      // },
+      config: {
+        phone: { enableExperimentalGroupCallingSupport: true },
+      },
       credentials: { access_token: token }
     });
     this.setState({ spark });
@@ -88,11 +91,20 @@ export class SparkWidget extends React.Component<any, any> {
   }
 
   placeCall = (numberToDial) => {
-    this.call = this.state.spark.phone.dial(numberToDial);
-    this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
-    this.call.on('membership:disconnected', () => this.handleCleanup());
-    this.call.on('inactive', () => this.handleCleanup());
-    this.call.on('error', (err) => console.log(err));
+    return new Promise(resolve => {
+      this.call = this.state.spark.phone.dial(numberToDial);
+      this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
+      this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
+
+      this.call.on('active', () => {
+        console.log('A Call Is Active');
+        // this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
+        this.call.on('membership:disconnected', () => this.handleCleanup());
+        this.call.on('inactive', () => this.handleCleanup());
+        this.call.on('error', (err) => console.log(err));
+      });
+      resolve();
+    });
   }
   
   sparkStuffs = () => {
@@ -114,7 +126,7 @@ export class SparkWidget extends React.Component<any, any> {
       param: {
         CameraId: 1,
         Zoom: action,
-        ZoomSpeed: 2
+        ZoomSpeed: 5
       }
     }).then(() => setTimeout(() => JsXAPI.commander({
       string: 'Camera Ramp', param: { CameraId: 1, Zoom: 'Stop' }

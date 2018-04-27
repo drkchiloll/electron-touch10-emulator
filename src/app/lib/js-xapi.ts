@@ -116,8 +116,8 @@ export class JsXAPI {
     return {
       sn: unit.Hardware.Module.SerialNumber,
       temp: unit.Hardware.Module.Temperature,
-      product: unit.Hardware.ProductId,
-      // softwareVersion: unit.Hardware.Software.Version,
+      product: unit.ProductPlatform,
+      softwareVersion: unit.Software.Version,
       // We can get ActiveCalls, InProgress Calls, & Suspended Calls
     };
   };

@@ -70,7 +70,10 @@ export class SparkWidget extends React.Component<any, any> {
         this.call.localMediaStream = null;
       }
     });
-    setTimeout(() => this.setState({ showControls: true }),1500);
+    const { metaData: { hardware: {product} } } = this.props.account;
+    setTimeout(() => this.setState({
+      showControls: product.includes('DX') ? false : true
+    }),1500);
   };
 
   handleCleanup = () => {

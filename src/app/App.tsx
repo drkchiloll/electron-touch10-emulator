@@ -154,7 +154,7 @@ export class App extends React.Component<App.Props, App.State> {
     this.connect(account)
       .then(this.xapiDataTracking)
       .then(() => {
-        JsXAPI.eventInterval = setInterval(JsXAPI.poller, 7500);
+        // JsXAPI.eventInterval = setInterval(JsXAPI.poller, 7500);
         this.setState({
           mainView: true,
           acctDialog: false,
@@ -219,7 +219,14 @@ export class App extends React.Component<App.Props, App.State> {
 
   registerEvents = () => {
     if(JsXAPI.xapi.eventNames().indexOf('update') === -1) {
-      JsXAPI.xapi.addListener('update', this.eventhandler);
+      JsXAPI.xapi.feedback.on('/Event/Bookings', (book) => {
+        console.log(book);
+        return JsXAPI.getMeetings().then(meetings => {
+          console.log(meetings);
+          this.eventhandler(meetings);
+        })
+      })
+      // JsXAPI.xapi.addListener('update', this.eventhandler);
       this.calls = JsXAPI.xapi.feedback.on('/Status/Call', this.callhandler);
       this.wakeStatus = JsXAPI.xapi.feedback.on('/Status/Standby State', (state) => {
         console.log(state);
@@ -255,8 +262,8 @@ export class App extends React.Component<App.Props, App.State> {
       setTimeout(this.registerEvents, 1000);
     } 
     let meetings: any;
-    if(stuffs && stuffs[0] instanceof Array) {
-      meetings = stuffs[0];
+    if(stuffs && stuffs instanceof Array) {
+      meetings = stuffs;
       if(meetings.length > 0) {
         if(meetings.length === xapiData.meetings.length) {
           let toUpdate = MeetingHelper.compare(meetings, xapiData.meetings);

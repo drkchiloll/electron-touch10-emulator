@@ -29,6 +29,7 @@ export function CodecHeaderToggle(props: any) {
         anchorOrigin={styles.menuorigin}
         targetOrigin={styles.menuorigin}
         onItemClick={props.change}
+        menuStyle={{maxHeight: 600, overflow: 'auto' }}
         iconButtonElement={
           <IconButton tooltip='Toggle Codecs'
             tooltipPosition='bottom-right'

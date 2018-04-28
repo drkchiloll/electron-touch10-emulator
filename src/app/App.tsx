@@ -226,7 +226,6 @@ export class App extends React.Component<App.Props, App.State> {
           this.eventhandler(meetings);
         })
       })
-      // JsXAPI.xapi.addListener('update', this.eventhandler);
       this.calls = JsXAPI.xapi.feedback.on('/Status/Call', this.callhandler);
       this.wakeStatus = JsXAPI.xapi.feedback.on('/Status/Standby State', (state) => {
         console.log(state);

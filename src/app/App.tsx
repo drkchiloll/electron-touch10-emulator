@@ -63,11 +63,6 @@ export namespace App {
 }
 
 export class App extends React.Component<App.Props, App.State> {
-  public calls:any;
-  public microphone:any;
-  public audio:any;
-  public wakeStatus:any;
-  public bookings:any;
   public teamsGuest: SparkGuest;
   constructor(props) {
     super(props);
@@ -217,42 +212,42 @@ export class App extends React.Component<App.Props, App.State> {
     });
   }
 
+  bookings = ({xapiData, feed}:any) => {
+    return JsXAPI.getMeetings().then(meetings => {
+      console.log(meetings);
+      this.eventhandler(meetings);
+    })
+  }
+
+  calls = ({xapiData, feed}:any) => this.callhandler(feed);
+
+  wakeStatus = ({xapiData, feed}:any) => {
+    xapiData['status'] = feed === 'Off' ? 'Awake': 'Standby';
+    this.setState({ xapiData });
+  }
+
+  audio = ({xapiData, feed}:any) => {
+    xapiData['volume'] = feed;
+    this.setState({ xapiData });
+  }
+
+  microphone = ({xapiData, feed}:any) => {
+    xapiData['mic'] = feed.Mute;
+    this.setState({ xapiData });
+  }
+
   registerEvents = () => {
-    if(JsXAPI.xapi.eventNames().indexOf('update') === -1) {
-      JsXAPI.xapi.feedback.on('/Event/Bookings', (book) => {
-        console.log(book);
-        return JsXAPI.getMeetings().then(meetings => {
-          console.log(meetings);
-          this.eventhandler(meetings);
-        })
-      })
-      this.calls = JsXAPI.xapi.feedback.on('/Status/Call', this.callhandler);
-      this.wakeStatus = JsXAPI.xapi.feedback.on('/Status/Standby State', (state) => {
-        console.log(state);
-        let { xapiData } = this.state;
-        xapiData['status'] = state === 'Off' ? 'Awake' : 'Standby';
-        this.setState({ xapiData });
-      })
-      this.audio = JsXAPI.xapi.feedback.on('/Status/Audio Volume', (volume) => {
-        let { xapiData } = this.state;
-        xapiData['volume'] = volume;
-        this.setState({ xapiData })
-      })
-      this.microphone = JsXAPI.xapi.feedback.on('/Status/Audio Microphones', (mic) => {
-        console.log(mic);
-        let { xapiData } = this.state;
-        xapiData['mic'] = mic.Mute;
-        this.setState({ xapiData });
-      });
-      this.bookings = JsXAPI.xapi.event.on('Bookings', (bookings) => {
-        if(bookings.End) {
-          this.teamsGuest.deleteRoom({
-            roomId: bookings.Id,
-            token: this.state.token.token
-          });
-        }
-      })
-    }
+    const feedbacks = [
+      {id: 'bookings', path: '/Event/Bookings'},
+      {id: 'calls', path: '/Status/Call'}, 
+      {id: 'wakeStatus', path: '/Status/Standby State'},
+      {id: 'audio', path: '/Status/Audio Volume'},
+      {id: 'microphone', path: '/Status/Audio Microphones'}
+    ];
+    let {xapiData} = this.state;
+    Promise.each(feedbacks, ({id, path}:any) => {
+      JsXAPI.xapi.feedback.on(path, (feed) => this[id]({xapiData, feed}));
+    });
   }
 
   eventhandler = (stuffs) => {

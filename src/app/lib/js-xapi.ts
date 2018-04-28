@@ -5,6 +5,7 @@ import * as jsxapi from 'jsxapi';
 import { EventEmitter } from 'events';
 import { Time } from './index';
 import * as X2JS  from 'easyxml';
+
 export interface Booking {
   Id: string;
   Title: string;
@@ -12,13 +13,20 @@ export interface Booking {
   DialInfo: { Calls: { Call: [{ Number, CallType }] } }
 }
 
+export interface Account {
+  host: string;
+  username: string;
+  password: string;
+  name: string;
+  selected: boolean;
+  room?: Object;
+  metaData?: Object;
+}
+
 export class JsXAPI {
   public static xapi: any;
   public static event = new EventEmitter();
-  public static poller: any;
-  public static eventInterval: any;
-  public static account: {host, username, password, name, selected, room?};
-  private static reconnectTimeout: any;
+  public static account: Account;
 
   static connect() {
     return new Promise((resolve, reject) => {
@@ -26,23 +34,16 @@ export class JsXAPI {
         username: this.account.username,
         password: this.account.password,
         readyTimeout: 9000,
-        keepaliveInterval: 6670
+        keepaliveInterval: 6675
       });
 
       this.xapi.on('ready', () => {
         console.log('we are connected');
         resolve('success');
-        this.reconnectTimeout = setTimeout(() => {
-          console.log('session timeout');
-          this.xapi.emit('update', 'closing');
-          this.xapi.close();
-          return this.connect();
-        }, 600000);
       });
 
       this.xapi.on('error', (err) => {
         console.log(err);
-        clearTimeout(this.reconnectTimeout);
         this.event.emit('connection-error');
         return reject(err);
       });
@@ -50,12 +51,9 @@ export class JsXAPI {
   };
 
   static commander({cmd, params}: any) {
-    // cmd.string = 'the xCommand'
-    // cmd.param = Parameters {} of the Command
-    return this.xapi.command(cmd, params).catch((e) => {
-      console.log(e);
-      // this.event.emit('connection-error');
-    });
+    // cmd: string
+    // params: Object
+    return this.xapi.command(cmd, params)
   };
 
   static getStatus(status: string) {

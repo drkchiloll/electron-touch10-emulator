@@ -126,14 +126,14 @@ export class SparkWidget extends React.Component<any, any> {
 
   zoom = (action) => {
     JsXAPI.commander({
-      string: 'Camera Ramp',
-      param: {
+      cmd: 'Camera Ramp',
+      params: {
         CameraId: 1,
         Zoom: action,
         ZoomSpeed: 5
       }
     }).then(() => setTimeout(() => JsXAPI.commander({
-      string: 'Camera Ramp', param: { CameraId: 1, Zoom: 'Stop' }
+      cmd: 'Camera Ramp', params: { CameraId: 1, Zoom: 'Stop' }
     })),100);
   }
 
@@ -143,9 +143,9 @@ export class SparkWidget extends React.Component<any, any> {
     return (
       <div id='spark-call'>
         <Grid fluid>
-          <div style={{ position: 'absolute', top: -42, left: 157}}>
+          <div style={{ position: 'absolute', top: -82, left: 162}}>
             <audio id='farend-audio' autoPlay ></audio>
-            <video id='farend-video' height={700} width={600} autoPlay ></video>
+            <video id='farend-video' height={780} width={600} autoPlay ></video>
           </div>
           {
             this.state.showControls ?
@@ -159,7 +159,7 @@ export class SparkWidget extends React.Component<any, any> {
                 </Row>
                 <Row>
                   <Col xsOffset={5} xs={3}>
-                    <div style={{ marginTop: '-100px' }} >
+                    <div style={{ marginTop: '-110px' }} >
                       <Chip style={{ width: 80, height: 26, marginLeft: '35px' }}
                           backgroundColor={blueGrey100} >
                         <IconButton style={{ position: 'absolute', left: -3, top: -10 }}

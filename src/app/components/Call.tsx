@@ -5,36 +5,31 @@ import {
   Chip, SvgIcon, Badge, Divider, FontIcon, IconButton,
   Drawer, TextField
 } from 'material-ui';
-import AddIcon from 'material-ui/svg-icons/content/add';
-import DecreaseIcon from 'material-ui/svg-icons/content/remove'
-import VolumeUp from 'material-ui/svg-icons/av/volume-up';
-import VolumeDown from 'material-ui/svg-icons/av/volume-down';
-import ShareIcon from 'material-ui/svg-icons/content/content-copy';
-import PauseIcon from 'material-ui/svg-icons/av/pause';
-import TransferIcon from 'material-ui/svg-icons/navigation/arrow-forward';
-import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
-import MicOnIcon from 'material-ui/svg-icons/av/mic';
-import MicOffIcon from 'material-ui/svg-icons/av/mic-off';
-import DialPadIcon from 'material-ui/svg-icons/communication/dialpad';
-import CloseIcon from 'material-ui/svg-icons/navigation/close';
-
+import { Row, Col } from 'react-flexbox-grid';
 const AddCall = require('../imgs/AddCall.svg');
 const TransferCall = require('../imgs/TransferCall.svg');
 const HoldCall = require('../imgs/HoldCall.svg');
 const ShareInCall = require('../imgs/ShareInCall.svg');
 const KeyPad = require('../imgs/KeyPad.svg');
 const EndCall = require('../imgs/EndCall.svg');
-
+import CloseIcon from 'material-ui/svg-icons/navigation/close';
+import * as moment from 'moment';
 import { JsXAPI, Time, MeetingHelper } from '../lib';
 
 import { Dialer } from './index';
 
 export class Call extends React.Component<any, any> {
+  durationInterval: any;
   state = {
     showDialer: false,
     number: '',
     callback: null,
-    callbackHint: ''
+    callbackHint: '',
+    callDuration: '00:00',
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.durationInterval);
   }
 
   componentDidMount() {
@@ -44,6 +39,10 @@ export class Call extends React.Component<any, any> {
       MeetingHelper.setNext(nextMeeting);
     }
     let { callId } = this.props;
+    this.durationInterval = setInterval(() =>
+      JsXAPI.getStatus(`Call ${callId} Duration`).then(dur => {
+        this.duration(dur);
+      }),1000);
     let state: any = {};
     let callback: string;
 
@@ -55,8 +54,8 @@ export class Call extends React.Component<any, any> {
           state['showDialer'] = true;
           state['callbackHint'] = 'Enter PIN + # if Host';
           JsXAPI.commander({
-            string: 'UserInterface Message Prompt Display',
-            param: {
+            cmd: 'UserInterface Message Prompt Display',
+            params: {
               Duration: 45,
               Title: 'WebEx Pin',
               Text: '#'
@@ -68,7 +67,21 @@ export class Call extends React.Component<any, any> {
     });
   }
 
+  duration = (dur) => {
+    let callDuration = moment()
+      .hour(0)
+      .minute(0)
+      .second(dur)
+      .format('HH : mm : ss');
+    if(callDuration.startsWith('00 :')) {
+      callDuration = callDuration.substring(5);
+    }
+    callDuration = callDuration.replace(/\s/gi, '');
+    this.setState({ callDuration });
+  }
+
   hangup = callId => {
+    clearInterval(this.durationInterval);
     return JsXAPI.hangUp(callId).then(() => {
       setTimeout(() =>
         this.props.switch({
@@ -84,15 +97,15 @@ export class Call extends React.Component<any, any> {
     let { number } = this.state;
     const { callId } = this.props;
     return JsXAPI.commander({
-      string: `Call DTMFSend`,
-      param: {
+      cmd: `Call DTMFSend`,
+      params: {
         CallId: callId,
         DTMFString: number
       }
     }).then((resp) => {
       JsXAPI.commander({
-        string: 'UserInterface Message Prompt Clear',
-        param: {}
+        cmd: 'UserInterface Message Prompt Clear',
+        params: {}
       })
       this.setState({ number: '', showDialer: false, callbackHint: '' });
     })
@@ -102,8 +115,8 @@ export class Call extends React.Component<any, any> {
     let { number, callback } = this.state;
     if(callback.includes('webex.com')) {
       JsXAPI.commander({
-        string: 'UserInterface Message Prompt Display',
-        param: {
+        cmd: 'UserInterface Message Prompt Display',
+        params: {
           Duration: 45,
           Title: 'WebEx Pin Entry',
           Text: number + char
@@ -120,22 +133,26 @@ export class Call extends React.Component<any, any> {
     let { meeting, caller, callId, xapiData } = this.props;
     let avatar: any, title: string;
     if(meeting) {
-      let temp = meeting.endpoint.number;
-      temp = temp.replace(/@.*/, '');
-      avatar = <div style={{ fontSize: '40%' }}>{ temp }</div>;
+      caller = meeting.endpoint.number;
+      // let temp = meeting.endpoint.number;
+      // temp = temp.replace(/@.*/, '');
+      // avatar = <div style={{ fontSize: '40%' }}>{ temp }</div>;
     } else {
       avatar = <div style={{ fontSize: '40%' }}>{ caller }</div>;
     }
     return (
       <div>
-        <Paper style={this.styles.main}>
-          <Avatar style={this.styles.inner} backgroundColor='grey' size={85}>
+        <Subheader style={{ position: 'absolute', top: 0, fontSize: 18, left: '43%', color: 'black' }}>
+          {caller}&nbsp;&nbsp;{this.state.callDuration}
+        </Subheader>
+        <div style={this.styles.main}>
+          {/* <Avatar style={this.styles.inner} backgroundColor='grey' size={85}>
             { avatar }
-          </Avatar>
+          </Avatar> */}
           <Subheader style={{textAlign: 'center'}}>
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>
-        </Paper>
+        </div>
         <div style={{ marginTop: '25px' }}>
           <IconButton style={{
               marginLeft:  '190px',
@@ -203,11 +220,12 @@ export class Call extends React.Component<any, any> {
   styles:any = {
     main: {
       borderRadius: '7px',
+      border: 'solid 3px rgb(219,219,219)',
       position: 'relative',
       marginLeft: '150px',
       marginTop: '100px',
       width: '600px',
-      height: '350px'
+      height: '350px',
     },
     inner: {
       marginTop: '85px',

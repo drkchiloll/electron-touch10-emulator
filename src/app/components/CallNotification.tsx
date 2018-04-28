@@ -87,8 +87,8 @@ export const CallNotification = (props: any) => {
         })}
           onClick={() =>
             JsXAPI.commander({
-              string: 'Call Accept',
-              param: { Callid: call[keyToUse].id }
+              cmd: 'Call Accept',
+              params: { Callid: call[keyToUse].id }
             })
           } >
           <CallIcon color='green' />
@@ -96,8 +96,8 @@ export const CallNotification = (props: any) => {
         <IconButton style={styles.callIcon2}
           onClick={() =>
             JsXAPI.commander({
-              string: 'Call Reject',
-              param: { Callid: call[keyToUse].id }
+              cmd: 'Call Reject',
+              params: { Callid: call[keyToUse].id }
             })
           } >
           <CallEndIcon color='red' />
@@ -105,8 +105,8 @@ export const CallNotification = (props: any) => {
         <IconButton style={styles.callIcon1}
           onClick={() =>
             JsXAPI.commander({
-              string: 'Call Ignore',
-              param: { Callid: call[keyToUse].id }
+              cmd: 'Call Ignore',
+              params: { Callid: call[keyToUse].id }
             })
           } >
           <DnDIcon />

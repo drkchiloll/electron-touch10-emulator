@@ -56,8 +56,8 @@ export class OBTPMeeting extends React.Component<any, any> {
     return guest.obtpSparkRoom(token.token, title, chips)
       .then((newMeeting) => {
         JsXAPI.commander({
-          string: 'Bookings List',
-          param: {}
+          cmd: 'Bookings List',
+          params: {}
         }).then(meetings => {
           let booking: any[], item: number;
           if(meetings.Booking) {

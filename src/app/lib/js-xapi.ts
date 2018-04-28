@@ -20,17 +20,6 @@ export class JsXAPI {
   public static account: {host, username, password, name, selected, room?};
   private static reconnectTimeout: any;
 
-  static init() {
-    return this.connect().then(() => {
-      this.poller = () => Promise.all([
-        this.getMeetings()
-      ]).then(results => {
-        this.xapi.emit('update', results);
-      });
-      return;
-    });
-  };
-
   static connect() {
     return new Promise((resolve, reject) => {
       this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
@@ -54,17 +43,16 @@ export class JsXAPI {
       this.xapi.on('error', (err) => {
         console.log(err);
         clearTimeout(this.reconnectTimeout);
-        clearInterval(this.eventInterval);
         this.event.emit('connection-error');
         return reject(err);
       });
     });
   };
 
-  static commander(cmd:any) {
+  static commander({cmd, params}: any) {
     // cmd.string = 'the xCommand'
     // cmd.param = Parameters {} of the Command
-    return this.xapi.command(cmd.string, cmd.param).catch((e) => {
+    return this.xapi.command(cmd, params).catch((e) => {
       console.log(e);
       // this.event.emit('connection-error');
     });
@@ -228,8 +216,8 @@ export class JsXAPI {
   static getMeetings() {
     // console.log('getting meetings');
     return this.commander({
-      string: 'Bookings List',
-      param: {}
+      cmd: 'Bookings List',
+      params: {}
     }).then((bookings:any) => {
       const { status, ResultInfo: { TotalRows } } = bookings;
       if(bookings && (parseInt(TotalRows, 10) >= 1)) {
@@ -277,13 +265,13 @@ export class JsXAPI {
   static setAudio(action) {
     if(Number.isInteger(action)) {
       return this.commander({
-        string: 'Audio Volume Set',
-        param: { Level: action }
+        cmd: 'Audio Volume Set',
+        params: { Level: action }
       });
     } else {
       return this.commander({
-        string: `Audio Volume ${action}`,
-        param: { Steps: 1 }
+        cmd: `Audio Volume ${action}`,
+        params: { Steps: 1 }
       });
     }
   };
@@ -291,8 +279,8 @@ export class JsXAPI {
   // action: String; Mute | Unmute
   static setMic(action) {
     return this.commander({
-      string: `Audio Microphones ${action}`,
-      param: {}
+      cmd: `Audio Microphones ${action}`,
+      params: {}
     });
   }
 
@@ -303,15 +291,15 @@ export class JsXAPI {
 
   static dial(Number) {
     return this.commander({
-      string: 'Dial',
-      param: { Number }
+      cmd: 'Dial',
+      params: { Number }
     });
   };
 
   static hangUp(CallId) {
     return this.commander({
-      string: 'Call Disconnect',
-      param: { CallId }
+      cmd: 'Call Disconnect',
+      params: { CallId }
     });
   };
 
@@ -325,8 +313,8 @@ export class JsXAPI {
     // Deactivate: (turns the display on)
     // Halfwake: (Shows message on display to "Touch to Wake")
     return this.commander({
-      string: `Standby ${status}`,
-      param: {}
+      cmd: `Standby ${status}`,
+      params: {}
     });
   };
 
@@ -335,8 +323,8 @@ export class JsXAPI {
 
     const search = (start, end) => {
       return this.commander({
-        string: 'Phonebook Search',
-        param: {
+        cmd: 'Phonebook Search',
+        params: {
           PhonebookId: 'default',
           PhonebookType: 'Corporate',
           SearchString: query,
@@ -382,8 +370,8 @@ export class JsXAPI {
 
   static getCallHistory({ query = '' }) {
     return this.commander({
-      string: 'CallHistory Get',
-      param: {
+      cmd: 'CallHistory Get',
+      params: {
         Filter: 'All',
         Limit: 65534,
         DetailLevel: 'Full',

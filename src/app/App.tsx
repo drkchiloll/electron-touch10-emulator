@@ -170,7 +170,7 @@ export class App extends React.Component<App.Props, App.State> {
 
   connect = (account) => {
     JsXAPI.account = account;
-    return JsXAPI.init().then(() => {
+    return JsXAPI.connect().then(() => {
       this.connErrors({connected: true});
       return;
     })

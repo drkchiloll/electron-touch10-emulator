@@ -47,8 +47,8 @@ export class JoyStick extends React.Component<any,any> {
         if(moving) {
           if(position !== pos) {
             JsXAPI.commander({
-              string: 'Camera Ramp',
-              param: {
+              cmd: 'Camera Ramp',
+              params: {
                 CameraId: 1,
                 Pan: 'Stop',
                 Tilt: 'Stop'
@@ -72,8 +72,8 @@ export class JoyStick extends React.Component<any,any> {
             param['Pan'] = 'Right';
         }
         JsXAPI.commander({
-          string: 'Camera Ramp',
-          param
+          cmd: 'Camera Ramp',
+          params: {}
         });
       }
       this.setState({ moving: true, position: pos });
@@ -82,8 +82,8 @@ export class JoyStick extends React.Component<any,any> {
     manager.on('end', () => {
       console.log('end');
       JsXAPI.commander({
-        string: 'Camera Ramp',
-        param: {
+        cmd: 'Camera Ramp',
+        params: {
           CameraId: 1,
           Pan: 'Stop',
           Tilt: 'Stop'

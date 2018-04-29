@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { JsXAPI } from '../lib';
-import { Drawer, IconButton } from 'material-ui';
+import { Drawer, IconButton, Avatar, Paper, RaisedButton } from 'material-ui';
 import CallIcon from 'material-ui/svg-icons/communication/call';
 import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
 import DnDIcon from 'material-ui/svg-icons/notification/do-not-disturb';
 import OutIcon from 'material-ui/svg-icons/communication/call-made';
 import InIcon from 'material-ui/svg-icons/communication/call-received';
+import { IncomingCall } from './IncomingCall/index';
 
 const styles: any = {
   drawer: {
@@ -42,13 +43,10 @@ const styles: any = {
     top: 5
   }
 };
-
-let color = 'black';
-
 export const CallNotification = (props: any) => {
-  const { call, dialedNumber } = props;
-  color = color === 'black' ? 'red' : 'black';
-  const callDirections = Object.keys(call);
+  const { call, dialedNumber } = props,
+    color = 'black',
+    callDirections = Object.keys(call);
   let direction: string, keyToUse: any, display: string, callback: string;
   if(callDirections.find(key => call[key].hasOwnProperty('id'))) {
     let indexToUse = callDirections.findIndex(key => call[key].hasOwnProperty('id'));
@@ -60,58 +58,47 @@ export const CallNotification = (props: any) => {
     keyToUse = false;
   }
   const callMessage = direction === 'in' ? 'Incoming Call From:' : 'Outgoing Call To:';
-  if((dialedNumber && dialedNumber.room && dialedNumber.room.sipAddress)
-    && keyToUse && callback == 'sip:' + dialedNumber.room.sipAddress) {
-      return null;
-  } else {
-    return (
-      <Drawer
-        open={keyToUse && call[keyToUse].hasOwnProperty('id') &&
-          !call[keyToUse].answered && !call[keyToUse].disconnect}
-        openSecondary={true}
-        containerStyle={styles.drawer}
-        width={525} >
-        {
-          direction === 'in' ?
-            <InIcon style={styles.makereceive} color={color} /> :
-            <OutIcon style={styles.makereceive} color={color} />
-        }
-        <h4 style={styles.header}> {callMessage} {display} </h4>
-        <p style={styles.para}>
-          <span> Callback Number </span>
-          <br />
-          <span> {callback} </span>
-        </p>
-        <IconButton style={Object.assign(styles.callIcon3, {
-          display: direction === 'out' ? 'none' : 'inline-block'
-        })}
-          onClick={() =>
-            JsXAPI.commander({
-              cmd: 'Call Accept',
-              params: { Callid: call[keyToUse].id }
-            })
-          } >
-          <CallIcon color='green' />
-        </IconButton>
-        <IconButton style={styles.callIcon2}
-          onClick={() =>
-            JsXAPI.commander({
-              cmd: 'Call Reject',
-              params: { Callid: call[keyToUse].id }
-            })
-          } >
-          <CallEndIcon color='red' />
-        </IconButton>
-        <IconButton style={styles.callIcon1}
-          onClick={() =>
-            JsXAPI.commander({
-              cmd: 'Call Ignore',
-              params: { Callid: call[keyToUse].id }
-            })
-          } >
-          <DnDIcon />
-        </IconButton>
-      </Drawer>
-    )
-  }
+  const open = keyToUse && call[keyToUse].hasOwnProperty('id') &&
+    !call[keyToUse].answered && !call[keyToUse].disconnect;
+  return (
+    ((dialedNumber && dialedNumber.room && dialedNumber.room.sipAddress) &&
+      keyToUse && callback == 'sip:' + dialedNumber.room.sipAddress) ?
+      null
+      : direction === 'in' ?
+        <div style={{ display: open ? 'flex' : 'none' }}>
+          <IncomingCall display={display} callerId={call[keyToUse].id} />
+        </div>
+      :
+        <Drawer
+          open={open}
+          openSecondary={true}
+          containerStyle={styles.drawer}
+          width={525} >
+          <OutIcon style={styles.makereceive} color={color} />
+          <h4 style={styles.header}> {callMessage} {display} </h4>
+          <p style={styles.para}>
+            <span> Callback Number </span>
+            <br />
+            <span> {callback} </span>
+          </p>
+          <IconButton style={styles.callIcon2}
+            onClick={() =>
+              JsXAPI.commander({
+                cmd: 'Call Reject',
+                params: { Callid: call[keyToUse].id }
+              })
+            } >
+            <CallEndIcon color='red' />
+          </IconButton>
+          <IconButton style={styles.callIcon1}
+            onClick={() =>
+              JsXAPI.commander({
+                cmd: 'Call Ignore',
+                params: { Callid: call[keyToUse].id }
+              })
+            } >
+            <DnDIcon />
+          </IconButton>
+        </Drawer>
+  );
 }

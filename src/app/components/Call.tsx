@@ -25,7 +25,7 @@ export class Call extends React.Component<any, any> {
     number: '',
     callback: null,
     callbackHint: '',
-    callDuration: '00:00',
+    callDuration: '0:00',
   }
 
   componentWillUnmount() {
@@ -134,21 +134,15 @@ export class Call extends React.Component<any, any> {
     let avatar: any, title: string;
     if(meeting) {
       caller = meeting.endpoint.number;
-      // let temp = meeting.endpoint.number;
-      // temp = temp.replace(/@.*/, '');
-      // avatar = <div style={{ fontSize: '40%' }}>{ temp }</div>;
     } else {
       avatar = <div style={{ fontSize: '40%' }}>{ caller }</div>;
     }
     return (
       <div>
-        <Subheader style={{ position: 'absolute', top: 0, fontSize: 18, left: '43%', color: 'black' }}>
+        <Subheader style={{ position: 'absolute', top: 0, fontSize: 18, left: '43%', color: 'black', width: 300 }}>
           {caller}&nbsp;&nbsp;{this.state.callDuration}
         </Subheader>
         <div style={this.styles.main}>
-          {/* <Avatar style={this.styles.inner} backgroundColor='grey' size={85}>
-            { avatar }
-          </Avatar> */}
           <Subheader style={{textAlign: 'center'}}>
             <div style={{fontSize: 18}}> { title } </div>
           </Subheader>

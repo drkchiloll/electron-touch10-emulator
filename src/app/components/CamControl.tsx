@@ -39,7 +39,7 @@ export class JoyStick extends React.Component<any,any> {
         // let pan = direction.x === 'left' ? 'Left' : 'Right';
         // let tilt = direction.y === 'up' ? 'Up' : 'Down';
         pos = direction.angle;
-        let param: any = {
+        let params: any = {
           CameraId: 1,
           PanSpeed: 8,
           TiltSpeed: 8
@@ -60,20 +60,20 @@ export class JoyStick extends React.Component<any,any> {
         }
         switch(pos) {
           case 'up':
-            param['Tilt'] = 'Up';
+            params['Tilt'] = 'Up';
             break;
           case 'down':
-            param['Tilt'] = 'Down';
+            params['Tilt'] = 'Down';
             break;
           case 'left':
-            param['Pan'] = 'Left';
+            params['Pan'] = 'Left';
             break;
           case 'right':
-            param['Pan'] = 'Right';
+            params['Pan'] = 'Right';
         }
         JsXAPI.commander({
           cmd: 'Camera Ramp',
-          params: {}
+          params
         });
       }
       this.setState({ moving: true, position: pos });

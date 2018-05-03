@@ -19,7 +19,8 @@ const containerStyle = {
 export class JoyStick extends React.Component<any,any> {
   state = {
     moving: false,
-    position: null
+    position: null,
+    cameraId: 1
   };
 
   componentDidMount() {
@@ -28,6 +29,14 @@ export class JoyStick extends React.Component<any,any> {
       zone: document.querySelector('.joystick')
     });
     this.managerListener(manager);
+  }
+
+  componentWillReceiveProps(prop) {
+    const { cameraId } = prop;
+    const currentCam = this.state;
+    if(cameraId && cameraId != currentCam) {
+      this.setState({ cameraId: prop.cameraId })
+    }
   }
 
   managerListener = (manager) => {
@@ -40,16 +49,16 @@ export class JoyStick extends React.Component<any,any> {
         // let tilt = direction.y === 'up' ? 'Up' : 'Down';
         pos = direction.angle;
         let params: any = {
-          CameraId: 1,
-          PanSpeed: 8,
-          TiltSpeed: 8
+          CameraId: this.state.cameraId,
+          PanSpeed: 6,
+          TiltSpeed: 6
         };
         if(moving) {
           if(position !== pos) {
             JsXAPI.commander({
               cmd: 'Camera Ramp',
               params: {
-                CameraId: 1,
+                CameraId: this.state.cameraId,
                 Pan: 'Stop',
                 Tilt: 'Stop'
               }
@@ -84,7 +93,7 @@ export class JoyStick extends React.Component<any,any> {
       JsXAPI.commander({
         cmd: 'Camera Ramp',
         params: {
-          CameraId: 1,
+          CameraId: this.state.cameraId,
           Pan: 'Stop',
           Tilt: 'Stop'
         }

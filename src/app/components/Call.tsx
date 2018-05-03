@@ -139,7 +139,15 @@ export class Call extends React.Component<any, any> {
     }
     return (
       <div>
-        <Subheader style={{ position: 'absolute', top: 0, fontSize: 18, left: '43%', color: 'black', width: 300 }}>
+        <Subheader style={{
+            position: 'absolute',
+            top: 0,
+            fontSize: 15,
+            left: '50%',
+            color: 'black',
+            width: 225,
+            marginLeft: '-125px'
+          }}>
           {caller}&nbsp;&nbsp;{this.state.callDuration}
         </Subheader>
         <div style={this.styles.main}>

@@ -346,11 +346,13 @@ export class App extends React.Component<App.Props, App.State> {
     const {
       mainView, meetingsView, callView
     } = args;
+    const { callId, caller } = this.state;
     if(args.directory) {
       let {xapiData} = this.state;
       xapiData['directoryDialog'] = true;
       this.setState({ xapiData });
     } else if(meetingsView) {
+      if(callId || caller) return;
       this.setState({
         meetingsView,
         mainView: false,
@@ -415,7 +417,9 @@ export class App extends React.Component<App.Props, App.State> {
       Accounts.save(updatedAccounts);
       this.setState({
         accounts: updatedAccounts,
-        account: value
+        account: value,
+        caller: null,
+        callId: null
       });
       Promise.all([
         this.initHandler(value),

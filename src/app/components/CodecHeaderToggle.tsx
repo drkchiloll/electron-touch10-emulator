@@ -35,7 +35,12 @@ export function CodecHeaderToggle(props: any) {
             tooltipPosition='bottom-right'
           > <MoreVertIcon /> </IconButton>
         } >
-        { accounts.map((a: any, i: number) =>
+        { accounts.sort((a:any,b:any) => {
+            if(a.name > b.name) return -1;
+            if(a.name < b.name) return 1;
+            return 0
+          })
+          .map((a: any, i: number) =>
             <MenuItem value={a}
               key={`account_${i}`}
               primaryText={a.name} />) }

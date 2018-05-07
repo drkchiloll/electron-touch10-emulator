@@ -13,8 +13,7 @@ import AccountAddIcon from 'material-ui/svg-icons/social/group-add';
 import TrashIcon from 'material-ui/svg-icons/action/delete';
 import SaveIcon from 'material-ui/svg-icons/content/save';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
-
-import { Accounts, JsXAPI } from '../lib';
+import { Accounts, JsXAPI, SparkGuest } from '../lib';
 
 export class AccountDialog extends React.Component<any,any> {
   state = {
@@ -52,7 +51,7 @@ export class AccountDialog extends React.Component<any,any> {
       account['metaData'] = metaData;
       Accounts.save(accounts);
       let message = `${account.name} updated successfully`;
-      this.shareAccountName(account.name);
+      this.accountSelect(account);
       this.setState({
         accounts,
         message,
@@ -68,7 +67,7 @@ export class AccountDialog extends React.Component<any,any> {
     this.setState({ accounts });
   }
 
-  shareAccountName = name => this.props.accountName(name);
+  accountSelect = account => this.props.account(account);
 
   closeClick = () => this.setState({ close: true });
 
@@ -81,16 +80,17 @@ export class AccountDialog extends React.Component<any,any> {
         keyboardFocused={true}
         onClick={this.save}
       />,
-        close ? <CircularProgress size={20}
+        close ? <CircularProgress size={15}
           style={{marginRight: '20px', marginTop: '10px'}} /> :
         <FlatButton
           label='Close'
           primary={true}
           onClick={() => {
             this.closeClick();
+            let selected = accounts.findIndex(a => a.selected);
+            let account = accounts[selected];
+            this.accountSelect(account);
             setTimeout(() => {
-              let selected = accounts.findIndex(a => a.selected);
-              let account = accounts[selected];
               this.setState({ account, selected, accounts });
               this.props.close();
             }, 250);
@@ -99,8 +99,49 @@ export class AccountDialog extends React.Component<any,any> {
     ];
   }
 
+  removeCodec = () => {
+    let { accounts, selected } = this.state;
+    const { token } = this.props;
+    let account = accounts[selected];
+    console.log(account);
+    if(account.room) {
+      const spark = new SparkGuest({userid:'', username: ''});
+      spark.deleteRoom({
+        roomId: account.room.id,
+        token
+      })
+    }
+    let acctIdx = selected;
+    if(accounts.length === 1) {
+      return this.setState({
+        openSnack: true,
+        message: `This is the only account setup..Please Edit this Account`
+      });
+    }
+    accounts.splice(acctIdx, 1);
+    let accountName: string;
+    if(acctIdx !== 0) {
+      acctIdx = --acctIdx;
+      accounts[acctIdx].selected = true;
+      accountName = accounts[acctIdx - 1].name;
+    } else {
+      acctIdx = 0;
+      accounts[acctIdx].selected = true;
+      accountName = accounts[0].name;
+    }
+    this.accountSelect(accounts[acctIdx]);
+    Accounts.save(accounts);
+    this.setState({
+      selected: acctIdx,
+      account: accounts[acctIdx],
+      accounts,
+      message: `${accountName} removed successfully`,
+      snack: true
+    });
+  }
+
   render() {
-    let { snack, accounts, selected, message } = this.state;
+    let { close, snack, accounts, selected, message } = this.state;
     console.log(selected);
     return (
       <div>
@@ -120,7 +161,7 @@ export class AccountDialog extends React.Component<any,any> {
                       prevAcct = accounts[prevSelected];
                     account.selected = true;
                     prevAcct.selected = false;
-                    this.shareAccountName(account.name);
+                    this.accountSelect(account);
                     Accounts.save(accounts);
                     this.setState({ selected: newSelected });
                   }} >
@@ -168,33 +209,7 @@ export class AccountDialog extends React.Component<any,any> {
                     <BottomNavigationItem
                       label="Remove"
                       icon={<FontIcon color='red'><TrashIcon /></FontIcon>}
-                      onClick={() => {
-                        console.log('remove touched');
-                        let acctIdx = selected;
-                        if(accounts.length === 1) {
-                          return this.setState({
-                            openSnack: true,
-                            message: `This is the only account setup..Please Edit this Account`
-                          });
-                        }
-                        accounts.splice(acctIdx, 1);
-                        let accountName: string;
-                        if(acctIdx !== 0) {
-                          accounts[acctIdx - 1].selected = true;
-                          accountName = accounts[acctIdx - 1].name;
-                        } else {
-                          accounts[0].selected = true;
-                          accountName = accounts[0].name;
-                        }
-                        this.shareAccountName(accountName);
-                        Accounts.save(accounts);
-                        this.setState({
-                          selected: 0,
-                          accounts,
-                          message: `${accountName} removed successfully`,
-                          snack: true
-                        });
-                      }}
+                      onClick={this.removeCodec}
                     />
                   </BottomNavigation>
                 </Paper>

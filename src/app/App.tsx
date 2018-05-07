@@ -397,10 +397,22 @@ export class App extends React.Component<App.Props, App.State> {
     const accounts = Accounts.get();
     let account = accounts.find(a => a.selected);
     this.setState({ accounts, account });
-    return Promise.all([
-      this.initHandler(account),
-      this.teamsRoomCheck(account)
-    ]);
+    JsXAPI.account = account;
+    JsXAPI.specialconnect().then(() => {
+      JsXAPI.xapi.close();
+      return Promise.all([
+        this.initHandler(account),
+        this.teamsRoomCheck(account)
+      ]);
+    }).catch(() => {
+      console.log('hi there');
+      this.setState({
+        acctDialog: false,
+        mainView: true,
+        connected: false
+      });
+      this.modifyAccount();
+    })
   }
 
   changeAccount = (e: any, {props: { value }}: any) => {
@@ -455,7 +467,7 @@ export class App extends React.Component<App.Props, App.State> {
         callView ?
           <Call switch={this.updateView} { ...this.state } /> :
         acctDialog ?
-          <AccountDialog accountName={(name) => {}}
+          <AccountDialog account={(account) => this.setState({ account })}
             token={token.token}
             close={this.closeAccountManagement} /> :
           null
@@ -481,9 +493,6 @@ export class App extends React.Component<App.Props, App.State> {
             caller={call}
             open={openWidget}
             close={() => {
-              // ReactDOM.unmountComponentAtNode(
-              //   document.querySelector('#spark-call')
-              // );
               this.setState({ openWidget: false })
             }}
             token={token}

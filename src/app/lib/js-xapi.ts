@@ -28,6 +28,26 @@ export class JsXAPI {
   public static event = new EventEmitter();
   public static account: Account;
 
+  static specialconnect() {
+    return new Promise((resolve, reject) => {
+      this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
+        username: this.account.username,
+        password: this.account.password,
+        readyTimeout: 9000
+      });
+
+      this.xapi.on('ready', () => {
+        console.log('we are connected');
+        resolve('success');
+      });
+
+      this.xapi.on('error', (err) => {
+        console.log(err);
+        return reject(err);
+      });
+    })
+  }
+
   static connect() {
     return new Promise((resolve, reject) => {
       this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {

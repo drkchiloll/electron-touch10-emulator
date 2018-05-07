@@ -142,7 +142,7 @@ export class Call extends React.Component<any, any> {
         <Subheader style={{
             position: 'absolute',
             top: 0,
-            fontSize: 15,
+            fontSize: 13,
             left: '50%',
             color: 'black',
             width: 225,

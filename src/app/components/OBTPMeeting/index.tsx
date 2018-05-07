@@ -1,4 +1,5 @@
 import * as React from 'react';
+import * as Promise from 'bluebird';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker-cssmodules.css';
 import * as moment from 'moment';
@@ -15,7 +16,7 @@ export class OBTPMeeting extends React.Component<any, any> {
     end: null,
     title: 'Demo OBTP Meeting',
     creating: false,
-    chips: ['samuel.womack@wwt.com']
+    participants: ['samuel.womack@wwt.com']
   };
 
   handleTime() {
@@ -48,12 +49,12 @@ export class OBTPMeeting extends React.Component<any, any> {
   createMeeting = () => {
     this.setState({ creating: true });
     const { token } = this.props;
-    const { start, end, title, chips } = this.state;
+    const { start, end, title, participants } = this.state;
     const { userid, username } = JSON.parse(localStorage.getItem('sparkguest'));
     const guest = new SparkGuest({
       userid, username
     });
-    return guest.obtpSparkRoom(token.token, title, chips)
+    return guest.obtpSparkRoom(token.token, title, participants)
       .then((newMeeting) => {
         JsXAPI.commander({
           cmd: 'Bookings List',
@@ -114,13 +115,24 @@ export class OBTPMeeting extends React.Component<any, any> {
     this.props.close();
   }
 
-  changeChips = chips => this.setState({ chips });
+  searchRooms = (searchString) => {
+    console.log(searchString);
+    const accounts = JSON.parse(localStorage.getItem('accounts'));
+    return Promise
+      .filter(accounts, account => account.name.toLowerCase().includes(searchString))
+      .map(matched => matched.name + ' | ' + matched.email);
+  }
+
+  changeChips = participants => this.setState({ participants });
 
   render() {
-    const { creating, chips } = this.state;
+    const { creating, participants } = this.state;
     return (
       <Dialog open={this.props.open}
+        autoScrollBodyContent={true}
+        autoDetectWindowHeight={true}
         style={this.styles.dialog}
+        bodyStyle={{maxHeight: '80vh', minHeight: '50vh', marginTop: '50px'}}
         onRequestClose={this.closeModal}
         actions={[
           creating ? <CircularProgress size={20} style={{marginRight: '20px'}}  /> :
@@ -175,9 +187,10 @@ export class OBTPMeeting extends React.Component<any, any> {
         </div>
         <Row>
           <Col xs={12} >
-            <Chips value={chips}
+            <Chips value={participants}
               placeholder='Email Address'
-              onChange={this.changeChips} />
+              onChange={this.changeChips}
+              fetchSuggestions={this.searchRooms} />
           </Col>
         </Row>
       </Dialog>
@@ -186,7 +199,10 @@ export class OBTPMeeting extends React.Component<any, any> {
 
   styles: any = {
     dialog: {
-      marginTop: -195, marginLeft: 380, maxWidth: 'none', width: 585
+      marginTop: -195,
+      marginLeft: 380,
+      maxWidth: 'none',
+      width: 585
     },
     floatLabel: { fontSize: 16, color: 'black' },
     input: { fontSize: 12 }

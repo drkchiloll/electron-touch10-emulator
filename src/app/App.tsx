@@ -203,7 +203,8 @@ export class App extends React.Component<App.Props, App.State> {
       JsXAPI.getMicStatus()
     ]).then(stuffs => {
       let {xapiData} = this.state;
-      xapiData['meetings'] = stuffs[0];
+      this.verifyMeetings(stuffs[0]);
+      // xapiData['meetings'] = stuffs[0];
       xapiData['volume'] = stuffs[1];
       xapiData['status'] = stuffs[2] === 'Off' ? 'Awake' : 'Standby';
       xapiData['mic'] = stuffs[3];
@@ -212,10 +213,37 @@ export class App extends React.Component<App.Props, App.State> {
     });
   }
 
+  verifyMeetings = (meetings) => {
+    let {xapiData} = this.state;
+    const noMeetings = (meetings) => {
+      if(meetings.length === 0) {
+        if(xapiData.meetings.length != 0) {
+          xapiData.meetings = [];
+          this.setState({ xapiData });
+        }
+      }
+    };
+
+    return MeetingHelper.dayCheck(meetings).then((meetings) => {
+      meetings = meetings;
+      if(meetings.length === 0) return noMeetings(meetings);
+      if(meetings.length === xapiData.meetings.length) {
+        let toUpdate = MeetingHelper.compare(meetings, xapiData.meetings);
+        if(toUpdate) {
+          xapiData.meetings = meetings;
+          this.setState({ xapiData });
+        }
+      } else {
+        xapiData.meetings = meetings;
+        this.setState({ xapiData });
+      }
+    });
+  }
+
   bookings = ({xapiData, feed}:any) => {
     return JsXAPI.getMeetings().then(meetings => {
       console.log(meetings);
-      this.eventhandler(meetings);
+      this.verifyMeetings(meetings);
     })
   }
 
@@ -251,30 +279,11 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   eventhandler = (stuffs) => {
-    let { xapiData } = this.state;
     if(stuffs && stuffs === 'closing') {
       setTimeout(this.registerEvents, 1000);
-    } 
-    let meetings: any;
+    }
     if(stuffs && stuffs instanceof Array) {
-      meetings = stuffs;
-      if(meetings.length > 0) {
-        if(meetings.length === xapiData.meetings.length) {
-          let toUpdate = MeetingHelper.compare(meetings, xapiData.meetings);
-          if(toUpdate) {
-            xapiData.meetings = meetings;
-            this.setState({ xapiData });
-          }
-        } else {
-          xapiData.meetings = meetings;
-          this.setState({ xapiData });
-        }
-      } else if(meetings.length === 0) {
-        if(xapiData.meetings.length != 0) {
-          xapiData.meetings = [];
-          this.setState({ xapiData });
-        }
-      }
+      this.verifyMeetings(stuffs);
     }
   }
 

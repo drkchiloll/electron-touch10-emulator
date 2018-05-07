@@ -6,6 +6,8 @@ export const MeetingHelper = (() => {
 
   helper.meetingChanged = false;
 
+  helper.dayCheck = (meetings) => Time.sameDay(meetings);
+
   helper.compareProps = (newTime, oldTime) => newTime != oldTime
 
   helper.compare = function(newmeetings, oldmeetings) {

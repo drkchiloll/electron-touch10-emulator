@@ -1,5 +1,6 @@
 import * as moment from 'moment';
 import * as momenttz from 'moment-timezone';
+import * as Promise from 'bluebird';
 import { isDuration, Moment } from 'moment';
 
 export abstract class Time {
@@ -22,6 +23,11 @@ export abstract class Time {
     return momenttz.utc().tz(this.timezone).isAfter(
       momenttz.utc(new Date(endTime)).tz(this.timezone)
     )
+  }
+
+  static sameDay(meetings) {
+    return Promise.filter(meetings, ({startTime}) =>
+      moment().isSame(startTime, 'day'));
   }
 
   static durationUntilMeeting(date) {

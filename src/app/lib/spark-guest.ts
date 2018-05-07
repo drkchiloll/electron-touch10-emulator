@@ -7,8 +7,8 @@ const sparkGuestId = 'Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi9mYTM5NDJjYy1mY2FmLT
   sparkGuestSecret = 'Wg6OF8NJTYQfxb5zUReJ0mGJe4+iuNMBMPAArXRJo5Y=';
 
 export type SparkGuestConstructor = {
-  userid: string;
-  username: string;
+  userid?: string;
+  username?: string;
   expires?: number;
 };
 
@@ -22,9 +22,15 @@ export class SparkGuest {
   public token: string;
 
   constructor({userid, username, expires = 90*60}: SparkGuestConstructor) {
-    this.uId = userid;
-    this.uName = username;
-    this.expires = Math.round(Date.now() / 1000) + expires;
+    if(userid && username) {
+      this.uId = userid;
+      this.uName = username;
+      this.expires = Math.round(Date.now() / 1000) + expires;
+      if(!localStorage.getItem('sparkguest')) {
+        const sparkguest = { user: username, id: userid };
+        localStorage.setItem('sparkguest', JSON.stringify(sparkguest));
+      }
+    }
     this.request = axios.create({
       baseURL: 'https://api.ciscospark.com/v1',
       headers: {
@@ -32,10 +38,6 @@ export class SparkGuest {
         Accept: 'application/json'
       }
     });
-    if(!localStorage.getItem('sparkguest')) {
-      const sparkguest = { user: username, id: userid };
-      localStorage.setItem('sparkguest', JSON.stringify(sparkguest));
-    }
   }
 
   generateGuestToken() {

@@ -19,7 +19,7 @@ export abstract class Time {
         false : true
   }
 
-  static meetingEnded(endTime) {
+  static isPast(endTime) {
     return momenttz.utc().tz(this.timezone).isAfter(
       momenttz.utc(new Date(endTime)).tz(this.timezone)
     )
@@ -38,5 +38,9 @@ export abstract class Time {
 
   static createIsoStr(date) {
     return date.seconds(0).milliseconds(0).toISOString();
+  }
+
+  static tokenExpiration(seconds) {
+    return moment().add(seconds, 'seconds').format();
   }
 }

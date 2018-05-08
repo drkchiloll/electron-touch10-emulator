@@ -129,12 +129,12 @@ export class OBTPMeeting extends React.Component<any, any> {
     this.props.close();
   }
 
-  searchRooms = (searchString) => {
+  searchRooms = searchString => {
     const accounts = JSON.parse(localStorage.getItem('accounts'));
     return Promise
-      .filter(accounts, account => account.name.toLowerCase().includes(searchString) ||
+      .filter(accounts, (account:any) => account.name.toLowerCase().includes(searchString) ||
         account.name.includes(searchString))
-      .map(matched => matched.name + ' | ' + matched.email);
+      .map((matched:any) => matched.name + ' | ' + matched.email);
   }
 
   changeChips = participants => {

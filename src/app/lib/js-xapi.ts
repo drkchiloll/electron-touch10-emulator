@@ -240,7 +240,7 @@ export class JsXAPI {
       const { status, ResultInfo: { TotalRows } } = bookings;
       if(bookings && (parseInt(TotalRows, 10) >= 1)) {
         return Promise.reduce(bookings.Booking, (a: any, meeting: Booking) => {
-          if(!Time.meetingEnded(meeting.Time.EndTime)) {
+          if(!Time.isPast(meeting.Time.EndTime)) {
             const { DialInfo }: any = meeting;
             let number: string, type: string;
             if(DialInfo.ConnectMode === 'Manual') {

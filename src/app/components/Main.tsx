@@ -47,7 +47,7 @@ export class Main extends React.Component<any,any> {
 
   meetingSetup = (meetings) => {
     if(meetings && meetings instanceof Array && meetings.length > 0) {
-      if(!Time.meetingEnded(meetings[0])) {
+      if(!Time.isPast(meetings[0].endTime)) {
         MeetingHelper.compareNextMeetings(meetings[0])
           .then((nextMeeting) => {
             if(nextMeeting.hasOwnProperty('id')) {
@@ -120,7 +120,7 @@ export class Main extends React.Component<any,any> {
     const { startTime, endTime } = nextMeeting;
     const meetInTen = Time.meetInTen(startTime, endTime);
     let durationInMs: any;
-    if(!meetInTen && !Time.meetingEnded(endTime)) {
+    if(!meetInTen && !Time.isPast(endTime)) {
       const x = Time.timesubtract(startTime).format();
       if(this.state.durationInMs > 0) clearTimeout(this.timeout);
       durationInMs = Time.durationUntilMeeting(x);
@@ -130,7 +130,7 @@ export class Main extends React.Component<any,any> {
         const theMeeting = MeetingHelper.getNext();
         if(!theMeeting.redirected) this.redirect(theMeeting);
       }, durationInMs);
-    } else if(meetInTen && !Time.meetingEnded(endTime) && !nextMeeting.redirected) {
+    } else if(meetInTen && !Time.isPast(endTime) && !nextMeeting.redirected) {
       setTimeout(() => this.redirect(nextMeeting), 500);
     }
     this.setState({ meetInTen, durationInMs });

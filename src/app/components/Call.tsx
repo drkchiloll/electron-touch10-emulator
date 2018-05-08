@@ -139,15 +139,7 @@ export class Call extends React.Component<any, any> {
     }
     return (
       <div>
-        <Subheader style={{
-            position: 'absolute',
-            top: 0,
-            fontSize: 13,
-            left: '50%',
-            color: 'black',
-            width: 225,
-            marginLeft: '-125px'
-          }}>
+        <Subheader style={this.styles.calldur}>
           {caller}&nbsp;&nbsp;{this.state.callDuration}
         </Subheader>
         <div style={this.styles.main}>
@@ -220,6 +212,15 @@ export class Call extends React.Component<any, any> {
   }
 
   styles:any = {
+    calldur: {
+      position: 'absolute',
+      top: 0,
+      fontSize: 13,
+      left: '50%',
+      color: 'black',
+      width: 225,
+      marginLeft: '-125px'
+    },
     main: {
       borderRadius: '7px',
       border: 'solid 3px rgb(219,219,219)',
@@ -228,12 +229,6 @@ export class Call extends React.Component<any, any> {
       marginTop: '100px',
       width: '600px',
       height: '350px',
-    },
-    inner: {
-      marginTop: '85px',
-      marginLeft: '230px',
-      width: 140,
-      height: 140
     },
     icon: {
       marginLeft: '25px',
@@ -245,7 +240,6 @@ export class Call extends React.Component<any, any> {
       bottom: 0
     },
     badge: { top: 30, right: 28, width: 15, height: 15 },
-    plusminusIcon: { width: 10, height: 10 },
     closeIcon: { height: 15, width: 15 },
     closebtn: {
       position: 'absolute',

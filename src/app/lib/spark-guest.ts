@@ -1,7 +1,8 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import * as jwt from 'jsonwebtoken';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
-import * as Promise from 'bluebird';
+import { Promise } from 'bluebird';
+import { Time } from './index';
 
 const sparkGuestId = 'Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi9mYTM5NDJjYy1mY2FmLTQwMjktYmRjMy02NmFkY2EwNDU4NGI',
   sparkGuestSecret = 'Wg6OF8NJTYQfxb5zUReJ0mGJe4+iuNMBMPAArXRJo5Y=';
@@ -65,7 +66,7 @@ export class SparkGuest {
     });
   }
 
-  retreiveAccessToken() {
+  retreiveAccessToken(tokenReady?) {
     return this.request.post('/jwt/login')
       .then((resp: AxiosResponse) => {
         if(!resp.data || !resp.data.token) {
@@ -79,9 +80,31 @@ export class SparkGuest {
       });
   }
 
+  getToken() {
+    const { token, expiration } = JSON.parse(localStorage.getItem('token'));
+    if(!Time.isPast(new Date())) {
+      return token;
+    } else {
+      return false;
+    }
+  }
+
+  getAuthUser() {
+    const { user, id } = JSON.parse(localStorage.getItem('sparkguest'));
+    if(!this.uName && !this.uId) {
+      this.uName = user;
+      this.uId = id;
+    }
+  }
+
+  storeToken(token: any) {
+    token['expiration'] = Time.tokenExpiration(token.expiresIn);
+    localStorage.setItem('token', JSON.stringify(token));
+  }
+
   createTokens() {
     return this.generateGuestToken()
-      .then(() => this.retreiveAccessToken());
+      .then(this.retreiveAccessToken);
   }
 
   verifyToken() {

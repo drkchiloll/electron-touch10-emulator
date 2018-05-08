@@ -16,7 +16,8 @@ export class OBTPMeeting extends React.Component<any, any> {
     end: null,
     title: 'Demo OBTP Meeting',
     creating: false,
-    participants: ['samuel.womack@wwt.com']
+    participants: ['samuel.womack@wwt.com'],
+    emailParticipants: ['samuel.womack@wwt.com']
   };
 
   handleTime() {
@@ -46,15 +47,25 @@ export class OBTPMeeting extends React.Component<any, any> {
     }
   }
 
+  storelocal = meeting => {
+    let meetdatastore = JSON.parse(localStorage.getItem('meetings'));
+    if(meetdatastore) {
+      meetdatastore.push(meeting);
+    } else {
+      meetdatastore = [meeting];
+    }
+    localStorage.setItem('meetings', JSON.stringify(meetdatastore));
+  }
+
   createMeeting = () => {
     this.setState({ creating: true });
     const { token } = this.props;
-    const { start, end, title, participants } = this.state;
+    const { start, end, title, emailParticipants } = this.state;
     const { userid, username } = JSON.parse(localStorage.getItem('sparkguest'));
     const guest = new SparkGuest({
       userid, username
     });
-    return guest.obtpSparkRoom(token.token, title, participants)
+    return guest.obtpSparkRoom(token.token, title, emailParticipants)
       .then((newMeeting) => {
         JsXAPI.commander({
           cmd: 'Bookings List',
@@ -87,18 +98,21 @@ export class OBTPMeeting extends React.Component<any, any> {
             booking = [];
             item = 1;
           }
-          let meet: any = JsXAPI.generateBooking({
+          let manualMeeting: any = {
             id: newMeeting.roomId,
             start,
             end,
             title,
             number: newMeeting.sipAddress,
             item
-          });
+          };
+          let meet: any = JsXAPI.generateBooking(manualMeeting);
           booking.push(meet);
           let bookingsXML = JsXAPI.js2xml(booking);
           console.log(bookingsXML);
           JsXAPI.createBooking(bookingsXML).then(() => {
+            manualMeeting['participants'] = emailParticipants;
+            this.storelocal(manualMeeting);
             this.closeModal();
           });
         });
@@ -116,14 +130,23 @@ export class OBTPMeeting extends React.Component<any, any> {
   }
 
   searchRooms = (searchString) => {
-    console.log(searchString);
     const accounts = JSON.parse(localStorage.getItem('accounts'));
     return Promise
-      .filter(accounts, account => account.name.toLowerCase().includes(searchString))
+      .filter(accounts, account => account.name.toLowerCase().includes(searchString) ||
+        account.name.includes(searchString))
       .map(matched => matched.name + ' | ' + matched.email);
   }
 
-  changeChips = participants => this.setState({ participants });
+  changeChips = participants => {
+    const normalized = participants.map(part => {
+      if(part.includes('|')) return part.split(' | ')[1];
+      return part;
+    })
+    this.setState({
+      participants,
+      emailParticipants: normalized
+    });
+  }
 
   render() {
     const { creating, participants } = this.state;

@@ -477,7 +477,7 @@ export class App extends React.Component<App.Props, App.State> {
           <Call switch={this.updateView} { ...this.state } /> :
         acctDialog ?
           <AccountDialog account={(account) => this.setState({ account })}
-            token={token.token}
+            token={token}
             close={this.closeAccountManagement} /> :
           null
       }

@@ -44,12 +44,16 @@ export class SparkWidget extends React.Component<any, any> {
 
   sparks = (token) => {
     if(!this.call) {
+      let timeout = 2000;
       const { account: { metaData, room: { sipAddress }} } = this.props;
       // JsXAPI.dial(sipAddress);
-      const spark = this.createTeamsInstance(this.props.token.token);
+      // if(metaData && metaData.hardware && metaData.hardware.product) {
+      //   if(metaData.hardware.product === 'SX80') timeout = 0;
+      // }
+      const spark = this.createTeamsInstance(this.props.token);
       return spark.phone.register().then(() => {
         return this.placeCall(sipAddress).then(() => {
-          setTimeout(() => JsXAPI.dial(sipAddress), 2000);
+          setTimeout(() => JsXAPI.dial(sipAddress), timeout);
         });
       });
     }
@@ -67,7 +71,7 @@ export class SparkWidget extends React.Component<any, any> {
   }
 
   handleMedia = mediaStream => {
-    return Promise.each(mediaStream.getTracks(), track => {
+    return Promise.each(mediaStream.getTracks(), (track:any) => {
       console.log(track);
       if(track.kind === 'audio' || track.kind === 'video') {
         if(!track.remote) track.stop();
@@ -77,12 +81,12 @@ export class SparkWidget extends React.Component<any, any> {
 
   handleRemoteVideoEvent = () => {
     const { account: { metaData: { hardware: {product}}}} = this.props;
+    let timeout = 1500;
     ['audio', 'video'].forEach(kind => {
       if(this.call.remoteMediaStream) {
-        // console.log(this.call.remoteMediaStream);
+        // console.log(this.call.remoteMediaStream.id);
         const track = this.call.remoteMediaStream.getTracks().find((t) => t.kind === kind);
         if(track) {
-          // console.log(track.id);
           const farend: any = document.getElementById(`farend-main-${kind}`)
           farend.srcObject = new MediaStream([track]);
         }
@@ -92,7 +96,7 @@ export class SparkWidget extends React.Component<any, any> {
     });
     setTimeout(() => this.setState({
       showControls: product.includes('DX') ? false : true,
-    }),1500);
+    }),timeout);
   };
 
   handleCleanup = () => {
@@ -119,14 +123,18 @@ export class SparkWidget extends React.Component<any, any> {
   placeCall = (numberToDial) => {
     return new Promise(resolve => {
       this.call = this.state.spark.phone.dial(numberToDial);
-      this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
       const { account: {metaData: {hardware: {product}}}} = this.props;
-      if(product === 'SX80') {
+      this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
+      if(product === 'SX80' || product === 'DX80') {
         this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
       }
       this.call.on('active', () => {
         console.log('A Call Is Active');
-        this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
+        console.log(product);
+        this.call.on('remoteMediaStream:change', () => {
+          if(this.call.remoteMediaStream)
+            this.handleRemoteVideoEvent();
+        });
         this.call.on('membership:disconnected', () => this.handleCleanup());
         this.call.on('inactive', () => this.handleCleanup());
         this.call.on('error', (err) => console.log(err));
@@ -203,12 +211,6 @@ export class SparkWidget extends React.Component<any, any> {
             onDoubleClick={this.handleVideoDblClick} >
             <audio id='farend-main-audio' autoPlay></audio>
             <video id='farend-main-video' autoPlay height={780} width={600}></video>
-            <video
-              style={{position: 'absolute', top: 140, right: 150, zIndex: 1001}}
-              id='farend-sec-video'
-              autoPlay
-              height={120}
-              width={120}></video>
           </div>
           {
             this.state.showControls ?
@@ -253,6 +255,10 @@ export class SparkWidget extends React.Component<any, any> {
                           innerDivStyle={{fontSize:12}}
                           value='2'
                           primaryText='Camera 2' />
+                        {/* <MenuItem
+                          innerDivStyle={{ fontSize: 12 }}
+                          value='3'
+                          primaryText='Camera 3' /> */}
                       </IconMenu>
                     </div>
                   </Col>

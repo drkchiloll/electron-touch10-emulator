@@ -3,6 +3,7 @@ import * as jwt from 'jsonwebtoken';
 import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { Promise } from 'bluebird';
 import { Time } from './index';
+import * as CiscoSpark from 'ciscospark';
 
 const sparkGuestId = 'Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi9mYTM5NDJjYy1mY2FmLTQwMjktYmRjMy02NmFkY2EwNDU4NGI',
   sparkGuestSecret = 'Wg6OF8NJTYQfxb5zUReJ0mGJe4+iuNMBMPAArXRJo5Y=';
@@ -81,12 +82,15 @@ export class SparkGuest {
   }
 
   getToken() {
-    const { token, expiration } = JSON.parse(localStorage.getItem('token'));
-    if(!Time.isPast(new Date())) {
-      return token;
-    } else {
-      return false;
-    }
+    return new Promise(resolve => {
+      if(!JSON.parse(localStorage.getItem('token'))) return resolve(false);
+      const { token, expiration } = JSON.parse(localStorage.getItem('token'));
+      if(!Time.isPast(new Date())) {
+        return resolve(token);
+      } else {
+        return resolve(false);
+      }
+    })
   }
 
   getAuthUser() {
@@ -103,8 +107,14 @@ export class SparkGuest {
   }
 
   createTokens() {
-    return this.generateGuestToken()
-      .then(this.retreiveAccessToken);
+    return this.getToken().then((token) => {
+      console.log(token);
+      if(token) return token;
+      return this.generateGuestToken()
+        .then(() => this.retreiveAccessToken())
+        .then(token => this.storeToken(token))
+        .then(this.getToken);
+    });
   }
 
   verifyToken() {
@@ -118,6 +128,20 @@ export class SparkGuest {
     }).catch((e: jwt.JsonWebTokenError) => {
       return { result: 'failed to decode JWT token..' };
     })
+  }
+
+  getObtpMeeting(meetingNumber) {
+    let obtpMeetings = JSON.parse(localStorage.getItem('meetings'));
+    if(!obtpMeetings) return null;
+    return obtpMeetings.find((m:any) => m.number == meetingNumber);
+  }
+
+  deleteObtpMeeting(id) {
+    let obtpMeetings = JSON.parse(localStorage.getItem('meetings'));
+    let meetingIdx = obtpMeetings.findIndex((m:any) => m.id === id);
+    obtpMeetings.splice(meetingIdx, 1);
+    localStorage.setItem('meetings', JSON.stringify(obtpMeetings));
+    return Promise.resolve('done');
   }
 
   deleteRoom({roomId, token}) {

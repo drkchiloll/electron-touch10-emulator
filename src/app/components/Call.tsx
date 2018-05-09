@@ -14,11 +14,12 @@ const KeyPad = require('../imgs/KeyPad.svg');
 const EndCall = require('../imgs/EndCall.svg');
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 import * as moment from 'moment';
-import { JsXAPI, Time, MeetingHelper } from '../lib';
+import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
 
 import { Dialer } from './index';
 
 export class Call extends React.Component<any, any> {
+  sparkGuest: SparkGuest;
   durationInterval: any;
   state = {
     showDialer: false,
@@ -80,17 +81,36 @@ export class Call extends React.Component<any, any> {
     this.setState({ callDuration });
   }
 
-  hangup = callId => {
-    clearInterval(this.durationInterval);
-    return JsXAPI.hangUp(callId).then(() => {
+  deviceHangup = (callId) => {
+    JsXAPI.hangUp(callId).then(() =>
       setTimeout(() =>
-        this.props.switch({
+        this.setState({
           callView: false,
-          meetingsView: false,
+          meetingView: false,
           mainView: true
-        }), 100
-      )
-    })
+        }), 100))
+  }
+
+  hangup = callId => {
+    let { callback } = this.state;
+    clearInterval(this.durationInterval);
+    if(callback.includes('meet.ciscospark.com')) {
+      this.sparkGuest = new SparkGuest({});
+      callback = callback.replace('sip:', '');
+      let thisMeeting: any = this.sparkGuest.getObtpMeeting(callback);
+      if(!thisMeeting) return this.deviceHangup(callId);
+      this.sparkGuest.getToken().then(token => {
+        Promise.all([
+          this.sparkGuest.deleteRoom({
+            roomId: thisMeeting.id,
+            token
+          }),
+          this.sparkGuest.deleteObtpMeeting(thisMeeting.id)
+        ]).then(() => this.deviceHangup(callId))
+      });
+    } else {
+      return this.deviceHangup(callId);
+    }
   }
 
   passDigits = () => {

@@ -85,7 +85,7 @@ export class SparkGuest {
     return new Promise(resolve => {
       if(!JSON.parse(localStorage.getItem('token'))) return resolve(false);
       const { token, expiration } = JSON.parse(localStorage.getItem('token'));
-      if(!Time.isPast(new Date())) {
+      if(!Time.isPast(new Date(expiration))) {
         return resolve(token);
       } else {
         return resolve(false);
@@ -153,24 +153,29 @@ export class SparkGuest {
   setupRoom(codec: any) {
     let emulatorDetails: any = JSON.parse(JSON.stringify(codec));
     let roomId: string;
-    return this.request.post('/rooms', {
-      title: codec.name.toUpperCase()
+    return this.getToken().then(token => {
+      this.request.defaults.headers = {
+        Authorization: `Bearer ${token}`
+      };
+      return this.request.post('/rooms', {
+        title: codec.name.toUpperCase()
+      })
+        .then((resp) => ({ id: resp.data.id }))
+        .then(({ id }) => {
+          roomId = id;
+          let members = [codec.email, 'samuel.womack@wwt.com'];
+          return Promise.all([
+            this.request.get(`/rooms/${roomId}`)
+              .then(({ data: { sipAddress } }) => Object.assign(
+                emulatorDetails, { room: { id: roomId, sipAddress } })),
+            Promise.each(members, (member) => {
+              return this.request.post('/memberships', {
+                roomId, personEmail: member
+              })
+            })
+          ])
+        }).then(() => emulatorDetails);
     })
-    .then((resp) => ({ id: resp.data.id }))
-    .then(({id}) => {
-      roomId = id;
-      let members = [codec.email, 'samuel.womack@wwt.com'];
-      return Promise.all([
-        this.request.get(`/rooms/${roomId}`)
-          .then(({data: {sipAddress}}) => Object.assign(
-            emulatorDetails, { room: { id: roomId, sipAddress }})),
-        Promise.each(members, (member) => {
-          return this.request.post('/memberships', {
-            roomId, personEmail: member
-          })
-        })
-      ])
-    }).then(() => emulatorDetails);
   }
 
   obtpSparkRoom(token, title, emailList) {

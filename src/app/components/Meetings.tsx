@@ -56,6 +56,11 @@ export class Meetings extends React.Component<any, any> {
       top: 250,
       left: 300,
       borderLeft: '5px solid black'
+    },
+    delMeeting: {
+      position: 'absolute',
+      top: -5,
+      right: -5
     }
   }
 
@@ -90,6 +95,10 @@ export class Meetings extends React.Component<any, any> {
     );
   }
 
+  cancelMeeting = (meeting) => {
+
+  }
+
   render() {
     const { meetings } = this.props;
     return (
@@ -103,27 +112,33 @@ export class Meetings extends React.Component<any, any> {
         {
           meetings && meetings.length > 0 ?
           <div>
-            <Subheader style={this.styles.header}>
+            <Subheader style={this.styles.header1}>
               Upcomings Meetings
             </Subheader>
             {
-              meetings.map((meeting:any, index: any) => {
+              meetings.map((m:any, index: any) => {
+                const {id, startTime, endTime, endpoint, title} = m;
                 return (
-                  <Paper key={meeting.id} style={this.styles.paper}>
-                    { Time.meetInTen(meeting.startTime, meeting.endTime) ? 
+                  <Paper key={id} style={this.styles.paper}>
+                    <IconButton style={this.styles.delMeeting}
+                      iconStyle={{ height: 15, width: 15 }}
+                      onClick={() => this.cancelMeeting(m)}>
+                      <CloseIcon />
+                    </IconButton>
+                    { Time.meetInTen(startTime, endTime) ? 
                       <RaisedButton label='Join' buttonStyle={this.styles.btn}
                         backgroundColor='green'
                         labelColor='#FFFFFF'
                         onClick={() => {
-                          this.dial(meeting.endpoint.number)
+                          this.dial(endpoint.number)
                         }} /> :
                       null }
                     { index === 0 ?
-                     this._renderCardHeader(meeting) :
-                     <CardHeader title={meeting.title} />}
+                     this._renderCardHeader(m) :
+                     <CardHeader title={title} />}
                     <CardText>
-                      {this.getTime(meeting.startTime) + ' - ' +
-                       this.getTime(meeting.endTime)}
+                      {this.getTime(startTime) + ' - ' +
+                       this.getTime(endTime)}
                     </CardText>
                   </Paper>
                 )

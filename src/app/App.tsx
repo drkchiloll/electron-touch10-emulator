@@ -16,7 +16,6 @@ import { SparkWidget } from './components/SparkWidget';
 import { JsXAPI, Accounts, MeetingHelper } from './lib';
 import { SparkGuest, SparkGuestConstructor } from './lib';
 import { CallHandler } from './lib/callhandler';
-
 export namespace App {
   export interface Props { }
   export interface State {
@@ -424,29 +423,23 @@ export class App extends React.Component<App.Props, App.State> {
     })
   }
 
-  changeAccount = (e: any, {props: { value }}: any) => {
-    let { account, accounts } = this.state;
-    if(account != value) {
-      if(JsXAPI.xapi) JsXAPI.xapi.close();
-      account.selected = false;
-      value.selected = true;
-      let updatedAccounts = accounts.map((acct: any) => {
-        if(acct.host == account) acct.selected = false;
-        if(acct.host == value.host) acct.selected = true;
-        return acct;
-      });
-      Accounts.save(updatedAccounts);
+  changeAccount = (account) => {
+    console.log(account);
+    global.emitter.emit('clear-callduration');
+    setTimeout(() => {
+      JsXAPI.xapi = null;
+      JsXAPI.account = account;
       this.setState({
-        accounts: updatedAccounts,
-        account: value,
+        accounts: Accounts.get(),
+        account,
         caller: null,
         callId: null
       });
       Promise.all([
-        this.initHandler(value),
+        this.initHandler(account),
         this.teamsRoomCheck(account)
-      ]);
-    }
+      ])
+    }, 100)
   }
 
   render() {

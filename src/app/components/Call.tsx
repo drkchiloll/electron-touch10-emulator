@@ -15,22 +15,28 @@ const EndCall = require('../imgs/EndCall.svg');
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 import * as moment from 'moment';
 import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
-
 import { Dialer } from './index';
+import { EventEmitter } from 'events';
+import '../lib/emitter';
+global.emitter = new EventEmitter();
 
 export class Call extends React.Component<any, any> {
   sparkGuest: SparkGuest;
-  durationInterval: any;
-  state = {
-    showDialer: false,
-    number: '',
-    callback: null,
-    callbackHint: '',
-    callDuration: '0:00',
+  callDurationCounter: any;
+  constructor(props) {
+    super(props);
+    this.state = {
+      showDialer: false,
+      number: '',
+      callback: null,
+      callbackHint: '',
+      callDuration: '0:00',
+    };
   }
 
+
   componentWillUnmount() {
-    clearInterval(this.durationInterval);
+    clearInterval(this.callDurationCounter);
   }
 
   componentDidMount() {
@@ -40,10 +46,12 @@ export class Call extends React.Component<any, any> {
       MeetingHelper.setNext(nextMeeting);
     }
     let { callId } = this.props;
-    this.durationInterval = setInterval(() =>
+    this.callDurationCounter = setInterval(() =>
       JsXAPI.getStatus(`Call ${callId} Duration`).then(dur => {
         this.duration(dur);
       }),1000);
+    global.emitter.on('clear-callduration', () =>
+      clearInterval(this.callDurationCounter));
     let state: any = {};
     let callback: string;
 
@@ -84,7 +92,7 @@ export class Call extends React.Component<any, any> {
   deviceHangup = (callId) => {
     JsXAPI.hangUp(callId).then(() =>
       setTimeout(() =>
-        this.setState({
+        this.props.switch({
           callView: false,
           meetingView: false,
           mainView: true
@@ -93,7 +101,7 @@ export class Call extends React.Component<any, any> {
 
   hangup = callId => {
     let { callback } = this.state;
-    clearInterval(this.durationInterval);
+    clearInterval(this.callDurationCounter);
     if(callback.includes('meet.ciscospark.com')) {
       this.sparkGuest = new SparkGuest({});
       callback = callback.replace('sip:', '');
@@ -160,7 +168,7 @@ export class Call extends React.Component<any, any> {
     return (
       <div>
         <Subheader style={this.styles.calldur}>
-          {caller}&nbsp;&nbsp;{this.state.callDuration}
+          {callback}&nbsp;&nbsp;{this.state.callDuration}
         </Subheader>
         <div style={this.styles.main}>
           <Subheader style={{textAlign: 'center'}}>

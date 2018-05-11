@@ -25,21 +25,19 @@ export class SparkWidget extends React.Component<any, any> {
   call: any;
 
   componentDidMount() {
-    console.log('mounting widget');
-    if(this.props.token) {
-      this.sparks(this.props.token);
-    } else {
-      this.sparkStuffs();
-    }
     const { account: { metaData: { hardware: { product } } } } = this.props;
-    if(product.includes('SX') || product.includes('MX')) {
-      JsXAPI.commander({
-        cmd: 'Video Input SetMainVideoSource',
-        params: {ConnectorId: [1,2]}
-      }).then(() => {
-        this.setState({ splitScreen: true });
-      });
-    }
+    const guest = new SparkGuest({});
+    guest.createTokens().then(token => {
+      this.sparks(token);
+      if(product.includes('SX') || product.includes('MX')) {
+        JsXAPI.commander({
+          cmd: 'Video Input SetMainVideoSource',
+          params: { ConnectorId: [1, 2] }
+        }).then(() => {
+          this.setState({ splitScreen: true });
+        });
+      }
+    });
   }
 
   sparks = (token) => {
@@ -50,7 +48,7 @@ export class SparkWidget extends React.Component<any, any> {
       // if(metaData && metaData.hardware && metaData.hardware.product) {
       //   if(metaData.hardware.product === 'SX80') timeout = 0;
       // }
-      const spark = this.createTeamsInstance(this.props.token);
+      const spark = this.createTeamsInstance(token);
       return spark.phone.register().then(() => {
         return this.placeCall(sipAddress).then(() => {
           setTimeout(() => JsXAPI.dial(sipAddress), timeout);

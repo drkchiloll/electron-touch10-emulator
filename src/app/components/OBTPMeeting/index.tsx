@@ -65,7 +65,7 @@ export class OBTPMeeting extends React.Component<any, any> {
     const guest = new SparkGuest({
       userid, username
     });
-    return guest.obtpSparkRoom(token.token, title, emailParticipants)
+    return guest.obtpSparkRoom(token, title, emailParticipants)
       .then((newMeeting) => {
         JsXAPI.commander({
           cmd: 'Bookings List',

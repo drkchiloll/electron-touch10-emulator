@@ -139,27 +139,21 @@ export class Call extends React.Component<any, any> {
     this.setState({ number: number + char });
   }
 
-  closeDialer = () => this.setState({ showDialer: false, number: '', callbackHint: '' });
+  closeDialer = () => this.setState({
+    showDialer: false,
+    number: '',
+    callbackHint: ''
+  });
 
   render() {
     let { number, showDialer, callback, callbackHint } = this.state;
-    let { meeting, caller, callId, xapiData } = this.props;
-    let avatar: any, title: string;
-    if(meeting) {
-      caller = meeting.endpoint.number;
-    } else {
-      avatar = <div style={{ fontSize: '40%' }}>{ caller }</div>;
-    }
+    let { callId } = this.props;
     return (
       <div>
         <Subheader style={this.styles.calldur}>
           {callback}&nbsp;&nbsp;{this.state.callDuration}
         </Subheader>
-        <div style={this.styles.main}>
-          <Subheader style={{textAlign: 'center'}}>
-            <div style={{fontSize: 18}}> { title } </div>
-          </Subheader>
-        </div>
+        <div style={this.styles.main}></div>
         <div style={{ marginTop: '25px' }}>
           <IconButton style={{
               marginLeft:  '190px',

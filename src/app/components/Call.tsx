@@ -47,7 +47,7 @@ export class Call extends React.Component<any, any> {
     let { callId } = this.props;
     this.callDurationCounter = setInterval(() =>
       JsXAPI.getStatus(`Call ${callId} Duration`).then(dur => {
-        this.duration(dur);
+        this.setState({ callDuration: Time.callDuration(dur) });
       }),1000);
     global.emitter.on('clear-callduration', () =>
       clearInterval(this.callDurationCounter));
@@ -73,19 +73,6 @@ export class Call extends React.Component<any, any> {
         this.setState(state);
       }
     });
-  }
-
-  duration = (dur) => {
-    let callDuration = moment()
-      .hour(0)
-      .minute(0)
-      .second(dur)
-      .format('HH : mm : ss');
-    if(callDuration.startsWith('00 :')) {
-      callDuration = callDuration.substring(5);
-    }
-    callDuration = callDuration.replace(/\s/gi, '');
-    this.setState({ callDuration });
   }
 
   deviceHangup = (callId) => {

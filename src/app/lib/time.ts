@@ -36,6 +36,19 @@ export abstract class Time {
     return moment.duration(later.diff(now)).asMilliseconds();
   }
 
+  static callDuration(dur) {
+    let callDuration = moment()
+      .hour(0)
+      .minute(0)
+      .second(dur)
+      .format('HH : mm : ss');
+    if(callDuration.startsWith('00 :')) {
+      callDuration = callDuration.substring(5);
+    }
+    callDuration = callDuration.replace(/\s/gi, '');
+    return callDuration;
+  }
+
   static createIsoStr(date) {
     return date.seconds(0).milliseconds(0).toISOString();
   }

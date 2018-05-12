@@ -317,6 +317,7 @@ export class App extends React.Component<App.Props, App.State> {
         update = this.callUpdate(incomingCall);
       }
       if(call.ghost == 'True') {
+        if(call.id !== this.state.callId) return;
         this.updateView({
           mainView: true,
           meetingsView: false
@@ -369,12 +370,15 @@ export class App extends React.Component<App.Props, App.State> {
       });
     } else if(mainView) {
       console.log('hangup');
-      this.setState({
+      let update: any = {
         mainView,
         meetingsView: false,
         callView: false,
-        acctDialog: false
-      });
+        acctDialog: false,
+        callId: null,
+        caller: null
+      };
+      this.setState(update);
     } else if(callView) {
       let update: any = {
         callView,
@@ -426,6 +430,8 @@ export class App extends React.Component<App.Props, App.State> {
   changeAccount = (account) => {
     console.log(account);
     global.emitter.emit('clear-callduration');
+    global.emitter.removeAllListeners();
+    JsXAPI.xapi.close();
     setTimeout(() => {
       JsXAPI.xapi = null;
       JsXAPI.account = account;

@@ -9,3 +9,4 @@ export { CallNotification } from './CallNotification';
 export { Update } from './Update';
 export { Controls } from './Controls';
 export { CodecHeaderToggle } from './CodecHeaderToggle';
+export { CallButton } from './CallButtonIcons';

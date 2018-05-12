@@ -1,15 +1,9 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
-import {
-  Paper, Subheader, FontIcon,
-  IconButton, Drawer, TextField
-} from 'material-ui';
-import { Row, Col } from 'react-flexbox-grid';
-import { CallButton } from './CallButtonIcons';
+import {Subheader, FontIcon, IconButton, Drawer, TextField} from 'material-ui';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
-import * as moment from 'moment';
 import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
-import { Dialer } from './index';
+import { Dialer, CallButton } from './index';
 import { EventEmitter } from 'events';
 import '../lib/emitter';
 global.emitter = new EventEmitter();

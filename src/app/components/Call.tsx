@@ -177,12 +177,9 @@ export class Call extends React.Component<any, any> {
         </div>
         <Drawer open={showDialer}
           openSecondary={true}
-          containerStyle={{
-            position: 'absolute',
-            height: 450,
-            top: 200,
-            right: showDialer ? 100 : -1 /* Doesn't Show when it should be close */
-          }}
+          containerStyle={Object.assign(this.styles.dialer, {
+            right: showDialer ? 100 : -1
+          })}
           width={350} >
           <TextField type='text' id='dialer' fullWidth={true}
             disabled
@@ -202,7 +199,9 @@ export class Call extends React.Component<any, any> {
           <Dialer showBackspace={number === '' ? false : true}
             passDigits={this.passDigits}
             update={this.updateNumber}
-            delete={(v) => this.setState({ number: number.substring(0, number.length - 1) })} />
+            delete={(v) => this.setState({
+              number: number.substring(0, number.length - 1)
+            })} />
         </Drawer>
       </div>
     )
@@ -240,8 +239,16 @@ export class Call extends React.Component<any, any> {
       position: 'absolute',
       bottom: 0
     },
-    badge: { top: 30, right: 28, width: 15, height: 15 },
-    closeIcon: { height: 15, width: 15 },
+    badge: {
+      top: 30,
+      right: 28,
+      width: 15,
+      height: 15
+    },
+    closeIcon: {
+      height: 15,
+      width: 15
+    },
     closebtn: {
       position: 'absolute',
       right: 10,
@@ -251,8 +258,26 @@ export class Call extends React.Component<any, any> {
       padding: 0,
       margin: 0
     },
-    text: { backgroundColor: 'black', height: 75 },
-    txthint: { marginLeft: 35, fontSize: 20, color: 'grey', top: 25 },
-    txtinput: { marginLeft: 35, fontSize: 28, color: 'white', cursor: 'none' }
+    text: {
+      backgroundColor: 'black',
+      height: 75
+    },
+    txthint: {
+      marginLeft: 35,
+      fontSize: 20,
+      color: 'grey',
+      top: 25
+    },
+    txtinput: {
+      marginLeft: 35,
+      fontSize: 28,
+      color: 'white',
+      cursor: 'none'
+    },
+    dialer: {
+      position: 'absolute',
+      height: 450,
+      top: 200
+    }
   }
 }

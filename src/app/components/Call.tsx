@@ -34,7 +34,6 @@ export class Call extends React.Component<any, any> {
     };
   }
 
-
   componentWillUnmount() {
     clearInterval(this.callDurationCounter);
   }

@@ -148,7 +148,6 @@ export class App extends React.Component<App.Props, App.State> {
     this.connect(account)
       .then(this.xapiDataTracking)
       .then(() => {
-        // JsXAPI.eventInterval = setInterval(JsXAPI.poller, 7500);
         this.setState({
           mainView: true,
           acctDialog: false,
@@ -203,7 +202,6 @@ export class App extends React.Component<App.Props, App.State> {
     ]).then(stuffs => {
       let {xapiData} = this.state;
       this.verifyMeetings(stuffs[0]);
-      // xapiData['meetings'] = stuffs[0];
       xapiData['volume'] = stuffs[1];
       xapiData['status'] = stuffs[2] === 'Off' ? 'Awake' : 'Standby';
       xapiData['mic'] = stuffs[3];

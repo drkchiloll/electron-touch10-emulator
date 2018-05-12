@@ -1,17 +1,11 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
 import {
-  Paper, FloatingActionButton, Subheader, Avatar,
-  Chip, SvgIcon, Badge, Divider, FontIcon, IconButton,
-  Drawer, TextField
+  Paper, Subheader, FontIcon,
+  IconButton, Drawer, TextField
 } from 'material-ui';
 import { Row, Col } from 'react-flexbox-grid';
-const AddCall = require('../imgs/AddCall.svg');
-const TransferCall = require('../imgs/TransferCall.svg');
-const HoldCall = require('../imgs/HoldCall.svg');
-const ShareInCall = require('../imgs/ShareInCall.svg');
-const KeyPad = require('../imgs/KeyPad.svg');
-const EndCall = require('../imgs/EndCall.svg');
+import { CallButton } from './CallButtonIcons';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 import * as moment from 'moment';
 import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
@@ -84,7 +78,8 @@ export class Call extends React.Component<any, any> {
       }))
   }
 
-  hangup = callId => {
+  hangup = () => {
+    const { callId } = this.props;
     let { callback } = this.state;
     clearInterval(this.callDurationCounter);
     if(callback.includes('meet.ciscospark.com')) {
@@ -145,6 +140,29 @@ export class Call extends React.Component<any, any> {
     callbackHint: ''
   });
 
+  dialerAction = () => {
+    const { showDialer } = this.state;
+    this.setState({ showDialer: showDialer ? false : true });
+  }
+
+  _renderCallBtns = () => {
+    let icons = [
+      'AddCall', 'ShareInCall', 'HoldCall',
+      'KeyPad', 'TransferCall', 'EndCall'
+    ];
+    return icons.map((icon, idx) => {
+      return (
+        <CallButton
+          key={idx}
+          style={idx===0 ? this.styles.mainicon : this.styles.icon}
+          img={icon}
+          click={idx===3 ? this.dialerAction : idx===5 ?
+            this.hangup : () => {}}
+          ripple={true} />
+      );
+    })
+  }
+
   render() {
     let { number, showDialer, callback, callbackHint } = this.state;
     let { callId } = this.props;
@@ -155,35 +173,7 @@ export class Call extends React.Component<any, any> {
         </Subheader>
         <div style={this.styles.main}></div>
         <div style={{ marginTop: '25px' }}>
-          <IconButton style={{
-              marginLeft:  '190px',
-              marginRight: '15px'
-            }}
-            disableTouchRipple={true}>
-            <FontIcon> <img src={AddCall} height={60} width={60} /> </FontIcon>
-          </IconButton>
-          <IconButton style={this.styles.icon} disableTouchRipple={true}>
-            <FontIcon> <img src={ShareInCall} height={60} width={60} /> </FontIcon>
-          </IconButton>
-          <IconButton style={this.styles.icon} disableTouchRipple={true}>
-            <FontIcon> <img src={HoldCall} height={60} width={60} /> </FontIcon>
-          </IconButton>
-          <IconButton style={this.styles.icon} tooltip='Keypad' tooltipPosition='bottom-center'
-            disableTouchRipple={true}
-            onClick={() => {
-              const { showDialer } = this.state;
-              this.setState({ showDialer: showDialer ? false: true })
-            }} >
-            <FontIcon> <img src={KeyPad} height={60} width={60} /> </FontIcon>
-          </IconButton>
-          <IconButton style={this.styles.icon}>
-            <FontIcon> <img src={TransferCall} height={60} width={60} /> </FontIcon>
-          </IconButton>
-          <IconButton style={this.styles.icon}
-            disableTouchRipple={true}
-            onClick={() => this.hangup(callId) } >
-            <FontIcon> <img src={EndCall} height={60} width={60} /> </FontIcon>
-          </IconButton>
+          { this._renderCallBtns() }
         </div>
         <Drawer open={showDialer}
           openSecondary={true}
@@ -236,6 +226,10 @@ export class Call extends React.Component<any, any> {
       marginTop: '100px',
       width: '600px',
       height: '350px',
+    },
+    mainicon: {
+      marginLeft: '190px',
+      marginRight: '15px'
     },
     icon: {
       marginLeft: '25px',

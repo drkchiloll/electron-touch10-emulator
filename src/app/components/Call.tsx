@@ -91,12 +91,11 @@ export class Call extends React.Component<any, any> {
 
   deviceHangup = (callId) => {
     JsXAPI.hangUp(callId).then(() =>
-      setTimeout(() =>
-        this.props.switch({
-          callView: false,
-          meetingView: false,
-          mainView: true
-        }), 100))
+      this.props.switch({
+        callView: false,
+        meetingView: false,
+        mainView: true
+      }))
   }
 
   hangup = callId => {

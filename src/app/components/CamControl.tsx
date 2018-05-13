@@ -18,9 +18,9 @@ const containerStyle = {
 
 export class JoyStick extends React.Component<any,any> {
   state = {
-    moving: false,
     position: null,
-    cameraId: 1
+    cameraId: 1,
+    moving: false
   };
 
   componentDidMount() {
@@ -41,55 +41,71 @@ export class JoyStick extends React.Component<any,any> {
 
   managerListener = (manager) => {
     manager.on('move', (e, stick) => {
-      const { moving, position } = this.state;
-      let { direction } = stick;
-      let pos: string;
-      if(direction) {
-        // let pan = direction.x === 'left' ? 'Left' : 'Right';
-        // let tilt = direction.y === 'up' ? 'Up' : 'Down';
-        pos = direction.angle;
+      const angleChange = (angle) => {
+        if(angle <= 20 && angle >= 0.001) return 0;
+        if(angle <= 65 && angle >= 20.001) return 45;
+        if(angle <= 110 && angle >= 65.001) return 90;
+        if(angle <= 155 && angle >= 110.001) return 135;
+        if(angle <= 200 && angle >= 155.001) return 180;
+        if(angle <= 245 && angle >= 200.001) return 225;
+        if(angle <= 290 && angle >= 245.001) return 270;
+        if(angle <= 315 && angle >= 290.001) return 270; // 315
+        if(angle <= 335 && angle >= 315.001) return 0; // 315
+        if(angle <= 359.999 && angle >= 335.001) return 0;
+      };
+      const dir = (angle: number) => {
+        const { cameraId } = this.state;
         let params: any = {
-          CameraId: this.state.cameraId,
-          PanSpeed: 6,
-          TiltSpeed: 6
+          CameraId: cameraId
         };
-        if(moving) {
-          if(position !== pos) {
-            JsXAPI.commander({
-              cmd: 'Camera Ramp',
-              params: {
-                CameraId: this.state.cameraId,
-                Pan: 'Stop',
-                Tilt: 'Stop'
-              }
-            })
-          } else {
-            return;
-          }
+        if(angle === 0) {
+          return Object.assign(params, { PanSpeed: 1, Pan: 'Right' });
+        } else if(angle === 45) {
+          return Object.assign(params, {
+            PanSpeed: 1, TiltSpeed: 1, Pan: 'Right', Tilt: 'Up'
+          });
+        } else if(angle === 90) {
+          return Object.assign(params, { TiltSpeed: 1, Tilt: 'Up' });
+        } else if(angle === 135) {
+          return Object.assign(params, {
+            PanSpeed: 1, TiltSpeed: 1, Tilt: 'Up', Pan: 'Left'
+          });
+        } else if(angle === 180) {
+          return Object.assign(params, { PanSpeed: 1, Pan: 'Left' });
+        } else if(angle === 225) {
+          return Object.assign(params, {
+            PanSpeed: 1, TiltSpeed: 1, Tilt: 'Down', Pan: 'Left'
+          });
+        } else if(angle === 270) {
+          return Object.assign(params, { TiltSpeed: 1, Tilt: 'Down' });
         }
-        switch(pos) {
-          case 'up':
-            params['Tilt'] = 'Up';
-            break;
-          case 'down':
-            params['Tilt'] = 'Down';
-            break;
-          case 'left':
-            params['Pan'] = 'Left';
-            break;
-          case 'right':
-            params['Pan'] = 'Right';
+      };
+      let { position, moving } = this.state;
+      let { angle } = stick;
+      let deg = angle.degree,
+        newpos = angleChange(deg),
+        direction = dir(newpos);
+      if(!position) position = newpos;
+      if(position === newpos) {
+        this.setState({ position: newpos });
+        if(!moving) {
+          JsXAPI.commander({ cmd: 'Camera Ramp', params: direction })
+            .then(() => this.setState({ moving: true}));
         }
+      } else {
+        this.setState({ moving: false, position: newpos });
         JsXAPI.commander({
           cmd: 'Camera Ramp',
-          params
-        });
+          params: {
+            CameraId: this.state.cameraId,
+            Pan: 'Stop',
+            Tilt: 'Stop'
+          }
+        })
       }
-      this.setState({ moving: true, position: pos });
     });
 
     manager.on('end', () => {
-      console.log('end');
       JsXAPI.commander({
         cmd: 'Camera Ramp',
         params: {
@@ -97,7 +113,8 @@ export class JoyStick extends React.Component<any,any> {
           Pan: 'Stop',
           Tilt: 'Stop'
         }
-      }).then(() => this.setState({ moving: false, position: null }));
+      })
+      this.setState({ moving: false });
     })
     const front: any = document.querySelector('.front');
     front.style.backgroundImage = `url(${WebExTeams})`;

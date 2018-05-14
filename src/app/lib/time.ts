@@ -56,11 +56,24 @@ export abstract class Time {
     return callDuration;
   }
 
-  static createIsoStr(date) {
+  static createIsoStr(date = moment()) {
     return date.seconds(0).milliseconds(0).toISOString();
   }
 
   static tokenExpiration(seconds) {
     return moment().add(seconds, 'seconds').format();
+  }
+
+  static meetingTimes() {
+    let hr = moment().get('hour');
+    let minInts = [0, 15, 30, 45];
+    let hrRange = [];
+    for(hr; hr < 24; hr++) {
+      hrRange.push(hr);
+    }
+    let includedHours = [];
+    let myval = hrRange.map((hr, i) => minInts.map(min =>
+      includedHours.push(moment().hours(hr).minutes(min))));
+    return includedHours;
   }
 }

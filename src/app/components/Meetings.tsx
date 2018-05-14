@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { JsXAPI, Time } from '../lib';
+import { Promise } from 'bluebird';
+import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
 import * as moment from 'moment';
 import * as momenttz from 'moment-timezone';
 import {
@@ -21,8 +22,32 @@ export class Meetings extends React.Component<any, any> {
   }
 
   cancelMeeting = (meeting) => {
-    JsXAPI.getMeetings().then(meetings => {
-      console.log(meetings);
+    return JsXAPI.commander({
+      cmd: 'Bookings List',
+      params: {}
+    }).then(meetings => MeetingHelper.parseForObtp(meetings))
+    .then(meetings => {
+      return Promise.map(meetings, (m: any) => {
+        console.log(m);
+        if(m.Id === meeting.id) {
+          m.Time.EndTime = Time.createIsoStr();
+        }
+        return m;
+      })
+    }).then(meetings => {
+      return JsXAPI.createBooking(
+        JsXAPI.js2xml(meetings)
+      )
+    }).then(() => {
+      let spark = new SparkGuest({});
+      return spark.getToken().then(token => {
+        return Promise.all([
+          spark.deleteRoom({
+            roomId: meeting.id, token
+          }),
+          spark.deleteObtpMeeting(meeting.id)
+        ]);
+      });
     });
   }
 
@@ -113,11 +138,17 @@ export class Meetings extends React.Component<any, any> {
                 const {id, startTime, endTime, endpoint, title} = m;
                 return (
                   <Paper key={id} style={this.styles.paper}>
-                    <IconButton style={this.styles.delMeeting}
-                      iconStyle={{ height: 15, width: 15 }}
-                      onClick={() => this.cancelMeeting(m)}>
-                      <CloseIcon />
-                    </IconButton>
+                    {
+                      endpoint.number.includes('meet.ciscospark') ?
+                        <IconButton style={this.styles.delMeeting}
+                          iconStyle={{ height: 15, width: 15 }}
+                          onClick={() => {
+                            return this.cancelMeeting(m);
+                          }}>
+                          <CloseIcon />
+                        </IconButton> :
+                        null
+                    }
                     { Time.meetInTen(startTime, endTime) ? 
                       <RaisedButton label='Join' buttonStyle={this.styles.btn}
                         backgroundColor='green'

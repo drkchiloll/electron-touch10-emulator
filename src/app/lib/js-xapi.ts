@@ -149,7 +149,6 @@ export class JsXAPI {
       _item: item,
       Id: id,
       Title: title,
-      Agenda: title,
       Privacy: 'Public',
       Organizer: {
         FirstName: 'Samuel',
@@ -158,11 +157,11 @@ export class JsXAPI {
       },
       Time: {
         StartTime: Time.createIsoStr(start),
-        StartTimeBuffer: 300,
+        StartTimeBuffer: '600',
         EndTime: Time.createIsoStr(end),
-        EndTimeBuffer: 0
+        EndTimeBuffer: '10'
       },
-      MaximumMeetingExtension: 32,
+      MaximumMeetingExtension: '0',
       BookingStatus: 'OK',
       Webex: {
         Enabled: 'False',
@@ -177,7 +176,8 @@ export class JsXAPI {
             Number: number,
             Protocol: 'SIP',
             CallRate: 6000,
-            CallType: 'Video'
+            CallType: 'Video',
+            id: '1'
           }
         },
         ConnectMode: 'OBTP'
@@ -239,6 +239,7 @@ export class JsXAPI {
     }).then((bookings:any) => {
       const { status, ResultInfo: { TotalRows } } = bookings;
       if(bookings && (parseInt(TotalRows, 10) >= 1)) {
+        // console.log(bookings);
         return Promise.reduce(bookings.Booking, (a: any, meeting: Booking) => {
           if(!Time.isPast(meeting.Time.EndTime)) {
             const { DialInfo }: any = meeting;

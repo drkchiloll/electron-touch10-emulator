@@ -1,4 +1,4 @@
-import * as Promise from 'bluebird';
+import { Promise } from 'bluebird';
 import { Time } from './index';
 
 export const MeetingHelper = (() => {
@@ -63,6 +63,36 @@ export const MeetingHelper = (() => {
       nextMeeting.redirected = false;
       this.setNext(nextMeeting);
       return Promise.resolve(nextMeeting);
+    }
+  };
+
+  helper.parseForObtp = function(meetings) {
+    if(meetings.Booking) {
+      let bookings = meetings.Booking;
+      return Promise.map(bookings, (book: any, i: number) => {
+        let tmp = JSON.parse(JSON.stringify(book));
+        delete tmp.DialInfo.Calls;
+        let calls: any;
+        if(book.DialInfo.ConnectMode === 'OBTP') {
+          calls = book.DialInfo.Calls.Call[0];
+          tmp.DialInfo['Calls'] = { Call: { _item: 1, ...calls }};
+        }
+        return Promise.each(Object.keys(tmp), key => {
+          if(key === 'BookingStatusMessage') delete tmp[key];
+          if(key === 'MeetingExtensionAvailability') delete tmp[key];
+          if(key === 'Organizer') delete tmp[key].Id;
+          if(key === 'Webex') {
+            delete tmp[key].Url;
+            delete tmp[key].MeetingNumber;
+            delete tmp[key].Password;
+            delete tmp[key].HostKey;
+            delete tmp[key].DialInNumber;
+          }
+          return;
+        }).then(() => ({ _item: i + 1, ...tmp }));
+      });
+    } else {
+      return Promise.resolve([]);
     }
   };
 

@@ -20,9 +20,9 @@ export class Meetings extends React.Component<any, any> {
     sessionStorage.setItem('redirectCounter', '2')
   }
 
-  getMeetings() {
+  cancelMeeting = (meeting) => {
     JsXAPI.getMeetings().then(meetings => {
-      this.setState({ meetings })
+      console.log(meetings);
     });
   }
 
@@ -63,9 +63,6 @@ export class Meetings extends React.Component<any, any> {
       right: -5
     }
   }
-
-  getTime = date =>
-    momenttz.utc(new Date(date)).tz(momenttz.tz.guess()).format('h:mm a');
   
   dial = number => {
     const { meetings }: any = this.state;
@@ -93,10 +90,6 @@ export class Meetings extends React.Component<any, any> {
         title={<Title/>}
         style={this.styles.card} />
     );
-  }
-
-  cancelMeeting = (meeting) => {
-
   }
 
   render() {
@@ -137,14 +130,16 @@ export class Meetings extends React.Component<any, any> {
                      this._renderCardHeader(m) :
                      <CardHeader title={title} />}
                     <CardText>
-                      {this.getTime(startTime) + ' - ' +
-                       this.getTime(endTime)}
+                      {Time.getTime(startTime) + ' - ' +
+                       Time.getTime(endTime)}
                     </CardText>
                   </Paper>
                 )
               })
             }
-            <Subheader style={this.styles.header2}> No More Meetings Today</Subheader>
+            <Subheader style={this.styles.header2}>
+              No More Meetings Today
+            </Subheader>
           </div> :
           <Subheader style={this.styles.header3}>
             ROOM AVAILABLE ALL DAY

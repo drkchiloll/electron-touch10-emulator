@@ -17,16 +17,19 @@ import { JoyStick } from './CamControl';
 const EndCall = require('../imgs/EndCall.svg');
 
 export class SparkWidget extends React.Component<any, any> {
-  state = {
-    token: null,
-    spark: null,
-    showControls: false,
-    cameraId: '1',
-    splitScreen: false,
-    activeCall: false,
-    sendVideo: true
-  };
-  call: any;
+  public call: any;
+  constructor(props) {
+    super(props);
+    this.state = {
+      token: null,
+      spark: null,
+      showControls: false,
+      cameraId: '1',
+      splitScreen: false,
+      activeCall: false,
+      sendVideo: false
+    };
+  }
 
   componentDidMount() {
     const { account: { metaData: { hardware: { product } } } } = this.props;
@@ -48,10 +51,6 @@ export class SparkWidget extends React.Component<any, any> {
     if(!this.call) {
       let timeout = 1500;
       const { account: { metaData, room: { sipAddress }} } = this.props;
-      // JsXAPI.dial(sipAddress);
-      // if(metaData && metaData.hardware && metaData.hardware.product) {
-      //   if(metaData.hardware.product === 'SX80') timeout = 0;
-      // }
       const spark = this.createTeamsInstance(token);
       return spark.phone.register().then(() => {
         return this.placeCall(sipAddress).then(() => {
@@ -85,15 +84,23 @@ export class SparkWidget extends React.Component<any, any> {
     const { account: { metaData: { hardware: {product}}}} = this.props;
     let timeout = 2000;
     ['audio', 'video'].forEach(kind => {
+      let track: any;
       if(this.call.remoteMediaStream) {
-        // console.log(this.call.remoteMediaStream.id);
-        const track = this.call.remoteMediaStream.getTracks().find((t) => t.kind === kind);
+        track = this.call.remoteMediaStream.getTracks().find((t) => t.kind === kind);
         if(track) {
           const farend: any = document.getElementById(`farend-main-${kind}`)
           farend.srcObject = new MediaStream([track]);
         }
-      } else {
-        this.call.localMediaStream = null;
+      } else if(this.call.localMediaStream) {
+        console.log('we are local');
+        track = this.call.localMediaStream.getTracks().find((t:any) =>
+          t.kind === kind);
+        if(track) {
+          const nearend: any = document.querySelector('#nearend-video');
+          nearend.srcObject = new MediaStream([track]);
+          nearend.muted = true;
+          nearend.setAttribute('style', 'zIndex:1010;');
+        }
       }
     });
     setTimeout(() => this.setState({
@@ -128,10 +135,16 @@ export class SparkWidget extends React.Component<any, any> {
       this.call = this.state.spark.phone.dial(numberToDial);
       const { account: {metaData: {hardware: {product}}}} = this.props;
       this.call.on('active', () => {
+        this.call.changeSendingMedia('video', false);
         console.log('A Call Is Active');
         console.log(product);
+        this.handleRemoteVideoEvent();
         this.call.on('remoteMediaStream:change', () => {
           if(this.call.remoteMediaStream)
+            this.handleRemoteVideoEvent();
+        });
+        this.call.on('localMediaStream:change', () => {
+          if(this.call.localMediaStream)
             this.handleRemoteVideoEvent();
         });
         this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
@@ -211,6 +224,7 @@ export class SparkWidget extends React.Component<any, any> {
             onDoubleClick={this.handleVideoDblClick} >
             <audio id='farend-main-audio' autoPlay></audio>
             <video id='farend-main-video' autoPlay width={605}></video>
+            <video id='nearend-video' autoPlay height={100} width={100}></video>
           </div>
           {
             activeCall ?

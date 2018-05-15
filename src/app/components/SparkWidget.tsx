@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as Promise from 'bluebird';
 import * as $ from 'jquery';
 import { IconButton, FontIcon, Chip, MenuItem, IconMenu } from 'material-ui';
-import { blueGrey100, blueGrey900 } from 'material-ui/styles/colors';
+import { blueGrey100, blueGrey900, fullBlack, red900 } from 'material-ui/styles/colors';
 import ReactModal from 'react-modal-resizable-draggable';
 import { SparkGuest, SparkGuestConstructor, JsXAPI } from '../lib';
 import * as CiscoSpark from 'ciscospark';
@@ -10,6 +10,8 @@ import CallIcon from 'material-ui/svg-icons/communication/call';
 import ZoomInIcon from 'material-ui/svg-icons/content/add';
 import ZoomOutIcon from 'material-ui/svg-icons/content/remove';
 import CamFilter from 'material-ui/svg-icons/content/filter-list';
+import VideoCamOn from 'material-ui/svg-icons/av/videocam';
+import VideoCamOff from 'material-ui/svg-icons/av/videocam-off';
 import { Grid, Row, Col } from 'react-flexbox-grid';
 import { JoyStick } from './CamControl';
 const EndCall = require('../imgs/EndCall.svg');
@@ -21,6 +23,8 @@ export class SparkWidget extends React.Component<any, any> {
     showControls: false,
     cameraId: '1',
     splitScreen: false,
+    activeCall: false,
+    sendVideo: true
   };
   call: any;
 
@@ -42,7 +46,7 @@ export class SparkWidget extends React.Component<any, any> {
 
   sparks = (token) => {
     if(!this.call) {
-      let timeout = 2000;
+      let timeout = 1500;
       const { account: { metaData, room: { sipAddress }} } = this.props;
       // JsXAPI.dial(sipAddress);
       // if(metaData && metaData.hardware && metaData.hardware.product) {
@@ -79,7 +83,7 @@ export class SparkWidget extends React.Component<any, any> {
 
   handleRemoteVideoEvent = () => {
     const { account: { metaData: { hardware: {product}}}} = this.props;
-    let timeout = 0;
+    let timeout = 2000;
     ['audio', 'video'].forEach(kind => {
       if(this.call.remoteMediaStream) {
         // console.log(this.call.remoteMediaStream.id);
@@ -94,6 +98,7 @@ export class SparkWidget extends React.Component<any, any> {
     });
     setTimeout(() => this.setState({
       showControls: product.includes('DX') ? false : true,
+      activeCall: true
     }),timeout);
   };
 
@@ -122,10 +127,6 @@ export class SparkWidget extends React.Component<any, any> {
     return new Promise(resolve => {
       this.call = this.state.spark.phone.dial(numberToDial);
       const { account: {metaData: {hardware: {product}}}} = this.props;
-      // this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
-      // if(product === 'SX80' || product === 'DX80') {
-      //   this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
-      // }
       this.call.on('active', () => {
         console.log('A Call Is Active');
         console.log(product);
@@ -201,16 +202,33 @@ export class SparkWidget extends React.Component<any, any> {
 
   render() {
     const { caller } = this.props;
-    const { cameraId } = this.state;
+    const { cameraId, activeCall, sendVideo } = this.state;
     const callId = caller.outgoingCall.id;
     return (
       <div id='spark-call'>
         <Grid fluid>
-          <div style={{ position: 'absolute', top: 145, left: 158 }}
+          <div style={{ position: 'absolute', top: 148, left: 158 }}
             onDoubleClick={this.handleVideoDblClick} >
             <audio id='farend-main-audio' autoPlay></audio>
             <video id='farend-main-video' autoPlay width={605}></video>
           </div>
+          {
+            activeCall ?
+              <IconButton style={{position: 'absolute', left: 150, top: 117 }}
+                onClick={() => {
+                  this.setState({ sendVideo: !sendVideo });
+                  this.call.changeSendingMedia('video', !sendVideo);
+                }}>
+                <FontIcon>
+                  {
+                    sendVideo ?
+                      <VideoCamOn color={fullBlack} /> :
+                      <VideoCamOff color={red900} />
+                  }
+                </FontIcon>
+              </IconButton> :
+              null
+          }
           {
             this.state.showControls ?
               <div>

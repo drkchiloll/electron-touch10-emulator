@@ -26,6 +26,10 @@ export class Main extends React.Component<any,any> {
 
   timeout: any = null;
 
+  componentWillUnmount() {
+    clearTimeout(this.timeout);
+  }
+
   componentDidMount() {
     window.addEventListener('resize', () => {
       let { left, top } = this.state;

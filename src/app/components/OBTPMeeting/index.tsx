@@ -8,7 +8,9 @@ import {
 } from 'material-ui';
 import Chips from 'react-chips';
 import { Row, Col } from 'react-flexbox-grid';
-import { JsXAPI, SparkGuest, SparkGuestConstructor } from '../../lib';
+import {
+  JsXAPI, SparkGuest, SparkGuestConstructor, Time, MeetingHelper
+} from '../../lib';
 
 export class OBTPMeeting extends React.Component<any, any> {
   state = {
@@ -70,34 +72,10 @@ export class OBTPMeeting extends React.Component<any, any> {
         JsXAPI.commander({
           cmd: 'Bookings List',
           params: {}
-        }).then(meetings => {
-          let booking: any[], item: number;
-          if(meetings.Booking) {
-            item = meetings.Booking.length + 1;
-            booking = meetings.Booking.map((book, i) => {
-              let t = JSON.parse(JSON.stringify(book));
-              delete t.DialInfo.Calls;
-              let calls = book.DialInfo.Calls.Call[0];
-              t.DialInfo['Calls'] = { Call: { _item: 1, ...calls } };
-              Object.keys(t).forEach(key => {
-                if(key === 'BookingStatusMessage') delete t[key];
-                if(key === 'MeetingExtensionAvailability') delete t[key];
-                if(key === 'Organizer') delete t[key].Id;
-                if(key === 'Webex') {
-                  delete t[key].Url;
-                  delete t[key].MeetingNumber;
-                  delete t[key].Password;
-                  delete t[key].HostKey;
-                  delete t[key].DialInNumber;
-                }
-              })
-              let b = { _item: i+1, ...t };
-              return b;
-            });
-          } else {
-            booking = [];
-            item = 1;
-          }
+        }).then(meetings =>
+          MeetingHelper.parseForObtp(meetings)
+        ).then((bookings) => {
+          let item: number = bookings.length + 1;
           let manualMeeting: any = {
             id: newMeeting.roomId,
             start,
@@ -107,8 +85,8 @@ export class OBTPMeeting extends React.Component<any, any> {
             item
           };
           let meet: any = JsXAPI.generateBooking(manualMeeting);
-          booking.push(meet);
-          let bookingsXML = JsXAPI.js2xml(booking);
+          bookings.push(meet);
+          let bookingsXML = JsXAPI.js2xml(bookings);
           console.log(bookingsXML);
           JsXAPI.createBooking(bookingsXML).then(() => {
             manualMeeting['participants'] = emailParticipants;
@@ -132,7 +110,8 @@ export class OBTPMeeting extends React.Component<any, any> {
   searchRooms = searchString => {
     const accounts = JSON.parse(localStorage.getItem('accounts'));
     return Promise
-      .filter(accounts, (account:any) => account.name.toLowerCase().includes(searchString) ||
+      .filter(accounts, (account:any) =>
+        account.name.toLowerCase().includes(searchString) ||
         account.name.includes(searchString))
       .map((matched:any) => matched.name + ' | ' + matched.email);
   }
@@ -175,7 +154,7 @@ export class OBTPMeeting extends React.Component<any, any> {
               onChange={(date) => this.setState({start: date})}
               showTimeSelect
               timeIntervals={15}
-              includeTimes={this.handleTime()}
+              includeTimes={Time.meetingTimes()}
               timeFormat='hh:mma'
               dateFormat='LLL'
               customInput={
@@ -192,7 +171,7 @@ export class OBTPMeeting extends React.Component<any, any> {
               onChange={(date) => this.setState({end: date})}
               showTimeSelect={true}
               showTimeSelectOnly={true}
-              includeTimes={this.handleTime()}
+              includeTimes={Time.meetingTimes()}
               timeIntervals={15}
               timeFormat='hh:mma'
               dateFormat='LT'

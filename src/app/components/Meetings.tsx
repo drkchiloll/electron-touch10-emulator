@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { JsXAPI, Time } from '../lib';
+import { Promise } from 'bluebird';
+import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
 import * as moment from 'moment';
 import * as momenttz from 'moment-timezone';
 import {
@@ -20,9 +21,33 @@ export class Meetings extends React.Component<any, any> {
     sessionStorage.setItem('redirectCounter', '2')
   }
 
-  getMeetings() {
-    JsXAPI.getMeetings().then(meetings => {
-      this.setState({ meetings })
+  cancelMeeting = (meeting) => {
+    return JsXAPI.commander({
+      cmd: 'Bookings List',
+      params: {}
+    }).then(meetings => MeetingHelper.parseForObtp(meetings))
+    .then(meetings => {
+      return Promise.map(meetings, (m: any) => {
+        console.log(m);
+        if(m.Id === meeting.id) {
+          m.Time.EndTime = Time.createIsoStr();
+        }
+        return m;
+      })
+    }).then(meetings => {
+      return JsXAPI.createBooking(
+        JsXAPI.js2xml(meetings)
+      )
+    }).then(() => {
+      let spark = new SparkGuest({});
+      return spark.getToken().then(token => {
+        return Promise.all([
+          spark.deleteRoom({
+            roomId: meeting.id, token
+          }),
+          spark.deleteObtpMeeting(meeting.id)
+        ]);
+      });
     });
   }
 
@@ -63,9 +88,6 @@ export class Meetings extends React.Component<any, any> {
       right: -5
     }
   }
-
-  getTime = date =>
-    momenttz.utc(new Date(date)).tz(momenttz.tz.guess()).format('h:mm a');
   
   dial = number => {
     const { meetings }: any = this.state;
@@ -95,10 +117,6 @@ export class Meetings extends React.Component<any, any> {
     );
   }
 
-  cancelMeeting = (meeting) => {
-
-  }
-
   render() {
     const { meetings } = this.props;
     return (
@@ -120,11 +138,17 @@ export class Meetings extends React.Component<any, any> {
                 const {id, startTime, endTime, endpoint, title} = m;
                 return (
                   <Paper key={id} style={this.styles.paper}>
-                    <IconButton style={this.styles.delMeeting}
-                      iconStyle={{ height: 15, width: 15 }}
-                      onClick={() => this.cancelMeeting(m)}>
-                      <CloseIcon />
-                    </IconButton>
+                    {
+                      endpoint.number.includes('meet.ciscospark') ?
+                        <IconButton style={this.styles.delMeeting}
+                          iconStyle={{ height: 15, width: 15 }}
+                          onClick={() => {
+                            return this.cancelMeeting(m);
+                          }}>
+                          <CloseIcon />
+                        </IconButton> :
+                        null
+                    }
                     { Time.meetInTen(startTime, endTime) ? 
                       <RaisedButton label='Join' buttonStyle={this.styles.btn}
                         backgroundColor='green'
@@ -137,14 +161,16 @@ export class Meetings extends React.Component<any, any> {
                      this._renderCardHeader(m) :
                      <CardHeader title={title} />}
                     <CardText>
-                      {this.getTime(startTime) + ' - ' +
-                       this.getTime(endTime)}
+                      {Time.getTime(startTime) + ' - ' +
+                       Time.getTime(endTime)}
                     </CardText>
                   </Paper>
                 )
               })
             }
-            <Subheader style={this.styles.header2}> No More Meetings Today</Subheader>
+            <Subheader style={this.styles.header2}>
+              No More Meetings Today
+            </Subheader>
           </div> :
           <Subheader style={this.styles.header3}>
             ROOM AVAILABLE ALL DAY

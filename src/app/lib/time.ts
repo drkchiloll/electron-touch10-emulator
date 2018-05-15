@@ -7,22 +7,29 @@ export abstract class Time {
   static timezone = momenttz.tz.guess();
 
   static timesubtract(date): Moment {
-    return momenttz.utc(new Date(date))
-      .tz(momenttz.tz.guess())
+    return this.tzUtcDate(date, this.timezone)
       .subtract(10, 'minutes')
   }
 
   static meetInTen(startTime, endTime) {
     const now = momenttz.utc().tz(this.timezone)
-    return now.isAfter(momenttz.utc(new Date(endTime)).tz(this.timezone)) ?
+    return now.isAfter(this.tzUtcDate(endTime, this.timezone)) ?
       false : this.timesubtract(startTime).isSameOrAfter(now) ?
         false : true
   }
 
+  static tzUtcDate(dt, tz) {
+    return momenttz.utc(dt ? new Date(dt) : new Date()).tz(tz);
+  }
+
   static isPast(endTime) {
-    return momenttz.utc().tz(this.timezone).isAfter(
-      momenttz.utc(new Date(endTime)).tz(this.timezone)
+    return this.tzUtcDate(null, this.timezone).isAfter(
+      this.tzUtcDate(endTime, this.timezone)
     )
+  }
+
+  static getTime(date) {
+    return this.tzUtcDate(date, this.timezone).format('h:mm a');
   }
 
   static sameDay(meetings) {
@@ -49,11 +56,24 @@ export abstract class Time {
     return callDuration;
   }
 
-  static createIsoStr(date) {
+  static createIsoStr(date = moment()) {
     return date.seconds(0).milliseconds(0).toISOString();
   }
 
   static tokenExpiration(seconds) {
     return moment().add(seconds, 'seconds').format();
+  }
+
+  static meetingTimes() {
+    let hr = moment().get('hour');
+    let minInts = [0, 15, 30, 45];
+    let hrRange = [];
+    for(hr; hr < 24; hr++) {
+      hrRange.push(hr);
+    }
+    let includedHours = [];
+    let myval = hrRange.map((hr, i) => minInts.map(min =>
+      includedHours.push(moment().hours(hr).minutes(min))));
+    return includedHours;
   }
 }

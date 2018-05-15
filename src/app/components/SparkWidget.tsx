@@ -79,7 +79,7 @@ export class SparkWidget extends React.Component<any, any> {
 
   handleRemoteVideoEvent = () => {
     const { account: { metaData: { hardware: {product}}}} = this.props;
-    let timeout = 1500;
+    let timeout = 0;
     ['audio', 'video'].forEach(kind => {
       if(this.call.remoteMediaStream) {
         // console.log(this.call.remoteMediaStream.id);
@@ -122,10 +122,10 @@ export class SparkWidget extends React.Component<any, any> {
     return new Promise(resolve => {
       this.call = this.state.spark.phone.dial(numberToDial);
       const { account: {metaData: {hardware: {product}}}} = this.props;
-      this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
-      if(product === 'SX80' || product === 'DX80') {
-        this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
-      }
+      // this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
+      // if(product === 'SX80' || product === 'DX80') {
+      //   this.call.on('remoteMediaStream:change', () => this.handleRemoteVideoEvent());
+      // }
       this.call.on('active', () => {
         console.log('A Call Is Active');
         console.log(product);
@@ -133,6 +133,7 @@ export class SparkWidget extends React.Component<any, any> {
           if(this.call.remoteMediaStream)
             this.handleRemoteVideoEvent();
         });
+        this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
         this.call.on('membership:disconnected', () => this.handleCleanup());
         this.call.on('inactive', () => this.handleCleanup());
         this.call.on('error', (err) => console.log(err));
@@ -205,10 +206,10 @@ export class SparkWidget extends React.Component<any, any> {
     return (
       <div id='spark-call'>
         <Grid fluid>
-          <div style={{ position: 'absolute', top: -82, left: 162}}
+          <div style={{ position: 'absolute', top: 145, left: 158 }}
             onDoubleClick={this.handleVideoDblClick} >
             <audio id='farend-main-audio' autoPlay></audio>
-            <video id='farend-main-video' autoPlay height={780} width={600}></video>
+            <video id='farend-main-video' autoPlay width={605}></video>
           </div>
           {
             this.state.showControls ?

@@ -63,6 +63,8 @@ export namespace App {
 
 export class App extends React.Component<App.Props, App.State> {
   public teamsGuest: SparkGuest;
+  public jsxapi = JsXAPI;
+  public xapi: any;
   constructor(props) {
     super(props);
     this.state = {
@@ -162,15 +164,22 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   connect = (account) => {
-    JsXAPI.account = account;
-    return JsXAPI.connect().then(() => {
-      this.connErrors({connected: true});
+    this.jsxapi.account = account;
+    // JsXAPI.account = account;
+    return this.jsxapi.connect().then(() => {
+      this.xapi = this.jsxapi.xapi;
+      this.connErrors({ connected: true });
       return;
     })
+    // return JsXAPI.connect().then(() => {
+    //   this.connErrors({connected: true});
+    //   return;
+    // })
   }
 
   callCheck = () => {
-    return JsXAPI.getStatus('Call')
+    // return JsXAPI.getStatus('Call')
+    return this.jsxapi.getStatus('Call')
       .then((call:any) => {
         if(!call) {
           return false;
@@ -195,10 +204,10 @@ export class App extends React.Component<App.Props, App.State> {
 
   xapiDataTracking = () => {
     return Promise.all([
-      JsXAPI.getMeetings(),
-      JsXAPI.getAudio(),
-      JsXAPI.getState(),
-      JsXAPI.getMicStatus()
+      this.jsxapi.getMeetings(),
+      this.jsxapi.getAudio(),
+      this.jsxapi.getState(),
+      this.jsxapi.getMicStatus()
     ]).then(stuffs => {
       let {xapiData} = this.state;
       this.verifyMeetings(stuffs[0]);
@@ -238,7 +247,7 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   bookings = ({xapiData, feed}:any) => {
-    return JsXAPI.getMeetings().then(meetings => {
+    return this.jsxapi.getMeetings().then(meetings => {
       console.log(meetings);
       this.verifyMeetings(meetings);
     })
@@ -271,7 +280,7 @@ export class App extends React.Component<App.Props, App.State> {
     ];
     let {xapiData} = this.state;
     Promise.each(feedbacks, ({id, path}:any) => {
-      JsXAPI.xapi.feedback.on(path, (feed) => this[id]({xapiData, feed}));
+      this.xapi.feedback.on(path, (feed) => this[id]({xapiData, feed}));
     });
   }
 
@@ -333,7 +342,7 @@ export class App extends React.Component<App.Props, App.State> {
   connErrors = ({ connected }) => {
     const { account } = this.state;
     if(JsXAPI.event.eventNames().indexOf('connection-error') === -1) {
-      JsXAPI.event.addListener('connection-error', () => {
+      this.jsxapi.event.addListener('connection-error', () => {
         console.log('error event called');
         this.setState({
           connected: false,
@@ -392,8 +401,8 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   modifyAccount = () => {
-    if(JsXAPI.xapi) {
-      JsXAPI.xapi.close();
+    if(this.xapi) {
+      this.xapi.close();
     }
     this.setState({
       mainView: false,
@@ -407,9 +416,9 @@ export class App extends React.Component<App.Props, App.State> {
     const accounts = Accounts.get();
     let account = accounts.find(a => a.selected);
     this.setState({ accounts, account });
-    JsXAPI.account = account;
-    JsXAPI.specialconnect().then(() => {
-      JsXAPI.xapi.close();
+    this.jsxapi.account = account;
+    this.jsxapi.specialconnect().then(() => {
+      this.xapi.close();
       return Promise.all([
         this.initHandler(account),
         this.teamsRoomCheck(account)
@@ -429,10 +438,10 @@ export class App extends React.Component<App.Props, App.State> {
     console.log(account);
     global.emitter.emit('clear-callduration');
     global.emitter.removeAllListeners();
-    JsXAPI.xapi.close();
+    this.xapi.close();
     setTimeout(() => {
-      JsXAPI.xapi = null;
-      JsXAPI.account = account;
+      this.xapi = null;
+      this.jsxapi.account = account;
       this.setState({
         accounts: Accounts.get(),
         account,

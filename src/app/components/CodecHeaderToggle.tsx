@@ -39,6 +39,13 @@ export class CodecHeaderToggle extends React.Component<any,any> {
     });
   }
 
+  componentWillReceiveProps(props) {
+    const { account } = this.state;
+    if(props.account.name !== account.name) {
+      this.setState({ account: props.account });
+    }
+  }
+
   changeAccount = (account) => {
     let { accounts } = this.state;
     accounts.forEach(a => {

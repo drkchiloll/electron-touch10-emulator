@@ -119,7 +119,6 @@ export class App extends React.Component<App.Props, App.State> {
 
   componentDidMount() {
     const { account } = this.state;
-    // return this.initHandler(account);
     return Promise.all([
       this.initHandler(account),
       this.teamsRoomCheck(account)
@@ -165,20 +164,14 @@ export class App extends React.Component<App.Props, App.State> {
 
   connect = (account) => {
     this.jsxapi.account = account;
-    // JsXAPI.account = account;
     return this.jsxapi.connect().then(() => {
       this.xapi = this.jsxapi.xapi;
       this.connErrors({ connected: true });
       return;
     })
-    // return JsXAPI.connect().then(() => {
-    //   this.connErrors({connected: true});
-    //   return;
-    // })
   }
 
   callCheck = () => {
-    // return JsXAPI.getStatus('Call')
     return this.jsxapi.getStatus('Call')
       .then((call:any) => {
         if(!call) {

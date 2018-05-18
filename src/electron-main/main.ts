@@ -22,6 +22,7 @@ class MyApplication {
 			height: 768,
 			minWidth: 1024,
 			minHeight: 600,
+			maxWidth: 1024,
 			acceptFirstMouse: true
 		});
 

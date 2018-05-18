@@ -108,7 +108,7 @@ export class SparkGuest {
 
   createTokens() {
     return this.getToken().then((token) => {
-      console.log(token);
+      // console.log(token);
       if(token) return token;
       return this.generateGuestToken()
         .then(() => this.retreiveAccessToken())

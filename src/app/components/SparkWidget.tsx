@@ -255,7 +255,7 @@ export class SparkWidget extends React.Component<any, any> {
                 </Row>
                 <Row>
                   <Col xsOffset={5} xs={3}>
-                    <div style={{ marginTop: '-110px' }} >
+                    <div style={{ position: 'absolute', top: 485 }} >
                       <Chip style={{ width: 80, height: 26, marginLeft: '35px' }}
                           backgroundColor={blueGrey100} >
                         <IconButton style={{ position: 'absolute', left: -3, top: -10 }}
@@ -272,7 +272,7 @@ export class SparkWidget extends React.Component<any, any> {
                     </div>
                   </Col>
                   <Col>
-                    <div style={{marginTop:'-125px', marginLeft: '-100px'}}>
+                    <div style={{position: 'absolute', top: 473, right: 375}}>
                       <IconMenu
                         menuStyle={{margin:0,padding:0,width:75}}
                         iconButtonElement={<IconButton><CamFilter color={blueGrey900} /></IconButton>}

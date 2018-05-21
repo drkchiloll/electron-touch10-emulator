@@ -2,6 +2,8 @@ import * as React from 'react';
 import * as Promise from 'bluebird';
 import {Subheader, FontIcon, IconButton, Drawer, TextField} from 'material-ui';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
+const SparkIcon = require('../imgs/spark.svg');
+const WebExIcon = require('../imgs/webex.svg');
 import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
 import { Dialer, CallButton } from './index';
 import { EventEmitter } from 'events';
@@ -9,8 +11,10 @@ import '../lib/emitter';
 global.emitter = new EventEmitter();
 
 export class Call extends React.Component<any, any> {
-  sparkGuest: SparkGuest;
-  callDurationCounter: any;
+  public sparkGuest: SparkGuest;
+  public callDurationCounter: any;
+  public callMedia: any;
+  public jsxapi = JsXAPI;
   constructor(props) {
     super(props);
     this.state = {
@@ -33,12 +37,21 @@ export class Call extends React.Component<any, any> {
       MeetingHelper.setNext(nextMeeting);
     }
     let { callId } = this.props;
-    this.callDurationCounter = setInterval(() =>
-      JsXAPI.getStatus(`Call ${callId} Duration`).then(dur => {
-        this.setState({ callDuration: Time.callDuration(dur) });
-      }),1000);
-    global.emitter.on('clear-callduration', () =>
-      clearInterval(this.callDurationCounter));
+    this.callDurationCounter = setInterval(() => {
+      Promise.all([
+        this.jsxapi.getStatus(`Call ${callId} Duration`).then(dur => {
+          this.setState({ callDuration: Time.callDuration(dur) });
+        }),
+        this.jsxapi.getStatus(`MediaChannels Call ${callId}`).then(media => {
+          let m = JSON.stringify(media).toLowerCase();
+          let Media = JSON.parse(m);
+          console.log(Media);
+        })
+      ])
+    },1000);
+    global.emitter.on('clear-callduration', () => {
+      clearInterval(this.callDurationCounter);
+    });
     let state: any = {};
     let callback: string;
 
@@ -162,6 +175,13 @@ export class Call extends React.Component<any, any> {
     let { callId } = this.props;
     return (
       <div>
+        {
+          callback && callback.includes('ciscospark') ?
+            <img src={SparkIcon} height={18} width={18} style={this.styles.callicon} /> :
+          callback && callback.includes('webex') ?
+            <img src={WebExIcon} height={18} width={18} style={this.styles.callicon} /> :
+            null
+        }
         <Subheader style={this.styles.calldur}>
           {callback}&nbsp;&nbsp;{this.state.callDuration}
         </Subheader>
@@ -210,6 +230,13 @@ export class Call extends React.Component<any, any> {
       color: 'black',
       width: 225,
       marginLeft: '-125px'
+    },
+    callicon: {
+      position: 'absolute',
+      top: 15,
+      left: '50%',
+      color: 'black',
+      marginLeft: '-138px'
     },
     main: {
       borderRadius: '7px',

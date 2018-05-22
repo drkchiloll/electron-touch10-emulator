@@ -33,6 +33,10 @@ const muiTheme = getMuiTheme({
     handleSizeActive: 25,
     trackColor: 'black'
   },
+  appBar: {
+    textColor: indigo200,
+    color: indigo500
+  },
   fontFamily: `'Times New Roman'`
 });
 const BGImg = require('./imgs/t10.jpg');

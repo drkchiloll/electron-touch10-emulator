@@ -1,14 +1,19 @@
 import * as React from 'react';
 import * as Promise from 'bluebird';
-import {Subheader, FontIcon, IconButton, Drawer, TextField} from 'material-ui';
+import {
+  Subheader, FontIcon, IconButton, Drawer,
+  TextField, Paper, AppBar, Table, TableHeader,
+  TableHeaderColumn, TableBody, TableRow, TableRowColumn
+} from 'material-ui';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 const SparkIcon = require('../imgs/spark.svg');
 const WebExIcon = require('../imgs/webex.svg');
-import { JsXAPI, Time, MeetingHelper, SparkGuest } from '../lib';
+import {JsXAPI, Time, MeetingHelper, SparkGuest, CallHandler} from '../lib';
 import { Dialer, CallButton } from './index';
 import { EventEmitter } from 'events';
 import '../lib/emitter';
 global.emitter = new EventEmitter();
+import { remote } from 'electron';
 
 export class Call extends React.Component<any, any> {
   public sparkGuest: SparkGuest;
@@ -23,6 +28,8 @@ export class Call extends React.Component<any, any> {
       callback: null,
       callbackHint: '',
       callDuration: '0:00',
+      callStats: null,
+      scrollpos: 0
     };
   }
 
@@ -42,11 +49,9 @@ export class Call extends React.Component<any, any> {
         this.jsxapi.getStatus(`Call ${callId} Duration`).then(dur => {
           this.setState({ callDuration: Time.callDuration(dur) });
         }),
-        this.jsxapi.getStatus(`MediaChannels Call ${callId}`).then(media => {
-          let m = JSON.stringify(media).toLowerCase();
-          let Media = JSON.parse(m);
-          console.log(Media);
-        })
+        this.jsxapi.getStatus(`MediaChannels Call ${callId}`).then((media) =>
+          CallHandler.stats(media)
+        ).then(stats => this.setState({ callStats: stats }))
       ])
     },1000);
     global.emitter.on('clear-callduration', () => {
@@ -171,8 +176,11 @@ export class Call extends React.Component<any, any> {
   }
 
   render() {
-    let { number, showDialer, callback, callbackHint } = this.state;
+    let { number, showDialer, callback, callbackHint, callStats } = this.state;
     let { callId } = this.props;
+    if(callback && callback.includes('sip:')) {
+      callback = callback.replace('sip:', '');
+    }
     return (
       <div>
         {
@@ -217,6 +225,135 @@ export class Call extends React.Component<any, any> {
               number: number.substring(0, number.length - 1)
             })} />
         </Drawer>
+        {
+          callStats ?
+            <div>
+              <AppBar title='Call Stats' iconStyleLeft={{display:'none'}}
+                style={{marginTop:'98px', height:'45px'}}
+                titleStyle={{fontSize: 16, textAlign: 'center'}}
+                onTitleClick={() => {
+                  let { scrollpos } = this.state;
+                  if(scrollpos > 0) scrollpos = 0;
+                  else scrollpos = window.innerHeight;
+                  window.scrollTo(0, scrollpos);
+                  this.setState({ scrollpos });
+                }} />
+              <AppBar style={{marginTop:'0px'}}
+                iconStyleLeft={{display: 'none'}}>
+                <Table
+                  height={this.state.statHeight}
+                  selectable={false}>
+                  <TableHeader displaySelectAll={false} >
+                    <TableRow>
+                      <TableHeaderColumn colSpan={1} >
+                        Outgoing Audio Stats
+                      </TableHeaderColumn>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody displayRowCheckbox={false} >
+                    <TableRow>
+                      <TableRowColumn>Codec</TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.codec.toUpperCase()}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Encrypted </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.encrypted ? 'true' : 'false'}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Transferred Data </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.stats.transferred}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Packets Sent </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.stats.packets}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Packet Loss </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.stats.loss}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Current Jitter </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.stats.jitter}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Max Jitter </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outAudio.stats.maxJitter}
+                      </TableRowColumn>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+                <Table
+                  height={this.state.statHeight}
+                  selectable={false}>
+                  <TableHeader displaySelectAll={false} >
+                    <TableRow>
+                      <TableHeaderColumn colSpan={1} >
+                        Outgoing Video Stats
+                      </TableHeaderColumn>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody displayRowCheckbox={false} >
+                    <TableRow>
+                      <TableRowColumn>Codec</TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.codec.toUpperCase()}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Encrypted </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.encrypted ? 'true' : 'false'}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Transferred Data </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.stats.transferred}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Packets Sent </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.stats.packets}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Packet Loss </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.stats.loss}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Current Jitter </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.stats.jitter}
+                      </TableRowColumn>
+                    </TableRow>
+                    <TableRow>
+                      <TableRowColumn> Max Jitter </TableRowColumn>
+                      <TableRowColumn>
+                        {callStats.outVideo.stats.maxJitter}
+                      </TableRowColumn>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </AppBar>
+            </div> :
+            null
+        }
       </div>
     )
   }

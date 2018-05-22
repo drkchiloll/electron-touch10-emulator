@@ -1,3 +1,4 @@
+import { Promise } from 'bluebird';
 
 export interface Call {
   id?: string;
@@ -56,4 +57,40 @@ export class CallHandler {
     }
     return {incomingCall: this.incomingCall, outgoingCall: this.outgoingCall};
   }
+
+  static parsestats(stat, source): any {
+    const bytesToSize = bytes => {
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      if(bytes === 0) return '0';
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      if(i === 0) return `${bytes} ${sizes[i]}`;
+      return `${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`;
+    };
+    return {
+      encrypted: stat.encryption === 'off' ? false : true,
+      codec: stat[source].protocol,
+      stats: {
+        transferred: stat.netstat.bytes === '0' ? bytesToSize(0) :
+          bytesToSize(parseInt(stat.netstat.bytes, 10)),
+        loss: stat.netstat.loss,
+        jitter: parseInt(stat.netstat.jitter, 10),
+        maxJitter: parseInt(stat.netstat.maxjitter, 10),
+        packets: stat.netstat.packets
+      }
+    };
+  };
+
+  static stats(m) {
+    if(!m) return null;
+    let m1 = JSON.stringify(m).toLowerCase(),
+      media = JSON.parse(m1);
+    const channels = media.channel;
+    let outAudio = channels.find(({type,direction}) =>
+        type==='audio' && direction==='outgoing'),
+      outVideo = channels.find(({type,direction, video}) =>
+        type==='video' && direction==='outgoing' && video.channelrole === 'main');
+    let outa = this.parsestats(outAudio, 'audio'),
+      outv = this.parsestats(outVideo, 'video');
+    return Promise.resolve({outAudio: outa, outVideo: outv});
+  };
 }

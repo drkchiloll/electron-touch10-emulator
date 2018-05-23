@@ -17,6 +17,7 @@ import { JoyStick } from './CamControl';
 const EndCall = require('../imgs/EndCall.svg');
 
 export class SparkWidget extends React.Component<any, any> {
+  public jsxapi = JsXAPI;
   public call: any;
   constructor(props) {
     super(props);
@@ -27,7 +28,9 @@ export class SparkWidget extends React.Component<any, any> {
       cameraId: '1',
       splitScreen: false,
       activeCall: false,
-      sendVideo: false
+      sendVideo: false,
+      endpointCallId: null,
+      endpointConnected: null
     };
   }
 
@@ -36,8 +39,9 @@ export class SparkWidget extends React.Component<any, any> {
     const guest = new SparkGuest({});
     guest.createTokens().then(token => {
       this.sparks(token);
+      console.log(product);
       if(product.includes('SX') || product.includes('MX')) {
-        JsXAPI.commander({
+        this.jsxapi.commander({
           cmd: 'Video Input SetMainVideoSource',
           params: { ConnectorId: [1, 2] }
         }).then(() => {
@@ -47,14 +51,32 @@ export class SparkWidget extends React.Component<any, any> {
     });
   }
 
-  sparks = (token) => {
+  sparks = token => {
     if(!this.call) {
-      let timeout = 1500;
-      const { account: { metaData, room: { sipAddress }} } = this.props;
+      let timeout = 3500;
+      let { account: { metaData, room: { sipAddress }} } = this.props;
+      let currentCall: any;
       const spark = this.createTeamsInstance(token);
-      return spark.phone.register().then(() => {
-        return this.placeCall(sipAddress).then(() => {
-          setTimeout(() => JsXAPI.dial(sipAddress), timeout);
+      return this.jsxapi.getStatus('Call').then((c:any) => {
+        if(c && c.length > 0) {
+          currentCall = c[0];
+          if(currentCall.RemoteNumber.indexOf('webex') === -1 &&
+             currentCall.RemoteNumber.indexOf('ciscospark') === -1) return;
+          sipAddress = currentCall.RemoteNumber;
+          this.setState({ endpointCallId: currentCall.id });
+          this.jsxapi.xapi.feedback.on('/Event/CallDisconnect', (call: any) => {
+            console.log(call);
+            const { endpointCallId } = this.state;
+            if(call.CallId === endpointCallId) {
+              this.handleCleanup();
+            }
+          })
+        }
+        return spark.phone.register().then(() => {
+          return this.placeCall(sipAddress).then(() => {
+            if(!currentCall)
+              setTimeout(() => JsXAPI.dial(sipAddress), timeout);
+          });
         });
       });
     }
@@ -82,7 +104,7 @@ export class SparkWidget extends React.Component<any, any> {
 
   handleRemoteVideoEvent = () => {
     const { account: { metaData: { hardware: {product}}}} = this.props;
-    let timeout = 2000;
+    let timeout = 4000;
     ['audio', 'video'].forEach(kind => {
       let track: any;
       if(this.call.remoteMediaStream) {
@@ -134,22 +156,23 @@ export class SparkWidget extends React.Component<any, any> {
     return new Promise(resolve => {
       this.call = this.state.spark.phone.dial(numberToDial);
       const { account: {metaData: {hardware: {product}}}} = this.props;
+      this.call.on('remoteMediaStream:change', () => {
+        if(this.call.remoteMediaStream) this.handleRemoteVideoEvent();
+      });
       this.call.on('active', () => {
         this.call.changeSendingMedia('video', false);
         console.log('A Call Is Active');
-        console.log(product);
-        this.handleRemoteVideoEvent();
         this.call.on('remoteMediaStream:change', () => {
-          if(this.call.remoteMediaStream)
-            this.handleRemoteVideoEvent();
+          if(this.call.remoteMediaStream) this.handleRemoteVideoEvent();
         });
         this.call.on('localMediaStream:change', () => {
-          if(this.call.localMediaStream)
-            this.handleRemoteVideoEvent();
+          if(this.call.localMediaStream) this.handleRemoteVideoEvent();
         });
         this.call.on('membership:connected', () => this.handleRemoteVideoEvent());
-        this.call.on('membership:disconnected', () => this.handleCleanup());
-        this.call.on('inactive', () => this.handleCleanup());
+        this.call.on('membership:disconnected membership:terminating', () => {
+          console.log('handle this');
+          if(!this.state.endpointCallId) this.handleCleanup();
+        });
         this.call.on('error', (err) => console.log(err));
       });
       resolve();

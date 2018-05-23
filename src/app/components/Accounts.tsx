@@ -123,7 +123,7 @@ export class AccountDialog extends React.Component<any,any> {
     if(acctIdx !== 0) {
       acctIdx = --acctIdx;
       accounts[acctIdx].selected = true;
-      accountName = accounts[acctIdx - 1].name;
+      accountName = accounts[acctIdx].name;
     } else {
       acctIdx = 0;
       accounts[acctIdx].selected = true;
@@ -135,7 +135,7 @@ export class AccountDialog extends React.Component<any,any> {
       selected: acctIdx,
       account: accounts[acctIdx],
       accounts,
-      message: `${accountName} removed successfully`,
+      message: `${account.name} removed successfully`,
       snack: true
     });
   }

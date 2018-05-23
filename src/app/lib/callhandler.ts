@@ -69,13 +69,19 @@ export class CallHandler {
     return {
       encrypted: stat.encryption === 'off' ? false : true,
       codec: stat[source].protocol,
-      stats: {
+      stats: stat.netstat ? {
         transferred: stat.netstat.bytes === '0' ? bytesToSize(0) :
           bytesToSize(parseInt(stat.netstat.bytes, 10)),
         loss: stat.netstat.loss,
         jitter: parseInt(stat.netstat.jitter, 10),
         maxJitter: parseInt(stat.netstat.maxjitter, 10),
         packets: stat.netstat.packets
+      } : {
+        transferred: 0,
+        loss: 0,
+        jitter: 0,
+        maxJitter: 0,
+        packets: 0
       }
     };
   };
@@ -85,6 +91,7 @@ export class CallHandler {
     let m1 = JSON.stringify(m).toLowerCase(),
       media = JSON.parse(m1);
     const channels = media.channel;
+    if(!channels) return null;
     let outAudio = channels.find(({type,direction}) =>
         type==='audio' && direction==='outgoing'),
       outVideo = channels.find(({type,direction, video}) =>

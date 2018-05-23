@@ -19,6 +19,7 @@ const EndCall = require('../imgs/EndCall.svg');
 export class SparkWidget extends React.Component<any, any> {
   public jsxapi = JsXAPI;
   public call: any;
+  public sparkJsSdk: any;
   constructor(props) {
     super(props);
     this.state = {
@@ -39,24 +40,20 @@ export class SparkWidget extends React.Component<any, any> {
     const guest = new SparkGuest({});
     guest.createTokens().then(token => {
       this.sparks(token);
-      console.log(product);
-      if(product.includes('SX') || product.includes('MX')) {
-        this.jsxapi.commander({
-          cmd: 'Video Input SetMainVideoSource',
-          params: { ConnectorId: [1, 2] }
-        }).then(() => {
-          this.setState({ splitScreen: true });
-        });
-      }
     });
   }
 
   sparks = token => {
     if(!this.call) {
-      let timeout = 3500;
-      let { account: { metaData, room: { sipAddress }} } = this.props;
+      let timeout = 1500;
+      let {
+        account: {
+          metaData: { hardware: { product }},
+          room: { sipAddress }
+        }
+      } = this.props;
       let currentCall: any;
-      const spark = this.createTeamsInstance(token);
+      this.sparkJsSdk = this.createTeamsInstance(token);
       return this.jsxapi.getStatus('Call').then((c:any) => {
         if(c && c.length > 0) {
           currentCall = c[0];
@@ -72,39 +69,39 @@ export class SparkWidget extends React.Component<any, any> {
             }
           })
         }
-        return spark.phone.register().then(() => {
+        return this.sparkJsSdk.phone.register().then(() => {
           return this.placeCall(sipAddress).then(() => {
-            if(!currentCall)
-              setTimeout(() => JsXAPI.dial(sipAddress), timeout);
+            if(!currentCall) {
+              setTimeout(() =>
+                this.jsxapi.dial(sipAddress).then(() => {
+                  if(product.includes('SX80') || product.includes('MX')) {
+                    this.jsxapi.commander({
+                      cmd: 'Video Input SetMainVideoSource',
+                      params: { ConnectorId: [1,2] }
+                    }).then(() => this.setState({ splitScreen: true }));
+                  }
+                }),
+                timeout
+              );
+            }
           });
         });
       });
     }
   }
 
-  createTeamsInstance = (token) => {
-    const spark: any = CiscoSpark.init({
+  createTeamsInstance = token => {
+    return CiscoSpark.init({
       config: {
         phone: { enableExperimentalGroupCallingSupport: true },
       },
       credentials: { access_token: token }
     });
-    this.setState({ spark });
-    return spark;
-  }
-
-  handleMedia = mediaStream => {
-    return Promise.each(mediaStream.getTracks(), (track:any) => {
-      console.log(track);
-      if(track.kind === 'audio' || track.kind === 'video') {
-        if(!track.remote) track.stop();
-      }
-    });
   }
 
   handleRemoteVideoEvent = () => {
     const { account: { metaData: { hardware: {product}}}} = this.props;
-    let timeout = 4000;
+    let timeout = 2500;
     ['audio', 'video'].forEach(kind => {
       let track: any;
       if(this.call.remoteMediaStream) {
@@ -147,14 +144,15 @@ export class SparkWidget extends React.Component<any, any> {
           audio.srcObject = null;
         }
         this.call = null;
+        this.sparkJsSdk = null;
         this.props.close();
       });
     }
   }
 
-  placeCall = (numberToDial) => {
+  placeCall = numberToDial => {
     return new Promise(resolve => {
-      this.call = this.state.spark.phone.dial(numberToDial);
+      this.call = this.sparkJsSdk.phone.dial(numberToDial);
       const { account: {metaData: {hardware: {product}}}} = this.props;
       this.call.on('remoteMediaStream:change', () => {
         if(this.call.remoteMediaStream) this.handleRemoteVideoEvent();
@@ -178,30 +176,17 @@ export class SparkWidget extends React.Component<any, any> {
       resolve();
     });
   }
-  
-  sparkStuffs = () => {
-    const sparkguest = new SparkGuest({
-      userid: '987654321',
-      username: 'myNewUser'
-    });
-    return sparkguest.createTokens()
-      .then((token: any) => {
-        this.setState({ token });
-        return token.token;
-      })
-      .then((token) => this.createTeamsInstance(token));
-  }
 
-  zoom = (action) => {
+  zoom = action => {
     const { cameraId } = this.state;
-    JsXAPI.commander({
+    this.jsxapi.commander({
       cmd: 'Camera Ramp',
       params: {
         CameraId: cameraId,
         Zoom: action,
         ZoomSpeed: 8
       }
-    }).then(() => setTimeout(() => JsXAPI.commander({
+    }).then(() => setTimeout(() => this.jsxapi.commander({
       cmd: 'Camera Ramp', params: { CameraId: cameraId, Zoom: 'Stop' }
     })),100);
   }
@@ -224,12 +209,12 @@ export class SparkWidget extends React.Component<any, any> {
         input = '2';
         cameraId = '2';
       }
-      JsXAPI.commander({
+      this.jsxapi.commander({
         cmd: 'Video Input SetMainVideoSource',
         params: { ConnectorId: input }
       }).then(() => this.setState({ splitScreen: false, cameraId }));
     } else {
-      JsXAPI.commander({
+      this.jsxapi.commander({
         cmd: 'Video Input SetMainVideoSource',
         params: { ConnectorId: [1,2] }
       }).then(() => this.setState({ splitScreen: true }));

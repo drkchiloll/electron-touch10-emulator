@@ -230,7 +230,7 @@ export class Call extends React.Component<any, any> {
             <div>
               <AppBar title='Call Stats' iconStyleLeft={{display:'none'}}
                 style={{marginTop:'98px', height:'45px'}}
-                titleStyle={{fontSize: 16, textAlign: 'center'}}
+                titleStyle={{fontSize: 16, textAlign: 'center', marginTop: '-10px'}}
                 onTitleClick={() => {
                   let { scrollpos } = this.state;
                   if(scrollpos > 0) scrollpos = 0;

@@ -28,46 +28,45 @@ export class JsXAPI {
   public static event = new EventEmitter();
   public static account: Account;
 
-  static specialconnect() {
-    return new Promise((resolve, reject) => {
-      this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
+  static connection(timeout, account?: Account) {
+    if(!account) {
+      account = {
+        name: this.account.name,
+        selected: false,
+        host: this.account.host,
         username: this.account.username,
-        password: this.account.password,
-        readyTimeout: 9000
+        password: this.account.password
+      };
+    }
+    return new Promise((resolve, reject) => {
+      let xapi = jsxapi.connect(`ssh://${account.host}`, {
+        username: account.username,
+        password: account.password,
+        readyTimeout: timeout,
+        keepaliveInterval: 6675
       });
 
-      this.xapi.on('ready', () => {
+      xapi.on('ready', () => {
         console.log('we are connected');
-        resolve('success');
+        resolve(xapi);
       });
 
-      this.xapi.on('error', (err) => {
+      xapi.on('error', (err) => {
         console.log(err);
         return reject(err);
       });
     })
   }
 
+  static specialconnect() {
+    return this.connection(2500);
+  }
+
   static connect() {
-    return new Promise((resolve, reject) => {
-      this.xapi = jsxapi.connect(`ssh://${this.account.host}`, {
-        username: this.account.username,
-        password: this.account.password,
-        readyTimeout: 9000,
-        keepaliveInterval: 6675
-      });
-
-      this.xapi.on('ready', () => {
-        console.log('we are connected');
-        resolve('success');
-      });
-
-      this.xapi.on('error', (err) => {
-        console.log(err);
-        this.event.emit('connection-error');
-        return reject(err);
-      });
-    });
+    return this.connection(9000).then((xapi) => {
+      this.xapi = xapi;
+      return 'success';
+    }).catch(err => this.event.emit('connection-error'));
   };
 
   static commander({cmd, params}: any) {

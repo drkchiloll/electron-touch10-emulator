@@ -15,14 +15,20 @@ import SaveIcon from 'material-ui/svg-icons/content/save';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
 import { Accounts, JsXAPI, SparkGuest } from '../lib';
 
+import { AccountInput } from './index';
+
 export class AccountDialog extends React.Component<any,any> {
-  state = {
-    snack: false,
-    selected: 0,
-    accounts: null,
-    account: null,
-    message: '',
-    close: false
+  public jsxapi = JsXAPI;
+  constructor(props) {
+    super(props);
+    this.state = {
+      snack: false,
+      selected: 0,
+      accounts: null,
+      account: null,
+      message: '',
+      close: false
+    };
   }
 
   styles: any = {
@@ -42,9 +48,10 @@ export class AccountDialog extends React.Component<any,any> {
   save = () => {
     const { accounts, selected } = this.state;
     let account = accounts[selected];
-    JsXAPI.account = account;
-    return JsXAPI.connect().then(() => {
-      return JsXAPI.getUnit();
+    console.log(account);
+    this.jsxapi.account = account;
+    return this.jsxapi.connect().then(() => {
+      return this.jsxapi.getUnit();
     }).then((metaData) => {
       account['email'] = JSON.parse(JSON.stringify(metaData)).email;
       delete metaData.email;
@@ -142,7 +149,6 @@ export class AccountDialog extends React.Component<any,any> {
 
   render() {
     let { close, snack, accounts, selected, message } = this.state;
-    console.log(selected);
     return (
       <div>
         <Dialog open={true}
@@ -218,45 +224,18 @@ export class AccountDialog extends React.Component<any,any> {
           </div>
           <div style={{ marginLeft: '235px' }}>
             <Paper zDepth={2}>
-              <TextField hintText="Connection Name"
-                style={this.styles.textField}
-                name='name'
-                underlineShow={true}
-                floatingLabelFixed={true}
-                floatingLabelText='Account Name'
-                value={accounts[selected].name}
-                onChange={this.inputChange}
-                errorText='' />
-              <TextField
-                hintText="Hostname/IP Address"
-                style={this.styles.textField}
-                name='host'
-                underlineShow={true}
-                floatingLabelFixed={true}
-                floatingLabelText='Codec or Touch10'
-                value={accounts[selected].host}
-                onChange={this.inputChange} />
-              <Divider />
-              <TextField
-                hintText="user_name"
-                style={this.styles.textField}
-                name='username'
-                underlineShow={true}
-                floatingLabelFixed={true}
-                floatingLabelText='UserName'
-                value={accounts[selected].username}
-                onChange={this.inputChange} />
-              <TextField
-                type='password'
-                hintText="password"
-                name='password'
-                style={this.styles.textField}
-                underlineShow={true}
-                floatingLabelFixed={true}
-                floatingLabelText='Password'
-                value={accounts[selected].password}
-                onChange={this.inputChange} />
-              <Divider />
+              {
+                Accounts.generateInput(accounts[selected]).map(
+                  (fields: any, i: number) => {
+                    return (
+                      <div key={i}>
+                        <AccountInput {...fields} change={this.inputChange} />
+                        {i === 1 ? <Divider /> : null}
+                      </div>
+                    )
+                  }
+                )
+              }
             </Paper>
           </div>
         </Dialog>

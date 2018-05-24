@@ -48,4 +48,25 @@ export class Accounts {
       name: 'New', host: '', username: '', password: '', selected: true
     };
   };
+
+  static generateInput(account) {
+    return [{
+      name: 'name',
+      value: account.name,
+      label: 'Codec Name'
+    }, {
+      name: 'host',
+      value: account.host,
+      label: 'Codec or Touch10'
+    }, {
+      name: 'username',
+      value: account.username,
+      label: 'Hostname/IP Address'
+    }, {
+      name: 'password',
+      value: account.password,
+      label: 'Password',
+      type: 'password'
+    }];
+  }
 }

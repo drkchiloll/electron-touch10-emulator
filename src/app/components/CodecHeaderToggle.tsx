@@ -29,7 +29,8 @@ export class CodecHeaderToggle extends React.Component<any,any> {
     super(props);
     this.state = {
       accounts: null,
-      account: null
+      account: null,
+      changing: false
     };
   }
 
@@ -50,13 +51,9 @@ export class CodecHeaderToggle extends React.Component<any,any> {
   }
 
   changeAccount = (e: any, account) => {
+    this.setState({ changing: true });
     const currentAccount = this.state.account;
     const {connected} = this.state;
-    ReactDOM.render(
-      <MuiThemeProvider muiTheme={getMuiTheme({})}>
-        <CircularProgress size={15} color='black' />
-      </MuiThemeProvider>,
-      document.querySelector('#account-name'));
     this.jsxapi.connection(2500, {
       name: account.name,
       selected: false,
@@ -72,35 +69,18 @@ export class CodecHeaderToggle extends React.Component<any,any> {
       accounts.find(a => a.name == account.name).selected = true;
       Accounts.save(accounts);
       this.props.change(account);
-      this.setState({ accounts, account });
-      ReactDOM.render(
-        <MuiThemeProvider muiTheme={getMuiTheme({})}>
-          <div>{ account.name } >
-          <IsConnectedIcon style={{
-            position: 'absolute', top: 12, marginLeft: '2px'
-          }}
-            color={true ? 'green' : 'red'} /></div>
-        </MuiThemeProvider>,
-        document.querySelector('#account-name')
-      )
+      this.setState({ accounts, account, changing: false });
     }).catch(() => {
-      ReactDOM.render(
-        <MuiThemeProvider muiTheme={getMuiTheme({})}>
-          <div>{currentAccount.name} >
-          <IsConnectedIcon style={{
-              position: 'absolute', top: 12, marginLeft: '2px'
-            }}
-              color={true ? 'green' : 'red'} /></div>
-        </MuiThemeProvider>,
-        document.querySelector('#account-name')
-      )
+      this.setState({
+        account: currentAccount, changing: false
+      });
       alert('Connection Error/Timeout');
     })
   };
 
   render() {
     let { connected } = this.props;
-    let { accounts, account } = this.state;
+    let { accounts, account, changing } = this.state;
     return (
       <div>
         <IconMenu
@@ -125,15 +105,21 @@ export class CodecHeaderToggle extends React.Component<any,any> {
                 key={`account_${i}`}
                 primaryText={a.name} />)}
         </IconMenu>
-        <div id='account-name'
-          style={{
-            font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
-            marginTop: '16px'
-          }}>
-          {account.name}>
-          <IsConnectedIcon style={{ position: 'absolute', top: 12, marginLeft: '2px' }}
-            color={connected ? 'green' : 'red'} />
+          <div id='account-name'
+            style={{
+              font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
+              marginTop: '16px'
+            }}>
+            {
+              changing ? <CircularProgress size={15} color='black' /> :
+              <div>
+                {account.name}>
+                <IsConnectedIcon color={connected ? 'green' : 'red'}
+                  style={{ position: 'absolute', top: 12, marginLeft: '2px' }} />
+              </div>
+            }
         </div>
+
       </div>
     );
   }

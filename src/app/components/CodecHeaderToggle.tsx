@@ -1,7 +1,5 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import { IconButton, IconMenu, MenuItem, CircularProgress } from 'material-ui';
-import { MuiThemeProvider, getMuiTheme } from 'material-ui/styles';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
 import { JsXAPI, Accounts } from '../lib';

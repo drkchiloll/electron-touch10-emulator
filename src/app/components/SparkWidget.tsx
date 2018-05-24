@@ -45,7 +45,7 @@ export class SparkWidget extends React.Component<any, any> {
 
   sparks = token => {
     if(!this.call) {
-      let timeout = 1500;
+      let timeout = 3500;
       let {
         account: {
           metaData: { hardware: { product }},
@@ -101,7 +101,7 @@ export class SparkWidget extends React.Component<any, any> {
 
   handleRemoteVideoEvent = () => {
     const { account: { metaData: { hardware: {product}}}} = this.props;
-    let timeout = 2500;
+    let timeout = 4500;
     ['audio', 'video'].forEach(kind => {
       let track: any;
       if(this.call.remoteMediaStream) {

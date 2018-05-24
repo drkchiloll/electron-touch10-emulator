@@ -409,22 +409,10 @@ export class App extends React.Component<App.Props, App.State> {
     const accounts = Accounts.get();
     let account = accounts.find(a => a.selected);
     this.setState({ accounts, account });
-    this.jsxapi.account = account;
-    this.jsxapi.specialconnect().then(() => {
-      this.xapi.close();
-      return Promise.all([
-        this.initHandler(account),
-        this.teamsRoomCheck(account)
-      ]);
-    }).catch(() => {
-      console.log('hi there');
-      this.setState({
-        acctDialog: false,
-        mainView: true,
-        connected: false
-      });
-      this.modifyAccount();
-    })
+    return Promise.all([
+      this.initHandler(account),
+      this.teamsRoomCheck(account)
+    ]);
   }
 
   changeAccount = (account) => {

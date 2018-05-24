@@ -59,7 +59,11 @@ export class AccountDialog extends React.Component<any,any> {
         message,
         snack: true
       });
-    });
+    }).catch(() => {
+      alert('Connection to this device could not be established at this time.');
+      Accounts.save(accounts);
+      this.accountSelect(account);
+    })
   }
 
   inputChange = (e, value) => {
@@ -72,6 +76,25 @@ export class AccountDialog extends React.Component<any,any> {
   accountSelect = account => this.props.account(account);
 
   closeClick = () => this.setState({ close: true });
+
+  close = () => {
+    const { account } = this.state;
+    console.log(account);
+    this.closeClick();
+    this.jsxapi.connection(2500, {
+      name: account.name,
+      host: account.host,
+      username: account.username,
+      password: account.password,
+      selected: account.selected
+    }).then((xapi: any) => {
+      xapi.close();
+      this.props.close();
+    }).catch(() => {
+      alert('Error Connecting to Codec..Check Connection..');
+      this.setState({ close: false });
+    });
+  };
 
   dialogActions = () => {
     const { accounts, close } = this.state;
@@ -88,16 +111,7 @@ export class AccountDialog extends React.Component<any,any> {
         <FlatButton
           label='Close'
           primary={true}
-          onClick={() => {
-            this.closeClick();
-            let selected = accounts.findIndex(a => a.selected);
-            let account = accounts[selected];
-            this.accountSelect(account);
-            setTimeout(() => {
-              this.setState({ account, selected, accounts });
-              this.props.close();
-            }, 250);
-          }}
+          onClick={this.close}
         />
     ];
   }
@@ -165,7 +179,7 @@ export class AccountDialog extends React.Component<any,any> {
                     prevAcct.selected = false;
                     this.accountSelect(account);
                     Accounts.save(accounts);
-                    this.setState({ selected: newSelected });
+                    this.setState({ selected: newSelected, account, accounts });
                   }} >
                     <Subheader>Account List</Subheader>
                   {

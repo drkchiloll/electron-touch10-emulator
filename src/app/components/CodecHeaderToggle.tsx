@@ -1,8 +1,10 @@
 import * as React from 'react';
-import { IconButton, IconMenu, MenuItem } from 'material-ui';
+import * as ReactDOM from 'react-dom';
+import { IconButton, IconMenu, MenuItem, CircularProgress } from 'material-ui';
+import { MuiThemeProvider, getMuiTheme } from 'material-ui/styles';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
-import { Accounts } from '../lib';
+import { JsXAPI, Accounts } from '../lib';
 
 const styles: any = {
   menu: { position: 'absolute', top: 0, width: 30 },
@@ -22,6 +24,7 @@ const styles: any = {
 };
 
 export class CodecHeaderToggle extends React.Component<any,any> {
+  public jsxapi = JsXAPI;
   constructor(props) {
     super(props);
     this.state = {
@@ -46,15 +49,53 @@ export class CodecHeaderToggle extends React.Component<any,any> {
     }
   }
 
-  changeAccount = (account) => {
-    let { accounts } = this.state;
-    accounts.forEach(a => {
-      if(a.selected) a.selected = false;
-    });
-    accounts.find(a => a.name == account.name).selected = true;
-    Accounts.save(accounts);
-    this.props.change(account);
-    this.setState({ accounts, account });
+  changeAccount = (e: any, account) => {
+    const currentAccount = this.state.account;
+    const {connected} = this.state;
+    ReactDOM.render(
+      <MuiThemeProvider muiTheme={getMuiTheme({})}>
+        <CircularProgress size={15} color='black' />
+      </MuiThemeProvider>,
+      document.querySelector('#account-name'));
+    this.jsxapi.connection(2500, {
+      name: account.name,
+      selected: false,
+      host: account.host,
+      username: account.username,
+      password: account.password
+    }).then((xapi: any) => {
+      xapi.close();
+      let { accounts } = this.state;
+      accounts.forEach(a => {
+        if(a.selected) a.selected = false;
+      });
+      accounts.find(a => a.name == account.name).selected = true;
+      Accounts.save(accounts);
+      this.props.change(account);
+      this.setState({ accounts, account });
+      ReactDOM.render(
+        <MuiThemeProvider muiTheme={getMuiTheme({})}>
+          <div>{ account.name } >
+          <IsConnectedIcon style={{
+            position: 'absolute', top: 12, marginLeft: '2px'
+          }}
+            color={true ? 'green' : 'red'} /></div>
+        </MuiThemeProvider>,
+        document.querySelector('#account-name')
+      )
+    }).catch(() => {
+      ReactDOM.render(
+        <MuiThemeProvider muiTheme={getMuiTheme({})}>
+          <div>{currentAccount.name} >
+          <IsConnectedIcon style={{
+              position: 'absolute', top: 12, marginLeft: '2px'
+            }}
+              color={true ? 'green' : 'red'} /></div>
+        </MuiThemeProvider>,
+        document.querySelector('#account-name')
+      )
+      alert('Connection Error/Timeout');
+    })
   };
 
   render() {
@@ -67,7 +108,7 @@ export class CodecHeaderToggle extends React.Component<any,any> {
           anchorOrigin={styles.menuorigin}
           targetOrigin={styles.menuorigin}
           onItemClick={(e: any, {props: {value}}) =>
-            this.changeAccount(value)}
+            this.changeAccount(e, value)}
           menuStyle={{ maxHeight: 600, overflow: 'auto' }}
           iconButtonElement={
             <IconButton tooltip='Toggle Codecs'
@@ -84,15 +125,15 @@ export class CodecHeaderToggle extends React.Component<any,any> {
                 key={`account_${i}`}
                 primaryText={a.name} />)}
         </IconMenu>
-        <p
+        <div id='account-name'
           style={{
             font: '14px arial', color: 'grey', width: 600, marginLeft: '40px',
             marginTop: '16px'
           }}>
           {account.name}>
-        <IsConnectedIcon style={{ position: 'absolute', top: 12, marginLeft: '2px' }}
+          <IsConnectedIcon style={{ position: 'absolute', top: 12, marginLeft: '2px' }}
             color={connected ? 'green' : 'red'} />
-        </p>
+        </div>
       </div>
     );
   }

@@ -31,10 +31,6 @@ export class AccountDialog extends React.Component<any,any> {
     };
   }
 
-  styles: any = {
-    textField : { marginLeft: 20 }
-  }
-
   componentWillMount() {
     let accounts = Accounts.get();
     let selected = accounts.findIndex(a => a.selected);
@@ -48,7 +44,6 @@ export class AccountDialog extends React.Component<any,any> {
   save = () => {
     const { accounts, selected } = this.state;
     let account = accounts[selected];
-    console.log(account);
     this.jsxapi.account = account;
     return this.jsxapi.connect().then(() => {
       return this.jsxapi.getUnit();
@@ -87,8 +82,9 @@ export class AccountDialog extends React.Component<any,any> {
         keyboardFocused={true}
         onClick={this.save}
       />,
-        close ? <CircularProgress size={15}
-          style={{marginRight: '20px', marginTop: '10px'}} /> :
+      close ?
+        <CircularProgress size={15} style={this.styles.circprogress} />
+        :
         <FlatButton
           label='Close'
           primary={true}
@@ -155,7 +151,7 @@ export class AccountDialog extends React.Component<any,any> {
           actions={this.dialogActions()} >
           <div>
             <Drawer open={true} width={225}>
-              <Paper style={{ maxHeight: '89%', overflow: 'auto' }}
+              <Paper style={this.styles.dpaper}
                 zDepth={0} >
                 <SelectableList value={selected}
                   onChange={(e: any) => {
@@ -187,7 +183,7 @@ export class AccountDialog extends React.Component<any,any> {
               <div>
                 <Paper zDepth={1}>
                   <BottomNavigation
-                    style={{ position: 'fixed', bottom: 0 }}>
+                    style={this.styles.bottomnav}>
                     <BottomNavigationItem
                       label="Account"
                       icon={<FontIcon><AccountAddIcon /></FontIcon>}
@@ -222,7 +218,7 @@ export class AccountDialog extends React.Component<any,any> {
               </div>
             </Drawer>
           </div>
-          <div style={{ marginLeft: '235px' }}>
+          <div style={this.styles.inDiv}>
             <Paper zDepth={2}>
               {
                 Accounts.generateInput(accounts[selected]).map(
@@ -249,4 +245,20 @@ export class AccountDialog extends React.Component<any,any> {
       </div>
     );
   }
+
+  styles: any = {
+    inDiv: { marginLeft: '235px' },
+    dpaper: {
+      maxHeight: '89%',
+      overflow: 'auto'
+    },
+    bottomnav: {
+      position: 'fixed',
+      bottom: 0
+    },
+    circprogress: {
+      marginRight: '20px',
+      marginTop: '10px'
+    }
+  };
 }

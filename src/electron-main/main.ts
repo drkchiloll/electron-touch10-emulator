@@ -1,3 +1,4 @@
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = true;
 import * as electron from 'electron';
 import { app, BrowserWindow, Menu } from 'electron';
 import { AppMenu } from './menu';
@@ -19,11 +20,13 @@ class MyApplication {
 	onReady(){
 		this.mainWindow = new BrowserWindow({
 			width: 1024,
-			height: 768,
+			height: 805,
 			minWidth: 1024,
-			minHeight: 600,
+			maxHeight: 805,
+			minHeight: 805,
 			maxWidth: 1024,
-			acceptFirstMouse: true
+			acceptFirstMouse: true,
+			webPreferences: { webSecurity: false }
 		});
 
 		// this.mainWindow.webContents.openDevTools();

@@ -227,7 +227,6 @@ export class SparkWidget extends React.Component<any, any> {
     const callId = caller.outgoingCall.id;
     return (
       <div id='spark-call'>
-        <Grid fluid>
           <div style={{ position: 'absolute', top: 148, left: 158 }}
             onDoubleClick={this.handleVideoDblClick} >
             <audio id='farend-main-audio' autoPlay></audio>
@@ -254,58 +253,51 @@ export class SparkWidget extends React.Component<any, any> {
           {
             this.state.showControls ?
               <div>
-                <Row>
-                  <Col xsOffset={6}>
-                    <div className='joystick' style={{ position: 'absolute', top: 412 }}>
-                      <JoyStick cameraId={cameraId} />
-                    </div>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col xsOffset={5} xs={3}>
-                    <div style={{ position: 'absolute', top: 485 }} >
-                      <Chip style={{ width: 80, height: 26, marginLeft: '35px' }}
-                          backgroundColor={blueGrey100} >
-                        <IconButton style={{ position: 'absolute', left: -3, top: -10 }}
-                          iconStyle={{ height: '14px', width: '14px' }}
-                          onClick={() => this.zoom('In')} >
-                          <ZoomInIcon color='black' />
-                        </IconButton>
-                        <IconButton style={{ position: 'absolute', right: -3, top: -10 }}
-                          iconStyle={{ height: '14px', width: '14px' }}
-                          onClick={() => this.zoom('Out')} >
-                          <ZoomOutIcon color='black' />
-                        </IconButton>
-                      </Chip>
-                    </div>
-                  </Col>
-                  <Col>
-                    <div style={{position: 'absolute', top: 473, right: 375}}>
-                      <IconMenu
-                        menuStyle={{margin:0,padding:0,width:75}}
-                        iconButtonElement={<IconButton><CamFilter color={blueGrey900} /></IconButton>}
-                        value={cameraId}
-                        onChange={this.camSelect} >
-                        <MenuItem
-                          innerDivStyle={{fontSize:12}}
-                          value='1'
-                          primaryText='Camera 1' />
-                        <MenuItem
-                          innerDivStyle={{fontSize:12}}
-                          value='2'
-                          primaryText='Camera 2' />
-                        {/* <MenuItem
-                          innerDivStyle={{ fontSize: 12 }}
-                          value='3'
-                          primaryText='Camera 3' /> */}
-                      </IconMenu>
-                    </div>
-                  </Col>
-                </Row>
+                <div className='joystick'
+                  style={{
+                    position: 'absolute', top: 412, right: '45.5%'
+                  }}
+                >
+                  <JoyStick cameraId={cameraId} />
+                </div>
+                <div style={{ position: 'absolute', top: 485, right: '49%' }} >
+                  <Chip style={{ width: 80, height: 26, marginLeft: '35px' }}
+                      backgroundColor={blueGrey100} >
+                    <IconButton style={{ position: 'absolute', left: -3, top: -10 }}
+                      iconStyle={{ height: '14px', width: '14px' }}
+                      onClick={() => this.zoom('In')} >
+                      <ZoomInIcon color='black' />
+                    </IconButton>
+                    <IconButton style={{ position: 'absolute', right: -3, top: -10 }}
+                      iconStyle={{ height: '14px', width: '14px' }}
+                      onClick={() => this.zoom('Out')} >
+                      <ZoomOutIcon color='black' />
+                    </IconButton>
+                  </Chip>
+                </div>
+                <div style={{position: 'absolute', top: 473, right: '45%'}}>
+                  <IconMenu
+                    menuStyle={{margin:0,padding:0,width:75}}
+                    iconButtonElement={<IconButton><CamFilter color={blueGrey900} /></IconButton>}
+                    value={cameraId}
+                    onChange={this.camSelect} >
+                    <MenuItem
+                      innerDivStyle={{fontSize:12}}
+                      value='1'
+                      primaryText='Camera 1' />
+                    <MenuItem
+                      innerDivStyle={{fontSize:12}}
+                      value='2'
+                      primaryText='Camera 2' />
+                    {/* <MenuItem
+                      innerDivStyle={{ fontSize: 12 }}
+                      value='3'
+                      primaryText='Camera 3' /> */}
+                  </IconMenu>
+                </div>
               </div> :
               null
           }
-        </Grid>
       </div>
     )
   }

@@ -191,7 +191,7 @@ export class Call extends React.Component<any, any> {
             null
         }
         <Subheader style={this.styles.calldur}>
-          {callback}&nbsp;&nbsp;{this.state.callDuration}
+          {callback + ': ' + this.state.callDuration}
         </Subheader>
         <div style={this.styles.main}></div>
         <div style={{ marginTop: '25px' }}>
@@ -227,9 +227,9 @@ export class Call extends React.Component<any, any> {
         </Drawer>
         {
           callStats ?
-            <div>
+            <div style={{position: 'absolute', bottom: -410, left:-2}}>
               <AppBar title='Call Stats' iconStyleLeft={{display:'none'}}
-                style={{marginTop:'98px', height:'45px'}}
+                style={{height:'45px'}}
                 titleStyle={{fontSize: 16, textAlign: 'center', marginTop: '-10px'}}
                 onTitleClick={() => {
                   let { scrollpos } = this.state;
@@ -365,7 +365,7 @@ export class Call extends React.Component<any, any> {
       fontSize: 13,
       left: '50%',
       color: 'black',
-      width: 225,
+      width: 250,
       marginLeft: '-125px'
     },
     callicon: {

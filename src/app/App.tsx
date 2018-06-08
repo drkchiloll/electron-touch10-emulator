@@ -19,7 +19,6 @@ import { CallHandler } from './lib/callhandler';
 export namespace App {
   export interface Props { }
   export interface State {
-    widgetHeight: number;
     token: any;
     openWidget: boolean;
     video: boolean;
@@ -70,7 +69,6 @@ export class App extends React.Component<App.Props, App.State> {
     this.state = {
       token: null,
       openWidget: false,
-      widgetHeight: 60,
       accounts: [],
       update: false,
       account: null,
@@ -449,7 +447,7 @@ export class App extends React.Component<App.Props, App.State> {
       mainView, meetingsView, connected, accounts,
       callView, acctDialog, account, update, video,
       xapiData: { incomingCall, outgoingCall, directoryDialog },
-      widgetHeight, token, openWidget
+      token, openWidget
     } = this.state;
     const call = { incomingCall, outgoingCall };
     if(!account) account = { name: 'New' }

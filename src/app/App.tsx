@@ -162,13 +162,21 @@ export class App extends React.Component<App.Props, App.State> {
       });
   }
 
-  connect = (account) => {
+  connect = account => {
     this.jsxapi.account = account;
-    return this.jsxapi.connect().then(() => {
-      this.xapi = this.jsxapi.xapi;
-      this.connErrors({ connected: true });
-      return;
-    })
+    return this.jsxapi.connection(7500)
+      .then(xapi => {
+        this.jsxapi.xapi = xapi;
+        this.xapi = this.jsxapi.xapi;
+        this.connErrors({ connected: true });
+        this.xapi.on('error', err => {
+          this.jsxapi.event.emit('connection-error');
+        });
+      })
+      .catch((e) => {
+        this.connErrors({ connected: false });
+        this.jsxapi.event.emit('connection-error');
+      });
   }
 
   callCheck = () => {

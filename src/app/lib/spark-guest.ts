@@ -5,8 +5,16 @@ import { Promise } from 'bluebird';
 import { Time } from './index';
 import * as CiscoSpark from 'ciscospark';
 
-const sparkGuestId = 'Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi9mYTM5NDJjYy1mY2FmLTQwMjktYmRjMy02NmFkY2EwNDU4NGI',
+const sparkGuestId =
+  'Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi9mYTM5NDJjYy1mY2FmLTQwMjktYmRjMy02NmFkY2EwNDU4NGI',
   sparkGuestSecret = 'Wg6OF8NJTYQfxb5zUReJ0mGJe4+iuNMBMPAArXRJo5Y=';
+
+const webexTeam: any = {
+  'id': 'Y2lzY29zcGFyazovL3VzL1RFQU0vYjk1N2I4ODAtNmE0ZC0xMWU4LTk4N2QtYjdhOGI0NjEzNmIx',
+  'name': 'CE Emulator',
+  'creatorId': 'Y2lzY29zcGFyazovL3VzL1BFT1BMRS8wNjYyMGQwZC02NTg1LTQ5ZTAtOTJlZC00MDMxZDI2ODNhMzI',
+  'created': '2018-06-07T12:24:28.936Z'
+}
 
 export type SparkGuestConstructor = {
   userid?: string;
@@ -90,7 +98,7 @@ export class SparkGuest {
       } else {
         return resolve(false);
       }
-    })
+    });
   }
 
   getAuthUser() {
@@ -159,7 +167,8 @@ export class SparkGuest {
         Authorization: `Bearer ${token}`
       };
       return this.request.post('/rooms', {
-        title: codec.name.toUpperCase()
+        title: codec.name.toUpperCase(),
+        teamId: webexTeam.id
       })
         .then((resp) => ({ id: resp.data.id }))
         .then(({ id }) => {
@@ -184,7 +193,9 @@ export class SparkGuest {
       Authorization: `Bearer ${token}`
     };
     let roomId: string, sipAddress: string;
-    return this.request.post('/rooms', {title})
+    return this.request.post('/rooms', {
+      title, teamId: webexTeam.id
+    })
       .then(({ data: {id} }) => {
         roomId = id;
         return this.request.get(`/rooms/${roomId}`)})
@@ -198,9 +209,3 @@ export class SparkGuest {
       }).then((meetingDetails) => meetingDetails);
   }
 }
-/**
- * roomId: Y2lzY29zcGFyazovL3VzL1JPT00vZDdkMWVkNTAtNDQwMy0xMWU4LWIxNTAtZGRhM2U4ODA3OGQw
- * title: ROOMKIT
-eyJhbGciOiJSUzI1NiJ9.eyJtYWNoaW5lX3R5cGUiOiJhcHB1c2VyIiwicHJpdmF0ZSI6ImV5SmpkSGtpT2lKS1YxUWlMQ0psYm1NaU9pSkJNVEk0UTBKRExVaFRNalUySWl3aVlXeG5Jam9pWkdseUluMC4uZ2o4RkZ6a1JfbldNeG9jdTV1NUhhQS5rYXJueWJBNEl1NTdXUUxWZXZZV0JZdE1WbGR4VmxCTk5TczdWdWhoSG1FQ1FURW0yLXhsN3NRUDNPRUZ5RDluSjNteVpZZk1YWlR5ZUdxSFhfM3RqckxtN3FTT1RNWndDZ05lN0t6UGFOQjJYN05vNzhUYnpKSTFYM25fRVJpWF92R2poenJtRnZPMTBLcENVSmN1QkdySXI3M0xUT3lmWFprWkZOOWloYTRPQ2hXOUJMaG5nTVF6RVp0Vmx2UnVhWTdkekc4Q0hpWEN3ZnRNVno0VldpWU15dnphM2hXWmxvcnZEbzF5Z21ZSTlNMFhJTF9GU3dyOW5BemhHcjJ0M1RRWk15WDd5S0xFeHptLVdwSXJGaWdTV2JDRzF5eXFQWG5LTGtCdTh0ZXN0ZDJwMFlRUGZQWjdockU3dGdlSTBna0xrMWFMQ1V2UUlqT0o4dzhBTlZIdFFOZklHRjJMRFBrSUduQ1E4Ynl5WTdPc0FiNlNzY3U1a09FOTYzeUxsZW1GSjRMM3owMG9CUXJlUTJPODk2d0lLMDFCYXFfcE9vVGVTeWw1UHVteHZ3d0xnU1V1eDFhT3R3SGgwb01MRTVoX0p0ODNmei1md2FLNnFXaHZOMWREcm5kYjRlVDV2QnJEZTB2QkNRZmJaRThqeHBYQVE2d3Utd2JRcHI2N0dSd3RUUk5GWlc4VjJfNWtkdEx0WUk3VnFGaTlIRTNFNzhkdV9ULW9XaUxXS2JuV1luSnBLN2xidEJDU2xLZVdYQUtSb1RScVliN3llYUtnWjY5RXVkN0RLenhtRXBnQzRHcHhPSnRXY2J3LkZlODR5bmFOWmw3bGtPUUJNOGRlS2ciLCJ1c2VyX3R5cGUiOiJtYWNoaW5lIiwidG9rZW5faWQiOiJBYVozcjBPRGhqWXpKak1EQXROMkl4TXkwME9ERmxMV0UzTmprdFlqUXdPV1l4WkdGaFlUQTBPREUyWWpRek1EWXROMll3IiwicmVmZXJlbmNlX2lkIjoiYWY3MWJjOGItY2RmNS00NDE4LWE3ZDAtNWQ2MWFkNWZhOTA1IiwiaXNzIjoiaHR0cHM6XC9cL2lkYnJva2VyLndlYmV4LmNvbVwvaWRiIiwidXNlcl9tb2RpZnlfdGltZXN0YW1wIjoiMjAxODA0MTkxODU5NDkuMzY0WiIsInJlYWxtIjoiZmEzOTQyY2MtZmNhZi00MDI5LWJkYzMtNjZhZGNhMDQ1ODRiIiwiY2lzX3V1aWQiOiIzY2UxZDEzMy00ZmMzLTQyODctOTk3Zi05OWVmYWY5ZmQxNTciLCJ0b2tlbl90eXBlIjoiQmVhcmVyIiwiZXhwaXJ5X3RpbWUiOjE1MjQxODU5OTE5NzIsImNsaWVudF9pZCI6IkMzMTE3NzIzYTBhNGM5ODVhOGJkNmRkYTc2Zjc3NjZjNTEzMjRiNmY0MWJmNGZlZjFjMmM4Mjc4NGExZjI5NzVjIn0.U3nZ7MrdJByM-BaJTbwnC0uIufUQf-6uewvnHpyoVAfrLvKSzn9wKKz9Wx2avadyID3_EcVkKYACgqcQR705TGQrT0GjaB1JNcAp9pIlUckRn2jsmgj_trrHQo8xqkAY2XTyK9V_-DSiMrodQe2xaEXCD1GH9gGNOJTt-FzmsuylF183MtGRftLBnzsZ2XRc4Z_uFaH1QpplGKY9p_HObkpwjynz0Fh-vyZ6Z3vxq5S9vgfMv5CXH8i-hWnK8JqOYlRC98bkBN4ZtMJTsOa6RV5OlWzJjS29j3nwA2TOjgogNBo75u-mWHXtDYRIy6p9cb8q-kIgJZgdNiFlGtVP0A
- * Y2lzY29zcGFyazovL3VzL1JPT00vMDkwYTg2MTAtNDQwNS0xMWU4LThiNjQtZTcwMTlkYmZkMjgw
- */

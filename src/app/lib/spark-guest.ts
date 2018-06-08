@@ -4,17 +4,8 @@ import { JsonWebTokenError, TokenExpiredError } from 'jsonwebtoken';
 import { Promise } from 'bluebird';
 import { Time } from './index';
 import * as CiscoSpark from 'ciscospark';
-
-const sparkGuestId =
-  'Y2lzY29zcGFyazovL3VzL09SR0FOSVpBVElPTi9mYTM5NDJjYy1mY2FmLTQwMjktYmRjMy02NmFkY2EwNDU4NGI',
-  sparkGuestSecret = 'Wg6OF8NJTYQfxb5zUReJ0mGJe4+iuNMBMPAArXRJo5Y=';
-
-const webexTeam: any = {
-  'id': 'Y2lzY29zcGFyazovL3VzL1RFQU0vYjk1N2I4ODAtNmE0ZC0xMWU4LTk4N2QtYjdhOGI0NjEzNmIx',
-  'name': 'CE Emulator',
-  'creatorId': 'Y2lzY29zcGFyazovL3VzL1BFT1BMRS8wNjYyMGQwZC02NTg1LTQ5ZTAtOTJlZC00MDMxZDI2ODNhMzI',
-  'created': '2018-06-07T12:24:28.936Z'
-}
+import { teams } from './guestissuer-details';
+const { guestid, guestsecret, teamid, teamname } = teams;
 
 export type SparkGuestConstructor = {
   userid?: string;
@@ -23,8 +14,8 @@ export type SparkGuestConstructor = {
 };
 
 export class SparkGuest {
-  private issuer: string = sparkGuestId;
-  private secret: string = sparkGuestSecret;
+  private issuer: string = guestid;
+  private secret: string = guestsecret;
   private uId: string;
   private uName: string;
   private expires: number; // Miliseconds
@@ -168,7 +159,7 @@ export class SparkGuest {
       };
       return this.request.post('/rooms', {
         title: codec.name.toUpperCase(),
-        teamId: webexTeam.id
+        teamId: teamid
       })
         .then((resp) => ({ id: resp.data.id }))
         .then(({ id }) => {
@@ -194,7 +185,7 @@ export class SparkGuest {
     };
     let roomId: string, sipAddress: string;
     return this.request.post('/rooms', {
-      title, teamId: webexTeam.id
+      title, teamId: teamid
     })
       .then(({ data: {id} }) => {
         roomId = id;

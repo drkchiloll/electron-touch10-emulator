@@ -129,18 +129,6 @@ export class AccountDialog extends React.Component<any,any> {
   handleAddAccount = () => {
     const newAccountState = api.newAccount(this.state.accounts);
     this.setState(newAccountState);
-    // let { accounts } = this.state;
-    // accounts = accounts.map(a => {
-    //   if(a.selected) a.selected = false;
-    //   return a;
-    // });
-    // const account: any = {
-    //   name: '', host: '', username: '', password: '', selected: true
-    // };
-    // accounts.push(account);
-    // this.setState({
-    //   accounts, account, selected: accounts.length - 1
-    // });
   }
 
   render() {

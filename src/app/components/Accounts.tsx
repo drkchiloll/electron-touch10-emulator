@@ -13,7 +13,7 @@ import AccountAddIcon from 'material-ui/svg-icons/social/group-add';
 import TrashIcon from 'material-ui/svg-icons/action/delete';
 import SaveIcon from 'material-ui/svg-icons/content/save';
 import CloseIcon from 'material-ui/svg-icons/navigation/close';
-import { Accounts, JsXAPI, SparkGuest } from '../lib';
+import { Accounts, JsXAPI, SparkGuest, api } from '../lib';
 
 import { AccountInput } from './index';
 
@@ -42,28 +42,20 @@ export class AccountDialog extends React.Component<any,any> {
   }
 
   save = () => {
-    const { accounts, selected } = this.state;
-    let account = accounts[selected];
-    this.jsxapi.account = account;
-    return this.jsxapi.connect().then(() => {
-      return this.jsxapi.getUnit();
-    }).then((metaData) => {
-      account['email'] = JSON.parse(JSON.stringify(metaData)).email;
-      delete metaData.email;
-      account['metaData'] = metaData;
-      Accounts.save(accounts);
-      let message = `${account.name} updated successfully`;
-      this.accountSelect(account);
-      this.setState({
-        accounts,
-        message,
-        snack: true
+    let { account, accounts } = this.state;
+    api.saveAccount(account, accounts)
+      .then(() => {
+        let message = `${account.name} modified successfully`;
+        this.accountSelect(account);
+        this.setState({ message, snack: true});
+      })
+      .catch((e) => {
+        alert(
+          'Connection to this device could not be established at this time.'
+        );
+        Accounts.save(accounts);
+        this.accountSelect(account);
       });
-    }).catch(() => {
-      alert('Connection to this device could not be established at this time.');
-      Accounts.save(accounts);
-      this.accountSelect(account);
-    })
   }
 
   inputChange = (e, value) => {
@@ -79,21 +71,15 @@ export class AccountDialog extends React.Component<any,any> {
 
   close = () => {
     const { account } = this.state;
-    console.log(account);
     this.closeClick();
-    this.jsxapi.connection(2500, {
-      name: account.name,
-      host: account.host,
-      username: account.username,
-      password: account.password,
-      selected: account.selected
-    }).then((xapi: any) => {
-      xapi.close();
-      this.props.close();
-    }).catch(() => {
-      alert('Error Connecting to Codec..Check Connection..');
-      this.setState({ close: false });
-    });
+    this.jsxapi.connection(2500, account)
+      .then((xapi: any) => {
+        xapi.close();
+        this.props.close();
+      }).catch(() => {
+        alert('Error Connecting to Codec..Check Connection..');
+        this.setState({ close: false });
+      });
   };
 
   dialogActions = () => {
@@ -118,43 +104,43 @@ export class AccountDialog extends React.Component<any,any> {
 
   removeCodec = () => {
     let { accounts, selected } = this.state;
-    const { token } = this.props;
-    let account = accounts[selected];
-    console.log(account);
-    if(account.room) {
-      const spark = new SparkGuest({userid:'', username: ''});
-      spark.deleteRoom({
-        roomId: account.room.id,
-        token
-      })
-    }
-    let acctIdx = selected;
-    if(accounts.length === 1) {
-      return this.setState({
-        openSnack: true,
-        message: `This is the only account setup..Please Edit this Account`
-      });
-    }
-    accounts.splice(acctIdx, 1);
-    let accountName: string;
-    if(acctIdx !== 0) {
-      acctIdx = --acctIdx;
-      accounts[acctIdx].selected = true;
-      accountName = accounts[acctIdx].name;
-    } else {
-      acctIdx = 0;
-      accounts[acctIdx].selected = true;
-      accountName = accounts[0].name;
-    }
-    this.accountSelect(accounts[acctIdx]);
+    api.removeCodec(accounts, selected)
+      .then(result => this.setState(result));
+  }
+
+  handleSelectAccount = (e: any) => {
+    let { accounts, selected } = this.state;
+    let accountName = e.target.innerHTML;
+    let newSelection = accounts.findIndex(a => a.name === accountName);
+    if(newSelection === -1) newSelection = 0;
+    let account = accounts[newSelection],
+      previousAccount = accounts[selected];
+    account.selected = true;
+    previousAccount.selected = false;
+    this.accountSelect(account);
     Accounts.save(accounts);
     this.setState({
-      selected: acctIdx,
-      account: accounts[acctIdx],
-      accounts,
-      message: `${account.name} removed successfully`,
-      snack: true
+      selected: newSelection,
+      account,
+      accounts
     });
+  }
+
+  handleAddAccount = () => {
+    const newAccountState = api.newAccount(this.state.accounts);
+    this.setState(newAccountState);
+    // let { accounts } = this.state;
+    // accounts = accounts.map(a => {
+    //   if(a.selected) a.selected = false;
+    //   return a;
+    // });
+    // const account: any = {
+    //   name: '', host: '', username: '', password: '', selected: true
+    // };
+    // accounts.push(account);
+    // this.setState({
+    //   accounts, account, selected: accounts.length - 1
+    // });
   }
 
   render() {
@@ -168,20 +154,9 @@ export class AccountDialog extends React.Component<any,any> {
               <Paper style={this.styles.dpaper}
                 zDepth={0} >
                 <SelectableList value={selected}
-                  onChange={(e: any) => {
-                    let prevSelected = JSON.parse(JSON.stringify(selected)),
-                      acctName = e.target.innerHTML;
-                    let newSelected = accounts.findIndex(acct => acct.name === acctName);
-                    if(newSelected === -1) newSelected = 0;
-                    let account = accounts[newSelected],
-                      prevAcct = accounts[prevSelected];
-                    account.selected = true;
-                    prevAcct.selected = false;
-                    this.accountSelect(account);
-                    Accounts.save(accounts);
-                    this.setState({ selected: newSelected, account, accounts });
-                  }} >
-                    <Subheader>Account List</Subheader>
+                  onChange={this.handleSelectAccount}
+                >
+                  <Subheader>Account List</Subheader>
                   {
                     accounts ? accounts.map((acct, i) => {
                       return (
@@ -201,26 +176,7 @@ export class AccountDialog extends React.Component<any,any> {
                     <BottomNavigationItem
                       label="Account"
                       icon={<FontIcon><AccountAddIcon /></FontIcon>}
-                      onClick={() => {
-                        console.log('add account');
-                        accounts = accounts.map(a => {
-                          if(a.selected) a.selected = false;
-                          return a;
-                        });
-                        const account: any = {
-                          name: 'New Account',
-                          host: '',
-                          username: '',
-                          password: '',
-                          selected: true
-                        };
-                        accounts.push(account);
-                        this.setState({
-                          accounts,
-                          selected: accounts.length - 1,
-                          account
-                        });
-                      }}
+                      onClick={this.handleAddAccount}
                     />
                     <BottomNavigationItem
                       label="Remove"

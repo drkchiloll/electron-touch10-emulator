@@ -45,7 +45,7 @@ export class Accounts {
 
   static newaccount(): Account {
     return {
-      name: 'New', host: '', username: '', password: '', selected: true
+      name: '', host: '', username: '', password: '', selected: true
     };
   };
 

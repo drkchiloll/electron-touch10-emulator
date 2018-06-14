@@ -13,7 +13,7 @@ import {
   Update, Controls, CodecHeaderToggle
 } from './components';
 import { SparkWidget } from './components/SparkWidget';
-import { JsXAPI, Accounts, MeetingHelper } from './lib';
+import { JsXAPI, Accounts, MeetingHelper, api } from './lib';
 import { SparkGuest, SparkGuestConstructor } from './lib';
 import { CallHandler } from './lib/callhandler';
 export namespace App {
@@ -62,7 +62,7 @@ export namespace App {
 
 export class App extends React.Component<App.Props, App.State> {
   public teamsGuest: SparkGuest;
-  public jsxapi = JsXAPI;
+  public jsxapi: any;
   public xapi: any;
   constructor(props) {
     super(props);
@@ -123,29 +123,11 @@ export class App extends React.Component<App.Props, App.State> {
     ]);
   }
 
-  teamsRoomCheck = (account: any) => {
-    this.teamsGuest = new SparkGuest({
-      userid: '1vfjjgg4bph9',
-      username: 'CE_Emulator'
-    });
-    return this.teamsGuest.createTokens()
-      .then(token => {
-        this.setState({ token });
-        if(account.room) {
-          return;
-        } else {
-          return this.teamsGuest.setupRoom(account)
-            .then((updatedAccount) =>
-              Accounts.update(updatedAccount))
-            .then(({ accounts, account }) =>
-              this.setState({ accounts, account }));
-        }
-      });
-  }
+  teamsRoomCheck = account => api.teamOps(account)
+    .then(result => this.setState(result));
 
-  initHandler = (account) => {
+  initHandler = account => {
     this.connect(account)
-      .then(this.xapiDataTracking)
       .then(() => {
         this.setState({
           mainView: true,
@@ -161,19 +143,23 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   connect = account => {
-    this.jsxapi.account = account;
-    return this.jsxapi.connection(7500)
-      .then(xapi => {
-        this.jsxapi.xapi = xapi;
+    let { xapiData } = this.state;
+    return api.initCodec(account, xapiData)
+      .then(({jsxapi, xapiData}) => {
+        this.jsxapi = jsxapi;
         this.xapi = this.jsxapi.xapi;
         this.connErrors({ connected: true });
         this.xapi.on('error', err => {
           this.jsxapi.event.emit('connection-error');
         });
+        this.setState({ xapiData });
+        return;
       })
-      .catch((e) => {
+      .catch(jsxapi => {
+        this.jsxapi = jsxapi;
         this.connErrors({ connected: false });
         this.jsxapi.event.emit('connection-error');
+        return Promise.reject('error');
       });
   }
 
@@ -201,54 +187,14 @@ export class App extends React.Component<App.Props, App.State> {
     callId: call.id
   });
 
-  xapiDataTracking = () => {
-    return Promise.all([
-      this.jsxapi.getMeetings(),
-      this.jsxapi.getAudio(),
-      this.jsxapi.getState(),
-      this.jsxapi.getMicStatus()
-    ]).then(stuffs => {
-      let {xapiData} = this.state;
-      this.verifyMeetings(stuffs[0]);
-      xapiData['volume'] = stuffs[1];
-      xapiData['status'] = stuffs[2] === 'Off' ? 'Awake' : 'Standby';
-      xapiData['mic'] = stuffs[3];
-      this.setState({xapiData});
-      return;
-    });
-  }
-
-  verifyMeetings = (meetings) => {
-    let {xapiData} = this.state;
-    const noMeetings = (meetings) => {
-      if(meetings.length === 0) {
-        if(xapiData.meetings.length != 0) {
-          xapiData.meetings = [];
-          this.setState({ xapiData });
-        }
-      }
-    };
-
-    return MeetingHelper.dayCheck(meetings).then((meetings) => {
-      meetings = meetings;
-      if(meetings.length === 0) return noMeetings(meetings);
-      if(meetings.length === xapiData.meetings.length) {
-        let toUpdate = MeetingHelper.compare(meetings, xapiData.meetings);
-        if(toUpdate) {
-          xapiData.meetings = meetings;
-          this.setState({ xapiData });
-        }
-      } else {
-        xapiData.meetings = meetings;
-        this.setState({ xapiData });
-      }
-    });
-  }
-
   bookings = ({xapiData, feed}:any) => {
     return this.jsxapi.getMeetings().then(meetings => {
       console.log(meetings);
-      this.verifyMeetings(meetings);
+      return api.verifyMeetings(meetings, xapiData)
+    })
+    .then(meetings => {
+      xapiData.meetings = meetings;
+      this.setState({ xapiData });
     })
   }
 
@@ -279,16 +225,21 @@ export class App extends React.Component<App.Props, App.State> {
     ];
     let {xapiData} = this.state;
     Promise.each(feedbacks, ({id, path}:any) => {
-      this.xapi.feedback.on(path, (feed) => this[id]({xapiData, feed}));
+      this.xapi.feedback.on(path, feed => this[id]({xapiData, feed}));
     });
   }
 
-  eventhandler = (stuffs) => {
+  eventhandler = stuffs => {
+    let { xapiData } = this.state;
     if(stuffs && stuffs === 'closing') {
       setTimeout(this.registerEvents, 1000);
     }
     if(stuffs && stuffs instanceof Array) {
-      this.verifyMeetings(stuffs);
+      return api.verifyMeetings(stuffs, xapiData)
+        .then(meetings => {
+          xapiData.meetings = meetings;
+          this.setState({ xapiData });
+        })
     }
   }
 
@@ -339,9 +290,9 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   connErrors = ({ connected }) => {
-    const { account } = this.state;
-    if(JsXAPI.event.eventNames().indexOf('connection-error') === -1) {
+    if(this.jsxapi.event.eventNames().indexOf('connection-error') === -1) {
       this.jsxapi.event.addListener('connection-error', () => {
+        const { account } = this.state;
         console.log('error event called');
         this.setState({
           connected: false,
@@ -351,6 +302,7 @@ export class App extends React.Component<App.Props, App.State> {
         });
         setTimeout(() => this.initHandler(account), 15000);
       });
+      const { account } = this.state;
       if(!connected) setTimeout(() => this.initHandler(account), 15000);
     }
   }
@@ -428,9 +380,8 @@ export class App extends React.Component<App.Props, App.State> {
     this.xapi.close();
     setTimeout(() => {
       this.xapi = null;
-      this.jsxapi.account = account;
+      this.jsxapi = null;
       this.setState({
-        accounts: Accounts.get(),
         account,
         caller: null,
         callId: null

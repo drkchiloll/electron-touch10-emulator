@@ -63,7 +63,6 @@ export class CodecHeaderToggle extends React.Component<any,any> {
       username: account.username,
       password: account.password
     }).then((xapi: any) => {
-      xapi.close();
       let { accounts } = this.state;
       accounts.forEach(a => {
         if(a.selected) a.selected = false;

@@ -1,4 +1,4 @@
-process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = true;
+process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = "true";
 import * as electron from 'electron';
 import { app, BrowserWindow, Menu } from 'electron';
 import { AppMenu } from './menu';

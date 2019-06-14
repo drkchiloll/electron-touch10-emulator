@@ -1,11 +1,9 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import * as Promise from 'bluebird';
 import { remote, ipcRenderer } from 'electron';
-import { Dialog, IconButton } from 'material-ui';
+import { IconButton } from 'material-ui';
 import SettingsIcon from 'material-ui/svg-icons/action/settings';
-import CallIcon from 'material-ui/svg-icons/communication/call';
-import CallEndIcon from 'material-ui/svg-icons/communication/call-end';
+
 // Import Components
 import {
   Main, Meetings, Call, AccountDialog,
@@ -13,8 +11,8 @@ import {
   Update, Controls, CodecHeaderToggle
 } from './components';
 import { SparkWidget } from './components/SparkWidget';
-import { JsXAPI, Accounts, MeetingHelper, api } from './lib';
-import { SparkGuest, SparkGuestConstructor } from './lib';
+import { Accounts, api } from './lib';
+import { SparkGuest } from './lib';
 import { CallHandler } from './lib/callhandler';
 export namespace App {
   export interface Props { }

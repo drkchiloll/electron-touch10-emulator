@@ -93,6 +93,7 @@ export class App extends React.Component<App.Props, App.State> {
   }
 
   componentWillMount() {
+    // Listen for Update Checks from the Menu
     ipcRenderer.on('update', (e) => {
       this.setState({ update: true });
     });

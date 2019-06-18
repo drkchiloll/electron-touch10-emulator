@@ -1,30 +1,30 @@
 import * as React from 'react';
-import * as Promise from 'bluebird';
 import {
-  Drawer, MenuItem, Dialog, ListItem,
-  FlatButton, Paper, TextField, List,
+  Drawer, Dialog, ListItem,
+  FlatButton, Paper, List,
   BottomNavigation, BottomNavigationItem,
-  Subheader, Snackbar, SelectField, makeSelectable,
+  Subheader, Snackbar, makeSelectable,
   FontIcon, Divider, CircularProgress
 } from 'material-ui';
 const SelectableList = makeSelectable(List);
-
+ 
 import AccountAddIcon from 'material-ui/svg-icons/social/group-add';
 import TrashIcon from 'material-ui/svg-icons/action/delete';
-import SaveIcon from 'material-ui/svg-icons/content/save';
-import CloseIcon from 'material-ui/svg-icons/navigation/close';
-import { Accounts, JsXAPI, SparkGuest, api } from '../lib';
+import { Accounts, JsXAPI, api, SysAccount, ISysAccount } from '../lib';
 
 import { AccountInput } from './index';
 
 export class AccountDialog extends React.Component<any,any> {
   public jsxapi = JsXAPI;
+  public accounts = new SysAccount();
   constructor(props) {
     super(props);
+
+
     this.state = {
       snack: false,
       selected: 0,
-      accounts: null,
+      accounts: [],
       account: null,
       message: '',
       close: false
@@ -32,30 +32,63 @@ export class AccountDialog extends React.Component<any,any> {
   }
 
   componentWillMount() {
-    let accounts = Accounts.get();
-    let selected = accounts.findIndex(a => a.selected);
-    this.setState({
-      accounts,
-      selected,
-      account: accounts[selected]
-    });
+    this.accounts.init('accounts').then(() => {
+      this.accounts.get().then((accounts: ISysAccount[]) => {
+        console.log(accounts)
+        if(accounts.length == 0 && this.state.accounts == 0) {
+          let account = {
+            name: 'New',
+            host: '10.10.10.10',
+            username: 'username',
+            password: 'password',
+            selected: true
+          };
+          this.setState({
+            accounts: [account],
+            selected: 0,
+            account
+          })
+        } else {
+          let selected = accounts.findIndex(a => a.selected);
+          this.setState({
+            accounts: accounts,
+            selected,
+            account: accounts[selected]
+          })
+        }
+        console.log(this.state);
+      })
+    })
   }
 
   save = () => {
-    let { account, accounts } = this.state;
-    api.saveAccount(account, accounts)
-      .then(() => {
-        let message = `${account.name} modified successfully`;
-        this.accountSelect(account);
-        this.setState({ message, snack: true});
-      })
-      .catch((e) => {
+    let { account } = this.state;
+    this.accounts.add(account).then(result => {
+      this.accountSelect(account);
+    }).then(() => {
+      return api.connectDevice(account).then((updatedRecord) => {
+        let message = `${account.name} added successfully`;
+        this.setState({ message, snack: true });
+        this.accounts.modify(updatedRecord);
+      }).catch(() => {
         alert(
-          'Connection to this device could not be established at this time.'
-        );
-        Accounts.save(accounts);
-        this.accountSelect(account);
-      });
+          'Connection to this device cannot be established at this time.'
+        )
+      })
+    })
+    // api.saveAccount(account, accounts)
+    //   .then(() => {
+    //     let message = `${account.name} modified successfully`;
+    //     this.accountSelect(account);
+    //     this.setState({ message, snack: true});
+    //   })
+    //   .catch((e) => {
+    //     alert(
+    //       'Connection to this device could not be established at this time.'
+    //     );
+    //     Accounts.save(accounts);
+    //     this.accountSelect(account);
+    //   });
   }
 
   inputChange = (e, value) => {
@@ -132,7 +165,7 @@ export class AccountDialog extends React.Component<any,any> {
   }
 
   render() {
-    let { close, snack, accounts, selected, message } = this.state;
+    let { snack, accounts, selected, message } = this.state;
     return (
       <div>
         <Dialog open={true}
@@ -179,6 +212,7 @@ export class AccountDialog extends React.Component<any,any> {
           <div style={this.styles.inDiv}>
             <Paper zDepth={2}>
               {
+                accounts.length >= 1 ?
                 Accounts.generateInput(accounts[selected]).map(
                   (fields: any, i: number) => {
                     return (
@@ -188,7 +222,7 @@ export class AccountDialog extends React.Component<any,any> {
                       </div>
                     )
                   }
-                )
+                ): <></>
               }
             </Paper>
           </div>

@@ -11,7 +11,7 @@ import {
   Update, Controls, CodecHeaderToggle
 } from './components';
 import { SparkWidget } from './components/SparkWidget';
-import { Accounts, api } from './lib';
+import { Accounts, api, SysAccount, ISysAccount } from './lib';
 import { SparkGuest } from './lib';
 import { CallHandler } from './lib/callhandler';
 export namespace App {
@@ -91,35 +91,30 @@ export class App extends React.Component<App.Props, App.State> {
       }
     }
   }
-
+  public accounts = new SysAccount();
   componentWillMount() {
     // Listen for Update Checks from the Menu
     ipcRenderer.on('update', (e) => {
       this.setState({ update: true });
     });
-    const accounts = Accounts.get();
-    let account: any;
-    if(accounts) {
-      account = accounts.find(a => a.selected);
-      if(!account) {
-        accounts[0].selected = true;
-        account = accounts[0];
-        this.setState({ account });
-      }
-      if(!account.host) {
-        this.setState({ acctDialog: true });
-      } else {
+    this.accounts.init('accounts').then(() => {
+      this.accounts.get().then((accounts: ISysAccount[]) => {
+        const account = accounts.find(a => a.selected);
+        // console.log(account);
         this.setState({ account, accounts });
-      }
-    }
+        console.log(this.state.account)
+      })
+    })
   }
 
   componentDidMount() {
-    const { account } = this.state;
-    return Promise.all([
-      this.initHandler(account),
-      this.teamsRoomCheck(account)
-    ]);
+    setTimeout(() => {
+      const { account } = this.state;
+      return Promise.all([
+        this.initHandler(account),
+        this.teamsRoomCheck(account)
+      ]);
+    }, 1000)
   }
 
   teamsRoomCheck = account => api.teamOps(account)

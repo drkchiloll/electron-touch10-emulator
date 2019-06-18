@@ -21,16 +21,17 @@ export const api = (() => {
           }
         });
     },
-    saveAccount(account: any, accounts) {
+    connectDevice(account: any) {
       return this.jsxapi.connection(5000, account).then(xapi => {
         this.jsxapi.xapi = xapi;
         return this.jsxapi.getUnit();
       }).then(metaData => {
         account['email'] = metaData.email;
         account['metaData'] = metaData;
-        Accounts.save(accounts);
-        return;
+        return account;
       })
+    },
+    saveAccount(account: any, accounts) {
     },
     removeCodec(accounts, selected) {
       let account = accounts[selected];

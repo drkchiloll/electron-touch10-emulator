@@ -2,7 +2,8 @@ import * as React from 'react';
 import { IconButton, IconMenu, MenuItem, CircularProgress } from 'material-ui';
 import MoreVertIcon from 'material-ui/svg-icons/navigation/more-vert';
 import IsConnectedIcon from 'material-ui/svg-icons/av/fiber-manual-record';
-import { JsXAPI, Accounts } from '../lib';
+import { JsXAPI, SysAccount, ISysAccount } from '../lib';
+import * as Promise from 'bluebird';
 
 const styles: any = {
   menu: { position: 'absolute', top: 0, width: 30 },
@@ -23,30 +24,30 @@ const styles: any = {
 
 export class CodecHeaderToggle extends React.Component<any,any> {
   public jsxapi = JsXAPI;
+  public accounts = new SysAccount();
   constructor(props) {
     super(props);
     this.state = {
-      accounts: null,
+      accounts: [],
       account: null,
       changing: false
     };
   }
 
   componentWillMount() {
-    let accts = Accounts.get();
-    let selacct = accts.find(a => a.selected);
-    this.setState({
-      accounts: accts,
-      account: selacct
-    });
+    this.accounts.init('accounts').then(() => {
+      this.accounts.get().then((accounts: ISysAccount[]) => {
+        const account = accounts.find(a => a.selected);
+        this.setState({ accounts, account });
+      })
+    })
   }
 
   componentWillReceiveProps(props) {
     const { account } = this.state;
-    if(props.account.name !== account.name) {
-      const accounts = Accounts.get();
+    if(!props.account) return;
+    if(!account || props.account.name !== account.name) {
       this.setState({
-        accounts,
         account: props.account
       });
     }
@@ -56,6 +57,7 @@ export class CodecHeaderToggle extends React.Component<any,any> {
     this.setState({ changing: true });
     const currentAccount = this.state.account;
     const {connected} = this.state;
+    if(!account) return;
     this.jsxapi.connection(2500, {
       name: account.name,
       selected: false,
@@ -64,13 +66,14 @@ export class CodecHeaderToggle extends React.Component<any,any> {
       password: account.password
     }).then((xapi: any) => {
       let { accounts } = this.state;
-      accounts.forEach(a => {
-        if(a.selected) a.selected = false;
-      });
-      accounts.find(a => a.name == account.name).selected = true;
-      Accounts.save(accounts);
-      this.props.change(account);
-      this.setState({ accounts, account, changing: false });
+      return Promise.each(accounts, (a: any) => {
+        if(a.name === account.name) a.selected = true;
+        else if(a.selected) a.selected = false;
+        this.props.change(account);
+        return this.accounts.modify(a);
+      }).then(() => {
+        this.setState({ accounts, account, changing: false });
+      })
     }).catch(() => {
       this.setState({
         account: currentAccount, changing: false
@@ -96,7 +99,7 @@ export class CodecHeaderToggle extends React.Component<any,any> {
               tooltipPosition='bottom-right'
             > <MoreVertIcon /> </IconButton>
           } >
-          {accounts.sort((a: any, b: any) => {
+          {accounts.length >= 0 ? accounts.sort((a: any, b: any) => {
             if(a.name > b.name) return -1;
             if(a.name < b.name) return 1;
             return 0
@@ -104,7 +107,7 @@ export class CodecHeaderToggle extends React.Component<any,any> {
             .map((a: any, i: number) =>
               <MenuItem value={a}
                 key={`account_${i}`}
-                primaryText={a.name} />)}
+                primaryText={a.name} />): <></>}
         </IconMenu>
           <div id='account-name'
             style={{
@@ -114,7 +117,7 @@ export class CodecHeaderToggle extends React.Component<any,any> {
             {
               changing ? <CircularProgress size={15} color='black' /> :
               <div>
-                {account.name}>
+                {account ? account.name : 'loading...'}>
                 <IsConnectedIcon color={connected ? 'green' : 'red'}
                   style={{ position: 'absolute', top: 12, marginLeft: '2px' }} />
               </div>

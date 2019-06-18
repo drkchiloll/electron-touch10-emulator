@@ -26,7 +26,10 @@ class MyApplication {
 			minHeight: 805,
 			maxWidth: 1024,
 			acceptFirstMouse: true,
-			webPreferences: { webSecurity: false }
+			webPreferences: {
+				webSecurity: false,
+				nodeIntegration: true
+			},
 		});
 
 		// this.mainWindow.webContents.openDevTools();
